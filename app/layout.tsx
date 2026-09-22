@@ -1,7 +1,9 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.css";
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import { theme } from "../styles/theme";
+import { NavigationBar } from "./components/navigation-bar/NavigationBar";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -23,7 +25,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body>
-        <MantineProvider defaultColorScheme="light">{children}</MantineProvider>
+        <MantineProvider
+          theme={theme}
+          // TODO: are we implementing a dark and light theme switch
+          defaultColorScheme="light"
+        >
+          <NavigationBar />
+          {children}
+        </MantineProvider>
       </body>
     </html>
   );
