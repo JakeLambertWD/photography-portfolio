@@ -1,8 +1,9 @@
-import { MantineProvider } from "@mantine/core";
+import { ColorSchemeScript, MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { theme } from "../styles/theme";
+import { DarkModeToggle } from "./components/navigation-bar/DarkModeToggle";
 import { NavigationBar } from "./components/navigation-bar/NavigationBar";
 import "./globals.css";
 
@@ -23,13 +24,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        <ColorSchemeScript defaultColorScheme="auto" />
+      </head>
       <body>
-        <MantineProvider
-          theme={theme}
-          // TODO: are we implementing a dark and light theme switch
-          defaultColorScheme="light"
-        >
+        <MantineProvider theme={theme} defaultColorScheme="auto">
+          <DarkModeToggle />
           <NavigationBar />
           {children}
         </MantineProvider>

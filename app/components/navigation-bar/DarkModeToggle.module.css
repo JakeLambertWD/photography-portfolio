@@ -1,0 +1,15 @@
+.icon {
+  display: none;
+}
+
+.moon {
+  display: block;
+}
+
+:global([data-mantine-color-scheme="dark"]) .sun {
+  display: block;
+}
+
+:global([data-mantine-color-scheme="dark"]) .moon {
+  display: none;
+}
