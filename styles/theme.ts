@@ -14,40 +14,6 @@ const lato = Lato({
   weight: ["100", "300", "400", "700", "900"],
 });
 
-const primaryColors = [
-  "#fff8e1",
-  "#ffefb3",
-  "#fce28a",
-  "#f4d05f",
-  "#edc34b",
-  PRIMARY_COLOR,
-  "#c99d24",
-  "#a77f14",
-  "#805f0b",
-  "#5b4205",
-] as const;
-
-export const brandColors = {
-  black: "#141110",
-  brown: "#1a1210",
-  charcoal: "#1b1815",
-  umber: "#332c26",
-  sepia: "#221d19",
-  ivory: "#f2ece4",
-  taupe: "#a89a8c",
-  amber: "oklch(78% 0.15 70)",
-  teal: "oklch(72% 0.1 195)",
-} as const;
-
-// Mantine exposes a generic `other` object on the theme type, but it is optional by default.
-// We augment it here so our app-specific palette is strongly typed and we can safely use
-// `theme.other.colors.*` without sprinkling `?? {}` checks across the app.
-declare module "@mantine/core" {
-  interface MantineThemeOther {
-    colors: typeof brandColors;
-  }
-}
-
 export const theme = createTheme({
   fontFamily: lato.style.fontFamily,
   cursorType: "pointer",
@@ -59,6 +25,7 @@ export const theme = createTheme({
     lg: "16px",
     xl: "20px",
     xxl: "24px",
+    xxxl: "32px",
   },
   fontSizes: {
     xxs: "0.625rem", // 10px
@@ -119,12 +86,32 @@ export const theme = createTheme({
   },
   // COLORS
   black: DEFAULT_BLACK,
-  primaryColor: "primary",
+  primaryColor: "yellow",
   primaryShade: 5,
   colors: {
-    primary: primaryColors,
-  },
-  other: {
-    colors: brandColors,
+    yellow: [
+      "#fff8e1",
+      "#ffefb3",
+      "#fce28a",
+      "#f4d05f",
+      "#edc34b",
+      PRIMARY_COLOR,
+      "#c99d24",
+      "#a77f14",
+      "#805f0b",
+      "#5b4205",
+    ],
+    brown: [
+      "#f2ece4",
+      "#a89a8c",
+      "#665b52",
+      "#4d433b",
+      "#332c26",
+      "#2a211d",
+      "#221d19",
+      "#1b1815",
+      "#1a1210",
+      "#141110",
+    ],
   },
 });
