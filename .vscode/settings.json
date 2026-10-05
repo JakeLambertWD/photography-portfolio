@@ -9,5 +9,9 @@
   },
   "[css]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  // tell Copilot Chat to auto approve terminal commands for pnpm
+  "chat.tools.terminal.autoApprove": {
+    "pnpm": true
   }
 }
