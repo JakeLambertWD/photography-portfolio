@@ -3,7 +3,7 @@ import { followerRouter } from "./follower";
 
 // Main application router for TRPC stored endpoints
 export const appRouter = router({
-  follower: followerRouter,
+  followers: followerRouter,
 });
 
 export type AppRouter = typeof appRouter;
