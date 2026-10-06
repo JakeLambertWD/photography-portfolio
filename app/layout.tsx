@@ -3,9 +3,11 @@ import "@mantine/core/styles.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { theme } from "../styles/theme";
+import { InstagramFollowerCount } from "./components/instagram-followers/InstagramFollowerCount";
 import { DarkModeToggle } from "./components/navigation-bar/DarkModeToggle";
 import { NavigationBar } from "./components/navigation-bar/NavigationBar";
 import "./globals.css";
+import { TRPCProvider } from "./providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,9 +36,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body>
         <MantineProvider theme={theme} defaultColorScheme="auto">
-          <DarkModeToggle />
-          <NavigationBar />
-          {children}
+          <TRPCProvider>
+            <DarkModeToggle />
+            <NavigationBar />
+            <InstagramFollowerCount />
+            {children}
+          </TRPCProvider>
         </MantineProvider>
       </body>
     </html>
