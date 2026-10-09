@@ -1,0 +1,47 @@
+# Photo Spots Map
+
+`/maps` shows the places I want to photograph as pins on a dark map of London.
+Each pin opens `/maps/[spotId]`, a full-screen view with a photo carousel and a
+note for each photo.
+
+## Flow
+
+```
+Neon DB (photo_spot, photo_spot_image)
+            ↓
+tRPC spots router (server/routers/spots.ts)
+            ↓
+/maps                → PhotoSpotsMap (MapLibre + Supercluster)
+/maps/[spotId]       → SpotDetail (carousel, per-photo notes, status)
+```
+
+## Pieces
+
+1. **db/migrations/002_photo_spots.sql** creates `photo_spot` (location, status,
+   tags) and `photo_spot_image` (image URL, caption, position). Run it manually
+   in the Neon SQL editor, like `001`.
+2. **db/seeds/002_photo_spots_sample.sql** adds eight `[Sample]` spots around
+   London Bridge so the map isn't empty. Delete them with
+   `delete from photo_spot where title like '[Sample]%';`
+3. **server/routers/spots.ts**
+   - `spots.list`: every spot with its first photo (used as the pin) and photo count.
+   - `spots.byId`: one spot with all photos in carousel order.
+   - `spots.updatePhotoCaption` / `spots.setStatus`: edits. These throw
+     `FORBIDDEN` in production until the site has sign-in, and the edit buttons
+     are hidden there too (`CAN_EDIT_SPOTS`).
+4. **app/maps/components/PhotoSpotsMap.tsx** renders the map with
+   `react-map-gl/maplibre`. Pins are grouped with `supercluster`; tapping a
+   group zooms in until it splits. It's loaded with `next/dynamic` and
+   `ssr: false` because MapLibre needs `window`.
+5. **app/maps/[spotId]/components/** holds the spot view: a scroll-snap carousel
+   with thumbnails, a note editor for the photo on screen, tags, spot notes,
+   directions (Google Maps) and the idea/shot toggle.
+
+## Notes
+
+- Map tiles come from OpenFreeMap's free dark style (no API key). Keep the
+  attribution control visible.
+- `maplibre-gl` is pinned to v5. v6 loads its worker from a separate file that
+  Turbopack doesn't resolve, so the map fails with "Worker failed to load".
+- The site navigation bar sits above the full-screen map (`zIndex: 1` in
+  `NavigationBar.tsx`); `MAP_OVERLAY_TOP_OFFSET` leaves room for it.

@@ -1,0 +1,13 @@
+import { Box } from "@mantine/core";
+import { SpotDetail } from "./components/SpotDetail";
+
+export default async function SpotPage({ params }: PageProps<"/maps/[spotId]">) {
+  const { spotId } = await params;
+
+  return (
+    // Full-bleed photos on mobile, so drop the default page padding.
+    <Box component="main" p={0} pt="xl">
+      <SpotDetail spotId={spotId} />
+    </Box>
+  );
+}
