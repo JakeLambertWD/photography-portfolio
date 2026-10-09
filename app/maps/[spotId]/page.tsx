@@ -6,7 +6,7 @@ export default async function SpotPage({ params }: PageProps<"/maps/[spotId]">) 
 
   return (
     // Full-bleed photos on mobile, so drop the default page padding.
-    <Box component="main" p={0} pt="xl">
+    <Box component="main" display="block" p={0} pt="xl">
       <SpotDetail spotId={spotId} />
     </Box>
   );

@@ -1,3 +1,4 @@
+import { CAN_EDIT_SPOTS, isSpotPhotoUrl, MAX_SPOT_PHOTOS, MAX_SPOT_TAGS } from "@/lib/photo-spots";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { sql } from "../db";
@@ -29,6 +30,25 @@ const spotDetailSchema = spotSummarySchema.omit({ coverImageUrl: true, photoCoun
   photos: z.array(spotPhotoSchema),
 });
 
+const createSpotInputSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  notes: z.string().trim().max(2000),
+  postcode: z.string().trim().max(10),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+  status: z.enum(SPOT_STATUSES),
+  tags: z.array(z.string().trim().min(1).max(40)).max(MAX_SPOT_TAGS),
+  photos: z
+    .array(
+      z.object({
+        imageUrl: z.string().refine(isSpotPhotoUrl, "Photos must be uploaded to Vercel Blob."),
+        caption: z.string().trim().max(2000),
+      }),
+    )
+    .max(MAX_SPOT_PHOTOS),
+});
+
+export type CreateSpotInput = z.infer<typeof createSpotInputSchema>;
 export type SpotStatus = (typeof SPOT_STATUSES)[number];
 export type SpotSummary = z.infer<typeof spotSummarySchema>;
 export type SpotDetail = z.infer<typeof spotDetailSchema>;
@@ -45,9 +65,8 @@ function getSql() {
   return sql;
 }
 
-// Editing is open to anyone who can reach the API, so it stays local-only until the site has auth.
 function assertCanEdit() {
-  if (process.env.NODE_ENV === "production") {
+  if (!CAN_EDIT_SPOTS) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "Editing spots is disabled in production until sign-in is added.",
@@ -144,4 +163,41 @@ export const spotsRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Spot not found." });
       }
     }),
+
+  create: publicProcedure.input(createSpotInputSchema).mutation(async ({ input }) => {
+    assertCanEdit();
+    const db = getSql();
+
+    // Generate the id up front so the spot and its photos can be inserted in one transaction.
+    const id = crypto.randomUUID();
+
+    const insertSpot = db`
+      insert into photo_spot (id, title, notes, postcode, latitude, longitude, status, tags)
+      values (
+        ${id},
+        ${input.title},
+        ${input.notes || null},
+        ${input.postcode.toUpperCase() || null},
+        ${input.latitude},
+        ${input.longitude},
+        ${input.status},
+        ${input.tags}
+      )
+    `;
+
+    // unnest turns the three arrays into one row per photo, keeping the order they were added in.
+    const insertPhotos = db`
+      insert into photo_spot_image (spot_id, image_url, caption, position)
+      select ${id}, photo.image_url, nullif(photo.caption, ''), photo.position
+      from unnest(
+        ${input.photos.map((photo) => photo.imageUrl)}::text[],
+        ${input.photos.map((photo) => photo.caption)}::text[],
+        ${input.photos.map((_, index) => index)}::int[]
+      ) as photo(image_url, caption, position)
+    `;
+
+    await db.transaction(input.photos.length > 0 ? [insertSpot, insertPhotos] : [insertSpot]);
+
+    return { id };
+  }),
 });

@@ -4,7 +4,8 @@ import { api } from "@/app/providers";
 import { Button, Group, Stack, Text, Textarea } from "@mantine/core";
 import { IconPencil } from "@tabler/icons-react";
 import { useState } from "react";
-import { CAN_EDIT_SPOTS, formatPhotoNumber } from "./SpotDetail.constants";
+import { CAN_EDIT_SPOTS } from "@/lib/photo-spots";
+import { formatPhotoNumber } from "./SpotDetail.constants";
 
 type PhotoCaptionProps = {
   spotId: string;

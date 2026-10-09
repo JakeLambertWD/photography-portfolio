@@ -19,7 +19,8 @@ import { IconChevronLeft, IconNavigation } from "@tabler/icons-react";
 import Link from "next/link";
 import { useState } from "react";
 import { PhotoCaption } from "./PhotoCaption";
-import { CAN_EDIT_SPOTS, getDirectionsUrl } from "./SpotDetail.constants";
+import { CAN_EDIT_SPOTS } from "@/lib/photo-spots";
+import { getDirectionsUrl } from "./SpotDetail.constants";
 import { SpotPhotoCarousel } from "./SpotPhotoCarousel";
 
 type SpotDetailProps = {
