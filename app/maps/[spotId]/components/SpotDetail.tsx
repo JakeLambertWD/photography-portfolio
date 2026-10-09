@@ -18,6 +18,7 @@ import {
 import { IconChevronLeft, IconNavigation } from "@tabler/icons-react";
 import Link from "next/link";
 import { useState } from "react";
+import { DeleteSpotButton } from "./DeleteSpotButton";
 import { PhotoCaption } from "./PhotoCaption";
 import { CAN_EDIT_SPOTS } from "@/lib/photo-spots";
 import { getDirectionsUrl } from "./SpotDetail.constants";
@@ -175,6 +176,12 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
           <Text fz="sm" c="red.4">
             {setStatus.error.message}
           </Text>
+        )}
+
+        {CAN_EDIT_SPOTS && (
+          <Group justify="center">
+            <DeleteSpotButton spotId={spot.id} title={spot.title} photoCount={spot.photos.length} />
+          </Group>
         )}
       </Stack>
     </Container>

@@ -26,7 +26,8 @@ tRPC spots router (server/routers/spots.ts)
 3. **server/routers/spots.ts**
    - `spots.list`: every spot with its first photo (used as the pin) and photo count.
    - `spots.byId`: one spot with all photos in carousel order.
-   - `spots.create` / `spots.updatePhotoCaption` / `spots.setStatus`: edits. These throw
+   - `spots.delete`: removes the spot, its photos (cascade) and their files in Vercel Blob.
+   - `spots.create` / `spots.updatePhotoCaption` / `spots.setStatus` / `spots.delete`: edits. These throw
      `FORBIDDEN` in production until the site has sign-in, and the edit buttons
      are hidden there too (`CAN_EDIT_SPOTS` in `lib/photo-spots.ts`).
 4. **app/maps/components/PhotoSpotsMap.tsx** renders the map with

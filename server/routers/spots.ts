@@ -1,4 +1,5 @@
 import { CAN_EDIT_SPOTS, isSpotPhotoUrl, MAX_SPOT_PHOTOS, MAX_SPOT_TAGS } from "@/lib/photo-spots";
+import { del } from "@vercel/blob";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { sql } from "../db";
@@ -199,5 +200,41 @@ export const spotsRouter = router({
     await db.transaction(input.photos.length > 0 ? [insertSpot, insertPhotos] : [insertSpot]);
 
     return { id };
+  }),
+
+  delete: publicProcedure.input(z.object({ id: z.uuid() })).mutation(async ({ input }) => {
+    assertCanEdit();
+    const db = getSql();
+
+    // Photos are removed by "on delete cascade"; grab their URLs first so the files can go too.
+    const photoRows = await db`
+      select image_url as "imageUrl"
+      from photo_spot_image
+      where spot_id = ${input.id}
+    `;
+
+    const deleted = await db`
+      delete from photo_spot
+      where id = ${input.id}
+      returning id
+    `;
+
+    if (!deleted[0]) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Spot not found." });
+    }
+
+    // Only files uploaded through the app live in Vercel Blob (not e.g. images in /public).
+    const blobUrls = photoRows
+      .map((row) => String(row.imageUrl))
+      .filter((url) => isSpotPhotoUrl(url));
+
+    if (blobUrls.length > 0 && process.env.BLOB_READ_WRITE_TOKEN) {
+      try {
+        await del(blobUrls);
+      } catch (error) {
+        // The spot is already gone; a leftover file is harmless, so don't fail the request.
+        console.error("Failed to delete spot photos from Vercel Blob:", error);
+      }
+    }
   }),
 });
