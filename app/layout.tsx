@@ -3,9 +3,6 @@ import "@mantine/core/styles.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { theme } from "../styles/theme";
-import { InstagramFollowerCount } from "./components/instagram-followers/InstagramFollowerCount";
-import { DarkModeToggle } from "./components/navigation-bar/DarkModeToggle";
-import { NavigationBar } from "./components/navigation-bar/NavigationBar";
 import "./globals.css";
 import { TRPCProvider } from "./providers";
 
@@ -37,9 +34,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body>
         <MantineProvider theme={theme} defaultColorScheme="auto">
           <TRPCProvider>
-            <DarkModeToggle />
-            <NavigationBar />
-            <InstagramFollowerCount />
             {children}
           </TRPCProvider>
         </MantineProvider>
