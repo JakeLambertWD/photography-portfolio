@@ -1,7 +1,7 @@
 import { createTheme } from "@mantine/core";
 import { Lato, Poppins } from "next/font/google";
 
-export const DEFAULT_BLACK = "#101010";
+export const DEFAULT_BLACK = "#181818";
 export const PRIMARY_COLOR = "#e7ba3d";
 
 const poppins = Poppins({

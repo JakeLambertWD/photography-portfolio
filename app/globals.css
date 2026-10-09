@@ -1,5 +1,5 @@
 :root {
-  --background: #141110;
+  --background: #181818;
   --foreground: #f2ece4;
 }
 
@@ -17,9 +17,6 @@ body {
   min-height: 100vh;
   color: var(--foreground);
   background-color: var(--background);
-  background-image:
-    linear-gradient(rgba(20, 17, 16, 0.48), rgba(20, 17, 16, 0.48)),
-    url("/pang-yuhao-ywFIm7uev64-unsplash.jpg");
   background-position: center;
   background-size: cover;
   background-attachment: fixed;
