@@ -38,11 +38,20 @@ tRPC spots router (server/routers/spots.ts)
    with thumbnails, a note editor for the photo on screen, tags, spot notes,
    directions (Google Maps) and the idea/shot toggle.
 
+## Searching
+
+The search bar (`PlaceSearch.tsx`) suggests matching saved spots plus real places
+from `places.search` (`server/routers/places.ts`). UK postcodes go to
+postcodes.io; everything else goes to Photon, a free OpenStreetMap search API,
+ranked towards central London. Picking a place drops a marker with an
+**Add spot here** shortcut; parks and other areas are framed whole. Requests are
+debounced and cached to stay within Photon's fair-use limits.
+
 ## Adding a spot
 
 1. **Add spot** (bottom right of the map) switches to placing mode: a fixed pin
-   sits in the middle of the map and you move the map under it. The postcode box
-   at the top jumps there via postcodes.io (`lib/postcodes.ts`).
+   sits in the middle of the map and you move the map under it. The search box
+   at the top jumps to a place or postcode.
 2. **Use this spot** opens the form (`add-spot/AddSpotForm.tsx`) with the pin's
    coordinates. The nearest postcode is filled in automatically. **Move pin**
    goes back to the map without losing what's been typed.

@@ -13,24 +13,21 @@ import {
   Paper,
   Stack,
   Text,
-  TextInput,
   Tooltip,
   useMantineTheme,
 } from "@mantine/core";
 import { CAN_EDIT_SPOTS } from "@/lib/photo-spots";
-import type { PostcodeLocation } from "@/lib/postcodes";
+import type { PlaceResult } from "@/server/routers/places";
 import { useMediaQuery } from "@mantine/hooks";
-import { IconCurrentLocation, IconPlus, IconSearch } from "@tabler/icons-react";
+import { IconCurrentLocation, IconPlus } from "@tabler/icons-react";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import MapGL, { AttributionControl, Marker, type MapRef } from "react-map-gl/maplibre";
 import Supercluster from "supercluster";
-import { POSTCODE_ZOOM } from "./add-spot/AddSpot.constants";
 import { AddSpotForm, type DraftLocation } from "./add-spot/AddSpotForm";
 import { PlacementPin } from "./add-spot/PlacementPin";
-import { PostcodeSearch } from "./add-spot/PostcodeSearch";
 import { ClusterMarker } from "./ClusterMarker";
 import {
   CLUSTER_MAX_ZOOM,
@@ -43,6 +40,9 @@ import {
   SPOT_STATUS_FILTERS,
   type SpotStatusFilter,
 } from "./PhotoSpotsMap.constants";
+import { PlaceSearch } from "./PlaceSearch";
+import { PLACE_ZOOM } from "./PlaceSearch.constants";
+import { SearchedPlaceMarker } from "./SearchedPlaceMarker";
 import { SpotMarker } from "./SpotMarker";
 
 type Bounds = [west: number, south: number, east: number, north: number];
@@ -59,15 +59,6 @@ type UserLocation = {
   longitude: number;
   latitude: number;
 };
-
-function matchesSearch(spot: SpotSummary, search: string) {
-  const query = search.trim().toLowerCase();
-  if (!query) return true;
-
-  return [spot.title, spot.postcode ?? "", ...spot.tags].some((value) =>
-    value.toLowerCase().includes(query),
-  );
-}
 
 function isInBounds(spot: SpotSummary, [west, south, east, north]: Bounds) {
   return (
@@ -87,7 +78,7 @@ export function PhotoSpotsMap() {
 
   const [viewport, setViewport] = useState<Viewport | null>(null);
   const [statusFilter, setStatusFilter] = useState<SpotStatusFilter>("all");
-  const [search, setSearch] = useState("");
+  const [searchedPlace, setSearchedPlace] = useState<PlaceResult | null>(null);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -99,26 +90,18 @@ export function PhotoSpotsMap() {
 
   const spots = useMemo(() => spotsQuery.data ?? [], [spotsQuery.data]);
 
-  const searchedSpots = useMemo(
-    () => spots.filter((spot) => matchesSearch(spot, search)),
-    [spots, search],
-  );
-
   const visibleSpots = useMemo(
-    () =>
-      statusFilter === "all"
-        ? searchedSpots
-        : searchedSpots.filter((spot) => spot.status === statusFilter),
-    [searchedSpots, statusFilter],
+    () => (statusFilter === "all" ? spots : spots.filter((spot) => spot.status === statusFilter)),
+    [spots, statusFilter],
   );
 
   const statusCounts = useMemo(
     () => ({
-      all: searchedSpots.length,
-      idea: searchedSpots.filter((spot) => spot.status === "idea").length,
-      shot: searchedSpots.filter((spot) => spot.status === "shot").length,
+      all: spots.length,
+      idea: spots.filter((spot) => spot.status === "idea").length,
+      shot: spots.filter((spot) => spot.status === "shot").length,
     }),
-    [searchedSpots],
+    [spots],
   );
 
   // Rebuild the cluster index only when the set of pins changes, not on every pan.
@@ -195,11 +178,39 @@ export function PhotoSpotsMap() {
     setAddSpotStep("details");
   }
 
-  function goToPostcode(location: PostcodeLocation) {
-    mapRef.current?.flyTo({
-      center: [location.longitude, location.latitude],
-      zoom: POSTCODE_ZOOM,
-    });
+  function goToPlace(place: PlaceResult) {
+    const map = mapRef.current;
+    if (!map) return;
+
+    // Areas such as parks get framed whole; single buildings get a close zoom.
+    if (place.bounds) {
+      const [west, south, east, north] = place.bounds;
+      map.fitBounds(
+        [
+          [west, south],
+          [east, north],
+        ],
+        { padding: 80, maxZoom: PLACE_ZOOM },
+      );
+    } else {
+      map.flyTo({ center: [place.longitude, place.latitude], zoom: PLACE_ZOOM });
+    }
+  }
+
+  function showPlace(place: PlaceResult) {
+    setSearchedPlace(place);
+    goToPlace(place);
+  }
+
+  function showSpot(spot: SpotSummary) {
+    setSearchedPlace(null);
+    mapRef.current?.flyTo({ center: [spot.longitude, spot.latitude], zoom: PLACE_ZOOM });
+  }
+
+  function addSpotAtPlace(place: PlaceResult) {
+    mapRef.current?.flyTo({ center: [place.longitude, place.latitude], zoom: PLACE_ZOOM });
+    setSearchedPlace(null);
+    setAddSpotStep("placing");
   }
 
   function closeAddSpot() {
@@ -254,6 +265,19 @@ export function PhotoSpotsMap() {
           );
         })}
 
+        {searchedPlace && !isPlacing && (
+          <Marker
+            longitude={searchedPlace.longitude}
+            latitude={searchedPlace.latitude}
+            anchor="bottom"
+          >
+            <SearchedPlaceMarker
+              place={searchedPlace}
+              onAddSpot={() => addSpotAtPlace(searchedPlace)}
+            />
+          </Marker>
+        )}
+
         {userLocation && (
           <Marker longitude={userLocation.longitude} latitude={userLocation.latitude}>
             <Box
@@ -274,25 +298,16 @@ export function PhotoSpotsMap() {
       <Box pos="absolute" top={MAP_OVERLAY_TOP_OFFSET} left={0} right={0} px="md">
         {isPlacing ? (
           <Stack gap="sm" maw="30rem" mx="auto">
-            <PostcodeSearch onFound={goToPostcode} />
+            <PlaceSearch placeholder="Jump to a place or postcode" onSelectPlace={goToPlace} />
           </Stack>
         ) : (
           <Stack gap="sm" maw="30rem" mx="auto">
-            <TextInput
-              aria-label="Search spots, postcodes or tags"
-              placeholder="Search spots, postcodes or tags"
-              value={search}
-              onChange={(event) => setSearch(event.currentTarget.value)}
-              leftSection={<IconSearch size={18} />}
-              size="md"
-              radius="sm"
-              styles={{
-                input: {
-                  backgroundColor: theme.colors.brown[7],
-                  borderColor: theme.colors.brown[4],
-                  color: theme.colors.brown[0],
-                },
-              }}
+            <PlaceSearch
+              placeholder="Search places, postcodes or your spots"
+              spots={spots}
+              onSelectPlace={showPlace}
+              onSelectSpot={showSpot}
+              onClear={() => setSearchedPlace(null)}
             />
             <Group gap="xs">
               {SPOT_STATUS_FILTERS.map((filter) => {

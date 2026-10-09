@@ -13,6 +13,3 @@ export const SPOT_STATUS_OPTIONS = [
   { value: "idea", label: "Idea" },
   { value: "shot", label: "Shot" },
 ] as const;
-
-// Zoom used when jumping to a searched postcode, close enough to place the pin precisely.
-export const POSTCODE_ZOOM = 17;
