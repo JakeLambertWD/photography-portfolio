@@ -110,10 +110,13 @@ export function AddSpotForm({ location, onMovePin, onCancel, onCreated }: AddSpo
     [],
   );
 
+  // crypto.randomUUID() only exists on HTTPS, which breaks testing over the local network.
+  const nextPhotoId = useRef(0);
+
   function addPhotos(files: File[]) {
     const room = MAX_SPOT_PHOTOS - photos.length;
     const added = files.slice(0, room).map((file) => ({
-      id: crypto.randomUUID(),
+      id: `photo-${nextPhotoId.current++}`,
       file,
       previewUrl: URL.createObjectURL(file),
       caption: "",
