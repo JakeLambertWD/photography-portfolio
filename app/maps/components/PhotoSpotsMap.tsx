@@ -71,6 +71,7 @@ export function PhotoSpotsMap() {
   const theme = useMantineTheme();
   const router = useRouter();
   const mapRef = useRef<MapRef>(null);
+  const hasAutoLocated = useRef(false);
 
   const spotsQuery = api.spots.list.useQuery();
 
@@ -115,6 +116,15 @@ export function PhotoSpotsMap() {
     [spots, viewport],
   );
 
+  function handleLoad(event: { target: MapLibreMap }) {
+    updateViewport(event);
+
+    if (!hasAutoLocated.current) {
+      hasAutoLocated.current = true;
+      locateUser(true);
+    }
+  }
+
   function updateViewport({ target: map }: { target: MapLibreMap }) {
     const bounds = map.getBounds();
 
@@ -129,9 +139,10 @@ export function PhotoSpotsMap() {
     mapRef.current?.flyTo({ center: [longitude, latitude], zoom, duration: 600 });
   }
 
-  function locateUser() {
+  // isAutomatic is the lookup on first load: it jumps straight there and stays quiet if it fails.
+  function locateUser(isAutomatic = false) {
     if (!("geolocation" in navigator)) {
-      setLocationError("Location isn't available in this browser");
+      if (!isAutomatic) setLocationError("Location isn't available in this browser");
       return;
     }
 
@@ -142,10 +153,15 @@ export function PhotoSpotsMap() {
         setUserLocation(location);
         setLocationError(null);
         setIsLocating(false);
-        mapRef.current?.flyTo({ center: [location.longitude, location.latitude], zoom: 15 });
+        const view = {
+          center: [location.longitude, location.latitude] as [number, number],
+          zoom: 15,
+        };
+        if (isAutomatic) mapRef.current?.jumpTo(view);
+        else mapRef.current?.flyTo(view);
       },
       () => {
-        setLocationError("Couldn't get your location");
+        if (!isAutomatic) setLocationError("Couldn't get your location");
         setIsLocating(false);
       },
       { enableHighAccuracy: true, timeout: 10000 },
@@ -208,7 +224,7 @@ export function PhotoSpotsMap() {
         maxZoom={MAP_MAX_ZOOM}
         mapStyle={MAP_STYLE_URL}
         attributionControl={false}
-        onLoad={updateViewport}
+        onLoad={handleLoad}
         onMove={updateViewport}
         style={{ width: "100%", height: "100%" }}
       >
@@ -358,7 +374,7 @@ export function PhotoSpotsMap() {
             <Tooltip label={locationError ?? "Centre on my location"}>
               <ActionIcon
                 aria-label={locationError ?? "Centre on my location"}
-                onClick={locateUser}
+                onClick={() => locateUser()}
                 loading={isLocating}
                 variant="default"
                 size={56}
