@@ -19,6 +19,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Photography Portfolio",
   description: "A photography portfolio.",
+  // Stops iOS turning postcodes and place names into underlined address links.
+  formatDetection: { telephone: false, address: false, email: false },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

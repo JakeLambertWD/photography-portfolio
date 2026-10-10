@@ -56,6 +56,11 @@ select {
   font-size: 16px !important;
 }
 
+/* Matches the static note text; 18px is above the iOS zoom threshold. */
+textarea.photo-caption-input {
+  font-size: 18px !important;
+}
+
 /* Weather options are removed by deselecting them in the dropdown. */
 .weather-select .mantine-Pill-remove {
   display: none;

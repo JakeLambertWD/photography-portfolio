@@ -69,11 +69,12 @@ export function AddPhotosTile({
           {...props}
           aria-label="Add photos"
           disabled={isUploading || room <= 0}
-          w={64}
-          h={64}
           bdrs="sm"
           display="flex"
           style={{
+            flex: "0 1 64px",
+            minWidth: 0,
+            aspectRatio: "1",
             alignItems: "center",
             justifyContent: "center",
             border: `1.5px dashed ${theme.colors.brown[2]}`,

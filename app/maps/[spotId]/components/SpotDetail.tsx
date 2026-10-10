@@ -1,20 +1,19 @@
 "use client";
 
 import { api } from "@/app/providers";
-import { formatSpotTag } from "@/app/maps/components/add-spot/AddSpot.constants";
+import { CAN_EDIT_SPOTS } from "@/lib/photo-spots";
 import {
   ActionIcon,
-  Badge,
   Box,
   Button,
   Center,
   Container,
+  Flex,
   Group,
   Loader,
   Stack,
   Text,
   Title,
-  useMantineTheme,
 } from "@mantine/core";
 import { IconChevronLeft, IconNavigation } from "@tabler/icons-react";
 import Link from "next/link";
@@ -22,9 +21,7 @@ import { useState } from "react";
 import { AddPhotosTile } from "./AddPhotosTile";
 import { DeleteSpotButton } from "./DeleteSpotButton";
 import { EditSpotButton } from "./EditSpotButton";
-import { PhotoActions } from "./PhotoActions";
 import { PhotoCaption } from "./PhotoCaption";
-import { CAN_EDIT_SPOTS } from "@/lib/photo-spots";
 import { getDirectionsUrl } from "./SpotDetail.constants";
 import { SpotPhotoCarousel } from "./SpotPhotoCarousel";
 
@@ -33,9 +30,8 @@ type SpotDetailProps = {
 };
 
 export function SpotDetail({ spotId }: SpotDetailProps) {
-  const theme = useMantineTheme();
   const [activeIndex, setActiveIndex] = useState(0);
-  const [uploadProgress, setUploadProgress] = useState<string | null>(null);
+  const [progress, setProgress] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const spotQuery = api.spots.byId.useQuery({ id: spotId }, { retry: false });
@@ -70,20 +66,9 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
   const photoIndex = Math.max(0, Math.min(activeIndex, spot.photos.length - 1));
   const activePhoto = spot.photos[photoIndex];
 
-  const addPhotosTile = CAN_EDIT_SPOTS ? (
-    <AddPhotosTile
-      spotId={spot.id}
-      spotTitle={spot.title}
-      photoCount={spot.photos.length}
-      onProgress={setUploadProgress}
-      onError={setUploadError}
-      onAdded={setActiveIndex}
-    />
-  ) : null;
-
   return (
-    <Container size="30rem" px={0} pt="md" pb="xxl" w="100%">
-      <Group justify="space-between" wrap="nowrap" px="xs" mb="sm">
+    <Container size="30rem" px={0} pb="xxl" w="100%">
+      <Group justify="space-between" wrap="nowrap" px="xs" my="sm">
         <ActionIcon
           component={Link}
           href="/maps"
@@ -94,43 +79,56 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
         >
           <IconChevronLeft size={24} />
         </ActionIcon>
-        <Stack gap={0} align="center" miw={0}>
+        <Flex gap="sm" justify="center" align="baseline" wrap="nowrap" miw={0}>
           <Title order={1} fz="lg" c="brown.0" ta="center" lineClamp={1}>
             {spot.title}
           </Title>
           {spot.postcode && (
             <Text ff="monospace" fz="xs" c="brown.1">
-              {spot.postcode}
+              - {spot.postcode}
             </Text>
           )}
-        </Stack>
+        </Flex>
         {CAN_EDIT_SPOTS ? <EditSpotButton spot={spot} /> : <Box w={44} />}
       </Group>
 
       {spot.photos.length > 0 ? (
-        <SpotPhotoCarousel
-          photos={spot.photos}
-          activeIndex={photoIndex}
-          onActiveIndexChange={setActiveIndex}
-          extraThumbnail={addPhotosTile}
-        />
+        <>
+          <SpotPhotoCarousel
+            photos={spot.photos}
+            tags={spot.tags}
+            activeIndex={photoIndex}
+            onActiveIndexChange={setActiveIndex}
+            extraThumbnail={
+              CAN_EDIT_SPOTS && (
+                <AddPhotosTile
+                  spotId={spot.id}
+                  spotTitle={spot.title}
+                  photoCount={spot.photos.length}
+                  onProgress={setProgress}
+                  onError={setUploadError}
+                  onAdded={setActiveIndex}
+                />
+              )
+            }
+          />
+          {(progress || uploadError) && (
+            <Text
+              fz="sm"
+              px="md"
+              c={uploadError ? "red.5" : "brown.1"}
+              role={uploadError ? "alert" : "status"}
+            >
+              {uploadError ?? progress}
+            </Text>
+          )}
+        </>
       ) : (
         <>
           <Center h={200} bg="brown.7" c="brown.1" fz="sm">
             No photos yet
           </Center>
-          {addPhotosTile && (
-            <Group px="md" py="sm">
-              {addPhotosTile}
-            </Group>
-          )}
         </>
-      )}
-
-      {(uploadProgress || uploadError) && (
-        <Text px="md" fz="sm" c={uploadError ? "red.4" : "brown.1"} aria-live="polite">
-          {uploadError ?? uploadProgress}
-        </Text>
       )}
 
       <Stack gap="lg" px="md" pt="sm">
@@ -143,36 +141,7 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
               photoIndex={photoIndex}
               caption={activePhoto.caption}
             />
-            {CAN_EDIT_SPOTS && (
-              <PhotoActions
-                key={`actions-${activePhoto.id}`}
-                spotId={spot.id}
-                photoId={activePhoto.id}
-                imageUrl={activePhoto.imageUrl}
-                isCover={photoIndex === 0}
-                onCoverChanged={() => setActiveIndex(0)}
-                onDeleted={() => setActiveIndex(Math.max(0, photoIndex - 1))}
-              />
-            )}
           </Stack>
-        )}
-
-        {spot.tags.length > 0 && (
-          <Group gap="xs">
-            {spot.tags.map((tag) => (
-              <Badge
-                key={tag}
-                variant="outline"
-                color="brown.2"
-                c="brown.0"
-                radius="xl"
-                tt="none"
-                fw={500}
-              >
-                {formatSpotTag(tag)}
-              </Badge>
-            ))}
-          </Group>
         )}
 
         {spot.notes && (
@@ -183,27 +152,40 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
             <Text c="brown.0">{spot.notes}</Text>
           </Stack>
         )}
-
-        <Group gap="sm" grow pt="md" style={{ borderTop: `1px solid ${theme.colors.brown[4]}` }}>
-          <Button
-            component="a"
-            href={getDirectionsUrl(spot.latitude, spot.longitude)}
-            target="_blank"
-            rel="noreferrer"
-            variant="default"
-            size="md"
-            leftSection={<IconNavigation size={18} />}
-          >
-            Directions
-          </Button>
-        </Group>
-
-        {CAN_EDIT_SPOTS && (
-          <Group justify="center">
-            <DeleteSpotButton spotId={spot.id} title={spot.title} photoCount={spot.photos.length} />
-          </Group>
-        )}
       </Stack>
+
+      <Group
+        pos="fixed"
+        bottom="var(--mantine-spacing-sm)"
+        left={0}
+        right={0}
+        maw="30rem"
+        mx="auto"
+        px="xs"
+        wrap="nowrap"
+        justify="space-between"
+        style={{ pointerEvents: "none" }}
+      >
+        {CAN_EDIT_SPOTS && (
+          <Box style={{ pointerEvents: "auto" }}>
+            <DeleteSpotButton spotId={spot.id} title={spot.title} photoCount={spot.photos.length} />
+          </Box>
+        )}
+        <ActionIcon
+          component="a"
+          href={getDirectionsUrl(spot.latitude, spot.longitude)}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Directions"
+          variant="transparent"
+          color="blue.4"
+          size={44}
+          ml="auto"
+          style={{ pointerEvents: "auto" }}
+        >
+          <IconNavigation size={20} />
+        </ActionIcon>
+      </Group>
     </Container>
   );
 }

@@ -1,21 +1,14 @@
 "use client";
 
 import type { SpotDetail } from "@/server/routers/spots";
-import {
-  AspectRatio,
-  Badge,
-  Box,
-  Group,
-  Image,
-  UnstyledButton,
-  useMantineTheme,
-} from "@mantine/core";
+import { AspectRatio, Box, Group, Image, UnstyledButton, useMantineTheme } from "@mantine/core";
 import { useEffect, useRef, type ReactNode } from "react";
-import { formatPhotoNumber } from "./SpotDetail.constants";
+import { formatSpotTag, SPOT_TAG_EMOJIS } from "@/app/maps/components/add-spot/AddSpot.constants";
 import styles from "./SpotPhotoCarousel.module.css";
 
 type SpotPhotoCarouselProps = {
   photos: SpotDetail["photos"];
+  tags: string[];
   activeIndex: number;
   onActiveIndexChange: (index: number) => void;
   // Shown at the end of the thumbnail strip, e.g. an "add photos" button.
@@ -24,6 +17,7 @@ type SpotPhotoCarouselProps = {
 
 export function SpotPhotoCarousel({
   photos,
+  tags,
   activeIndex,
   onActiveIndexChange,
   extraThumbnail,
@@ -76,25 +70,10 @@ export function SpotPhotoCarousel({
             </div>
           ))}
         </div>
-        {photos.length > 1 && (
-          <Badge
-            pos="absolute"
-            top={theme.spacing.sm}
-            left={theme.spacing.sm}
-            radius="xs"
-            size="lg"
-            ff="monospace"
-            fw={400}
-            bg="rgba(20, 17, 16, 0.82)"
-            c="brown.0"
-          >
-            {formatPhotoNumber(activeIndex)} / {formatPhotoNumber(photos.length - 1)}
-          </Badge>
-        )}
       </Box>
 
       {(photos.length > 1 || extraThumbnail) && (
-        <Group gap="sm" px="md" py="sm">
+        <Group gap="xs" wrap="nowrap" px="md" pb="sm" pt="lg">
           {photos.map((photo, index) => {
             const isActive = index === activeIndex;
 
@@ -104,11 +83,12 @@ export function SpotPhotoCarousel({
                 aria-label={`Show photo ${index + 1}`}
                 aria-pressed={isActive}
                 onClick={() => goToPhoto(index)}
-                w={64}
-                h={64}
                 bdrs="sm"
                 opacity={isActive ? 1 : 0.6}
                 style={{
+                  flex: "0 1 64px",
+                  minWidth: 0,
+                  aspectRatio: "1",
                   overflow: "hidden",
                   outline: isActive ? `2px solid ${theme.colors.yellow[5]}` : "none",
                   outlineOffset: 2,
@@ -119,6 +99,15 @@ export function SpotPhotoCarousel({
             );
           })}
           {extraThumbnail}
+        </Group>
+      )}
+      {tags.length > 0 && (
+        <Group gap="sm" wrap="nowrap" px="md" pt="sm" pb={0} fz="xl">
+          {tags.map((tag) => (
+            <span key={tag} role="img" aria-label={formatSpotTag(tag)} title={formatSpotTag(tag)}>
+              {SPOT_TAG_EMOJIS[tag] ?? formatSpotTag(tag)}
+            </span>
+          ))}
         </Group>
       )}
     </Box>

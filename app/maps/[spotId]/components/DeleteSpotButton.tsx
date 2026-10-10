@@ -1,7 +1,7 @@
 "use client";
 
 import { api } from "@/app/providers";
-import { Button, Group, Modal, Stack, Text } from "@mantine/core";
+import { ActionIcon, Button, Group, Modal, Stack, Text } from "@mantine/core";
 import { IconTrash } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -26,14 +26,15 @@ export function DeleteSpotButton({ spotId, title, photoCount }: DeleteSpotButton
 
   return (
     <>
-      <Button
-        variant="subtle"
-        color="red"
-        leftSection={<IconTrash size={16} />}
+      <ActionIcon
+        aria-label="Delete spot"
+        variant="transparent"
+        color="red.5"
+        size={44}
         onClick={() => setIsConfirming(true)}
       >
-        Delete spot
-      </Button>
+        <IconTrash size={24} stroke={1.75} />
+      </ActionIcon>
 
       <Modal
         opened={isConfirming}

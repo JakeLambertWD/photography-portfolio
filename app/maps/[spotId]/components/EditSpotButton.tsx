@@ -4,45 +4,50 @@ import { api } from "@/app/providers";
 import { WeatherPill } from "@/app/maps/components/add-spot/WeatherPill";
 import { useSortedSpotTags } from "@/app/maps/components/add-spot/useSortedSpotTags";
 import { MAX_SPOT_TAGS } from "@/lib/photo-spots";
+import { getPhotoUploadErrorMessage } from "@/lib/upload-spot-photo";
 import type { SpotDetail } from "@/server/routers/spots";
 import {
   ActionIcon,
   Button,
   Group,
+  Image,
+  Input,
   Modal,
-  Stack,
   MultiSelect,
+  Stack,
   Text,
-  Textarea,
   TextInput,
 } from "@mantine/core";
-import { IconPencil } from "@tabler/icons-react";
+import { IconPencil, IconTrash } from "@tabler/icons-react";
 import { useState, type FormEvent } from "react";
 
 type EditSpotButtonProps = {
   spot: SpotDetail;
 };
 
-function EditSpotForm({ spot, onDone }: { spot: SpotDetail; onDone: () => void }) {
+type EditSpotFormProps = EditSpotButtonProps & { onDone: () => void };
+
+function EditSpotForm({ spot, onDone }: EditSpotFormProps) {
   const utils = api.useUtils();
+  const updateSpot = api.spots.update.useMutation();
+  const deletePhoto = api.spots.deletePhoto.useMutation();
+
   const [title, setTitle] = useState(spot.title);
   const postcode = spot.postcode ?? "";
   const [tags, setTags] = useState<string[]>(spot.tags);
   const sortedTags = useSortedSpotTags(spot.tags);
-  const [notes, setNotes] = useState(spot.notes ?? "");
+  const [photos, setPhotos] = useState(spot.photos);
   const [titleError, setTitleError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const updateSpot = api.spots.update.useMutation({
-    onSuccess: async () => {
-      await Promise.all([
-        utils.spots.byId.invalidate({ id: spot.id }),
-        utils.spots.list.invalidate(),
-      ]);
-      onDone();
-    },
-  });
+  const isSaving = progress !== null;
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function removePhoto(id: string) {
+    setPhotos((current) => current.filter((photo) => photo.id !== id));
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!title.trim()) {
@@ -51,12 +56,30 @@ function EditSpotForm({ spot, onDone }: { spot: SpotDetail; onDone: () => void }
     }
 
     setTitleError(null);
-    updateSpot.mutate({ id: spot.id, title, postcode, tags, notes });
+    setError(null);
+    setProgress("Saving…");
+
+    try {
+      await updateSpot.mutateAsync({ id: spot.id, title, postcode, tags, notes: spot.notes ?? "" });
+
+      const keptIds = new Set(photos.map((photo) => photo.id));
+      const removed = spot.photos.filter((photo) => !keptIds.has(photo.id));
+      for (const photo of removed) await deletePhoto.mutateAsync({ photoId: photo.id });
+
+      await Promise.all([
+        utils.spots.byId.invalidate({ id: spot.id }),
+        utils.spots.list.invalidate(),
+      ]);
+      onDone();
+    } catch (submitError) {
+      setError(getPhotoUploadErrorMessage(submitError));
+      setProgress(null);
+    }
   }
 
   return (
     <form onSubmit={handleSubmit} style={{ height: "100%" }}>
-      <Stack gap="md" h="100%">
+      <Stack gap="md" h="100%" pb="sm">
         <TextInput
           size="md"
           label="Name"
@@ -79,27 +102,51 @@ function EditSpotForm({ spot, onDone }: { spot: SpotDetail; onDone: () => void }
           maxValues={MAX_SPOT_TAGS}
         />
 
-        <Textarea
-          size="md"
-          label="Spot notes"
-          value={notes}
-          onChange={(event) => setNotes(event.currentTarget.value)}
-          autosize
-          minRows={2}
-          maxLength={2000}
-        />
+        {photos.length > 0 && (
+          <Input.Wrapper label="Photos">
+            <Stack gap="sm" mt="xs">
+              {photos.map((photo, index) => (
+                <Group key={photo.id} wrap="nowrap" gap="sm">
+                  <Image
+                    src={photo.imageUrl}
+                    alt={`Photo ${index + 1}`}
+                    w={72}
+                    h={72}
+                    radius="sm"
+                    fit="cover"
+                  />
+                  <ActionIcon
+                    variant="transparent"
+                    color="red.5"
+                    size={44}
+                    aria-label={`Remove photo ${index + 1}`}
+                    onClick={() => removePhoto(photo.id)}
+                    disabled={isSaving}
+                  >
+                    <IconTrash size={24} stroke={1.75} />
+                  </ActionIcon>
+                </Group>
+              ))}
+            </Stack>
+          </Input.Wrapper>
+        )}
 
-        {updateSpot.error && (
+        {error && (
           <Text fz="sm" c="red.5" role="alert">
-            {updateSpot.error.message}
+            {error}
           </Text>
         )}
 
         <Group justify="flex-end" gap="sm" mt="auto">
-          <Button variant="default" onClick={onDone} disabled={updateSpot.isPending}>
+          {progress && (
+            <Text fz="sm" c="dimmed" mr="auto" aria-live="polite">
+              {progress}
+            </Text>
+          )}
+          <Button h={56} radius="sm" variant="default" onClick={onDone} disabled={isSaving}>
             Cancel
           </Button>
-          <Button type="submit" autoContrast loading={updateSpot.isPending}>
+          <Button h={56} radius="sm" type="submit" autoContrast loading={isSaving}>
             Save changes
           </Button>
         </Group>

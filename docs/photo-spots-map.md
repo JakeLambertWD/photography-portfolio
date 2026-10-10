@@ -35,7 +35,7 @@ tRPC spots router (server/routers/spots.ts)
    group zooms in until it splits. It's loaded with `next/dynamic` and
    `ssr: false` because MapLibre needs `window`.
 5. **app/maps/[spotId]/components/** holds the spot view: a scroll-snap carousel
-   with thumbnails, a note editor for the photo on screen, weather, spot notes,
+   with thumbnails, the note for the photo on screen, weather, spot notes,
    directions (Google Maps).
 
 ## Searching
@@ -67,13 +67,11 @@ connect it to the project, and put `BLOB_READ_WRITE_TOKEN` in `.env.local`
 
 On a spot's page (local only, like all edits):
 
-- **+ tile** at the end of the thumbnail strip uploads more photos
-  (`AddPhotosTile.tsx` → `spots.addPhotos`). They go after the existing ones.
-- **Use as map pin** / **Remove photo** under the photo note
-  (`PhotoActions.tsx` → `spots.setCoverPhoto` / `spots.deletePhoto`, which also
-  deletes the file from Vercel Blob).
-- **Pencil** in the header edits name, weather and spot notes
-  (`EditSpotButton.tsx` → `spots.update`).
+- **Pencil** in the header opens one edit screen (`EditSpotButton.tsx`) for the name,
+  weather and photos. Photos can only be removed here (which also deletes the file
+  from Vercel Blob). Nothing is applied until **Save changes**, which calls
+  `spots.update` and `deletePhoto` as needed. Photo notes are edited inline on the
+  spot page and photos are added with the + tile under the thumbnails.
 
 Uploads share `lib/upload-spot-photo.ts` with the Add spot form.
 
