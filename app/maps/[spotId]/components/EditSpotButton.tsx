@@ -1,10 +1,16 @@
 "use client";
 
-import { api } from "@/app/providers";
-import { SpotStatusToggle } from "@/app/maps/components/add-spot/SpotStatusToggle";
+import { SpotToggle } from "@/app/maps/components/add-spot/SpotToggle";
 import { WeatherPill } from "@/app/maps/components/add-spot/WeatherPill";
 import { useSortedSpotTags } from "@/app/maps/components/add-spot/useSortedSpotTags";
-import { MAX_SPOT_TAGS, type SpotStatus } from "@/lib/photo-spots";
+import { api } from "@/app/providers";
+import {
+  MAX_SPOT_TAGS,
+  SPOT_GEAR_OPTIONS,
+  SPOT_STATUS_OPTIONS,
+  type SpotGear,
+  type SpotStatus,
+} from "@/lib/photo-spots";
 import { getPhotoUploadErrorMessage } from "@/lib/upload-spot-photo";
 import type { SpotDetail } from "@/server/routers/spots";
 import {
@@ -36,6 +42,7 @@ function EditSpotForm({ spot, onDone }: EditSpotFormProps) {
   const [title, setTitle] = useState(spot.title);
   const postcode = spot.postcode ?? "";
   const [status, setStatus] = useState<SpotStatus>(spot.status);
+  const [gear, setGear] = useState<SpotGear>(spot.gear);
   const [tags, setTags] = useState<string[]>(spot.tags);
   const sortedTags = useSortedSpotTags(spot.tags);
   const [photos, setPhotos] = useState(spot.photos);
@@ -67,6 +74,7 @@ function EditSpotForm({ spot, onDone }: EditSpotFormProps) {
         title,
         postcode,
         status,
+        gear,
         tags,
         notes: spot.notes ?? "",
       });
@@ -100,7 +108,14 @@ function EditSpotForm({ spot, onDone }: EditSpotFormProps) {
           data-autofocus
         />
 
-        <SpotStatusToggle value={status} onChange={setStatus} />
+        <SpotToggle
+          label="Status"
+          options={SPOT_STATUS_OPTIONS}
+          value={status}
+          onChange={setStatus}
+        />
+
+        <SpotToggle label="Gear" options={SPOT_GEAR_OPTIONS} value={gear} onChange={setGear} />
 
         <MultiSelect
           size="md"

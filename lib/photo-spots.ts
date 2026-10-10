@@ -30,6 +30,20 @@ export function getSpotStatusLabel(status: SpotStatus) {
   return SPOT_STATUS_OPTIONS.find((option) => option.value === status)?.label ?? status;
 }
 
+// What the spot will be shot with.
+export const SPOT_GEAR = ["camera", "drone"] as const;
+export type SpotGear = (typeof SPOT_GEAR)[number];
+export const DEFAULT_SPOT_GEAR: SpotGear = "camera";
+
+export const SPOT_GEAR_OPTIONS = [
+  { value: "camera", label: "Camera", emoji: "📷" },
+  { value: "drone", label: "Drone", emoji: "🚁" },
+] as const satisfies readonly { value: SpotGear; label: string; emoji: string }[];
+
+export function getSpotGearOption(gear: SpotGear) {
+  return SPOT_GEAR_OPTIONS.find((option) => option.value === gear) ?? SPOT_GEAR_OPTIONS[0];
+}
+
 // Only accept photos that were uploaded to this project's public Vercel Blob store.
 export function isSpotPhotoUrl(value: string) {
   try {

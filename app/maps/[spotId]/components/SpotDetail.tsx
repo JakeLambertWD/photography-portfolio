@@ -1,7 +1,7 @@
 "use client";
 
 import { api } from "@/app/providers";
-import { CAN_EDIT_SPOTS, getSpotStatusLabel } from "@/lib/photo-spots";
+import { CAN_EDIT_SPOTS, getSpotGearOption, getSpotStatusLabel } from "@/lib/photo-spots";
 import {
   ActionIcon,
   Badge,
@@ -80,6 +80,17 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
     </Badge>
   );
 
+  const gear = getSpotGearOption(spot.gear);
+  // Status and gear lead the weather emoji row under the photos.
+  const spotLabels = (
+    <>
+      {statusBadge}
+      <span role="img" aria-label={gear.label} title={gear.label}>
+        {gear.emoji}
+      </span>
+    </>
+  );
+
   return (
     <Container size="30rem" px={0} pb="xxl" w="100%">
       <Group justify="space-between" wrap="nowrap" px="xs" my="sm">
@@ -111,7 +122,7 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
           <SpotPhotoCarousel
             photos={spot.photos}
             tags={spot.tags}
-            tagsLeading={statusBadge}
+            tagsLeading={spotLabels}
             activeIndex={photoIndex}
             onActiveIndexChange={setActiveIndex}
             extraThumbnail={
@@ -147,7 +158,11 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
       )}
 
       <Stack gap="lg" px="md" pt="sm">
-        {spot.photos.length === 0 && statusBadge}
+        {spot.photos.length === 0 && (
+          <Group gap="sm" wrap="nowrap" fz="xl">
+            {spotLabels}
+          </Group>
+        )}
 
         {activePhoto && (
           <Stack gap="xs">

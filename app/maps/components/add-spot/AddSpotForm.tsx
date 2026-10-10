@@ -2,9 +2,13 @@
 
 import { api } from "@/app/providers";
 import {
+  DEFAULT_SPOT_GEAR,
   DEFAULT_SPOT_STATUS,
   MAX_SPOT_PHOTOS,
   MAX_SPOT_TAGS,
+  SPOT_GEAR_OPTIONS,
+  SPOT_STATUS_OPTIONS,
+  type SpotGear,
   type SpotStatus,
 } from "@/lib/photo-spots";
 import { findNearestPostcode } from "@/lib/postcodes";
@@ -17,15 +21,15 @@ import {
   Group,
   Image,
   Input,
-  Stack,
   MultiSelect,
+  Stack,
   Text,
   Textarea,
   TextInput,
 } from "@mantine/core";
 import { IconMapPin, IconPhotoPlus, IconTrash } from "@tabler/icons-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { SpotStatusToggle } from "./SpotStatusToggle";
+import { SpotToggle } from "./SpotToggle";
 import { WeatherPill } from "./WeatherPill";
 import { useSortedSpotTags } from "./useSortedSpotTags";
 
@@ -56,6 +60,7 @@ export function AddSpotForm({ location, onCancel, onCreated }: AddSpotFormProps)
   const [titleError, setTitleError] = useState<string | null>(null);
   const [postcode, setPostcode] = useState("");
   const [status, setStatus] = useState<SpotStatus>(DEFAULT_SPOT_STATUS);
+  const [gear, setGear] = useState<SpotGear>(DEFAULT_SPOT_GEAR);
   const [tags, setTags] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [photos, setPhotos] = useState<DraftPhoto[]>([]);
@@ -154,6 +159,7 @@ export function AddSpotForm({ location, onCancel, onCreated }: AddSpotFormProps)
         latitude: location.latitude,
         longitude: location.longitude,
         status,
+        gear,
         tags,
         photos: uploadedPhotos,
       });
@@ -187,7 +193,14 @@ export function AddSpotForm({ location, onCancel, onCreated }: AddSpotFormProps)
           data-autofocus
         />
 
-        <SpotStatusToggle value={status} onChange={setStatus} />
+        <SpotToggle
+          label="Status"
+          options={SPOT_STATUS_OPTIONS}
+          value={status}
+          onChange={setStatus}
+        />
+
+        <SpotToggle label="Gear" options={SPOT_GEAR_OPTIONS} value={gear} onChange={setGear} />
 
         <MultiSelect
           size="md"

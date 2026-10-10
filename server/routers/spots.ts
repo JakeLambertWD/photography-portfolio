@@ -3,6 +3,7 @@ import {
   isSpotPhotoUrl,
   MAX_SPOT_PHOTOS,
   MAX_SPOT_TAGS,
+  SPOT_GEAR,
   SPOT_STATUSES,
 } from "@/lib/photo-spots";
 import { del } from "@vercel/blob";
@@ -18,6 +19,7 @@ const spotSummarySchema = z.object({
   latitude: z.number(),
   longitude: z.number(),
   status: z.enum(SPOT_STATUSES),
+  gear: z.enum(SPOT_GEAR),
   tags: z.array(z.string()),
   coverImageUrl: z.string().nullable(),
   photoCount: z.number(),
@@ -45,6 +47,7 @@ const spotDetailsInputSchema = z.object({
   notes: z.string().trim().max(2000),
   postcode: z.string().trim().max(10),
   status: z.enum(SPOT_STATUSES),
+  gear: z.enum(SPOT_GEAR),
   tags: z.array(z.string().trim().min(1).max(40)).max(MAX_SPOT_TAGS),
 });
 
@@ -106,6 +109,7 @@ export const spotsRouter = router({
         s.latitude,
         s.longitude,
         s.status,
+        s.gear,
         s.tags,
         cover.image_url as "coverImageUrl",
         (select count(*)::int from photo_spot_image i where i.spot_id = s.id) as "photoCount"
@@ -128,7 +132,7 @@ export const spotsRouter = router({
 
     const [spotRows, photoRows] = await Promise.all([
       db`
-        select id, title, notes, postcode, latitude, longitude, status, tags
+        select id, title, notes, postcode, latitude, longitude, status, gear, tags
         from photo_spot
         where id = ${input.id}
       `,
@@ -173,7 +177,7 @@ export const spotsRouter = router({
     const id = crypto.randomUUID();
 
     const insertSpot = db`
-      insert into photo_spot (id, title, notes, postcode, latitude, longitude, status, tags)
+      insert into photo_spot (id, title, notes, postcode, latitude, longitude, status, gear, tags)
       values (
         ${id},
         ${input.title},
@@ -182,6 +186,7 @@ export const spotsRouter = router({
         ${input.latitude},
         ${input.longitude},
         ${input.status},
+        ${input.gear},
         ${input.tags}
       )
     `;
@@ -239,6 +244,7 @@ export const spotsRouter = router({
           notes = ${input.notes || null},
           postcode = ${input.postcode.toUpperCase() || null},
           status = ${input.status},
+          gear = ${input.gear},
           tags = ${input.tags}
         where id = ${input.id}
         returning id
