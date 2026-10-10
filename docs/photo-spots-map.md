@@ -27,9 +27,9 @@ tRPC spots router (server/routers/spots.ts)
    - `spots.list`: every spot with its first photo (used as the pin) and photo count.
    - `spots.byId`: one spot with all photos in carousel order.
    - `spots.delete`: removes the spot, its photos (cascade) and their files in Vercel Blob.
-   - `spots.create` / `spots.updatePhotoCaption` / `spots.delete`: edits. These throw
-     `FORBIDDEN` in production until the site has sign-in, and the edit buttons
-     are hidden there too (`CAN_EDIT_SPOTS` in `lib/photo-spots.ts`).
+   - `spots.create` / `spots.updatePhotoCaption` / `spots.delete`: edits. Editing is
+     currently open to everyone, including production, because the site has no sign-in.
+     Set `CAN_EDIT_SPOTS` in `lib/photo-spots.ts` to `false` to lock it again.
 4. **app/maps/components/PhotoSpotsMap.tsx** renders the map with
    `react-map-gl/maplibre`. Pins are grouped with `supercluster`; tapping a
    group zooms in until it splits. It's loaded with `next/dynamic` and

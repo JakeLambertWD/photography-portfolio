@@ -1,7 +1,7 @@
 // Shared by the /maps UI, the spots tRPC router and the photo upload route.
 
-// Editing is open to anyone who can reach the API, so it stays local-only until the site has sign-in.
-export const CAN_EDIT_SPOTS = process.env.NODE_ENV !== "production";
+// Editing is open to anyone who can reach the API until the site has sign-in.
+export const CAN_EDIT_SPOTS = true;
 
 export const SPOT_PHOTO_UPLOAD_URL = "/api/spot-photos/upload";
 export const SPOT_PHOTO_PATH_PREFIX = "spots/";
