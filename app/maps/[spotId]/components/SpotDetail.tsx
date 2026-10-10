@@ -33,17 +33,11 @@ type SpotDetailProps = {
 
 export function SpotDetail({ spotId }: SpotDetailProps) {
   const theme = useMantineTheme();
-  const utils = api.useUtils();
   const [activeIndex, setActiveIndex] = useState(0);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const spotQuery = api.spots.byId.useQuery({ id: spotId }, { retry: false });
-
-  const setStatus = api.spots.setStatus.useMutation({
-    onSuccess: () =>
-      Promise.all([utils.spots.byId.invalidate({ id: spotId }), utils.spots.list.invalidate()]),
-  });
 
   if (spotQuery.isPending) {
     return (
@@ -85,7 +79,6 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
       onAdded={setActiveIndex}
     />
   ) : null;
-  const isShot = spot.status === "shot";
 
   return (
     <Container size="30rem" px={0} pt="md" pb="xxl" w="100%">
@@ -202,26 +195,7 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
           >
             Directions
           </Button>
-          {CAN_EDIT_SPOTS ? (
-            <Button
-              size="md"
-              autoContrast
-              loading={setStatus.isPending}
-              onClick={() => setStatus.mutate({ id: spot.id, status: isShot ? "idea" : "shot" })}
-            >
-              {isShot ? "Mark as idea" : "Mark as shot"}
-            </Button>
-          ) : (
-            <Badge size="xl" radius="sm" variant={isShot ? "light" : "outline"}>
-              {isShot ? "Shot" : "Idea"}
-            </Badge>
-          )}
         </Group>
-        {setStatus.error && (
-          <Text fz="sm" c="red.4">
-            {setStatus.error.message}
-          </Text>
-        )}
 
         {CAN_EDIT_SPOTS && (
           <Group justify="center">

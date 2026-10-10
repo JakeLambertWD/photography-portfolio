@@ -19,11 +19,3 @@ export const CLUSTER_MAX_ZOOM = 17;
 export const MAP_OVERLAY_TOP_OFFSET = "6.5rem";
 // Sits above the map attribution in the bottom-left corner.
 export const MAP_OVERLAY_BOTTOM_OFFSET = "2.5rem";
-
-export const SPOT_STATUS_FILTERS = [
-  { value: "all", label: "All" },
-  { value: "idea", label: "Ideas" },
-  { value: "shot", label: "Shot" },
-] as const;
-
-export type SpotStatusFilter = (typeof SPOT_STATUS_FILTERS)[number]["value"];

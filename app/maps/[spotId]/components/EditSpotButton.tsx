@@ -1,19 +1,14 @@
 "use client";
 
 import { api } from "@/app/providers";
-import {
-  SPOT_STATUS_OPTIONS,
-  SUGGESTED_SPOT_TAGS,
-} from "@/app/maps/components/add-spot/AddSpot.constants";
+import { SUGGESTED_SPOT_TAGS } from "@/app/maps/components/add-spot/AddSpot.constants";
 import { MAX_SPOT_TAGS } from "@/lib/photo-spots";
-import type { SpotDetail, SpotStatus } from "@/server/routers/spots";
+import type { SpotDetail } from "@/server/routers/spots";
 import {
   ActionIcon,
   Button,
   Group,
-  Input,
   Modal,
-  SegmentedControl,
   Stack,
   TagsInput,
   Text,
@@ -31,7 +26,6 @@ function EditSpotForm({ spot, onDone }: { spot: SpotDetail; onDone: () => void }
   const utils = api.useUtils();
   const [title, setTitle] = useState(spot.title);
   const [postcode, setPostcode] = useState(spot.postcode ?? "");
-  const [status, setStatus] = useState<SpotStatus>(spot.status);
   const [tags, setTags] = useState<string[]>(spot.tags);
   const [notes, setNotes] = useState(spot.notes ?? "");
   const [titleError, setTitleError] = useState<string | null>(null);
@@ -55,7 +49,7 @@ function EditSpotForm({ spot, onDone }: { spot: SpotDetail; onDone: () => void }
     }
 
     setTitleError(null);
-    updateSpot.mutate({ id: spot.id, title, postcode, status, tags, notes });
+    updateSpot.mutate({ id: spot.id, title, postcode, tags, notes });
   }
 
   return (
@@ -71,23 +65,13 @@ function EditSpotForm({ spot, onDone }: { spot: SpotDetail; onDone: () => void }
           data-autofocus
         />
 
-        <Group grow align="flex-start" gap="sm">
-          <TextInput
-            label="Postcode"
-            value={postcode}
-            onChange={(event) => setPostcode(event.currentTarget.value)}
-            maxLength={10}
-            autoComplete="postal-code"
-          />
-          <Input.Wrapper label="Status">
-            <SegmentedControl
-              fullWidth
-              data={[...SPOT_STATUS_OPTIONS]}
-              value={status}
-              onChange={(value) => setStatus(value as SpotStatus)}
-            />
-          </Input.Wrapper>
-        </Group>
+        <TextInput
+          label="Postcode"
+          value={postcode}
+          onChange={(event) => setPostcode(event.currentTarget.value)}
+          maxLength={10}
+          autoComplete="postal-code"
+        />
 
         <TagsInput
           label="Tags"

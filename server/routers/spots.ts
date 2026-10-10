@@ -5,15 +5,12 @@ import { z } from "zod";
 import { sql } from "../db";
 import { publicProcedure, router } from "../trpc";
 
-const SPOT_STATUSES = ["idea", "shot"] as const;
-
 const spotSummarySchema = z.object({
   id: z.string(),
   title: z.string(),
   postcode: z.string().nullable(),
   latitude: z.number(),
   longitude: z.number(),
-  status: z.enum(SPOT_STATUSES),
   tags: z.array(z.string()),
   coverImageUrl: z.string().nullable(),
   photoCount: z.number(),
@@ -40,7 +37,6 @@ const spotDetailsInputSchema = z.object({
   title: z.string().trim().min(1).max(120),
   notes: z.string().trim().max(2000),
   postcode: z.string().trim().max(10),
-  status: z.enum(SPOT_STATUSES),
   tags: z.array(z.string().trim().min(1).max(40)).max(MAX_SPOT_TAGS),
 });
 
@@ -51,7 +47,6 @@ const createSpotInputSchema = spotDetailsInputSchema.extend({
 });
 
 export type CreateSpotInput = z.infer<typeof createSpotInputSchema>;
-export type SpotStatus = (typeof SPOT_STATUSES)[number];
 export type SpotDetailsInput = z.infer<typeof spotDetailsInputSchema>;
 export type SpotSummary = z.infer<typeof spotSummarySchema>;
 export type SpotDetail = z.infer<typeof spotDetailSchema>;
@@ -102,7 +97,6 @@ export const spotsRouter = router({
         s.postcode,
         s.latitude,
         s.longitude,
-        s.status,
         s.tags,
         cover.image_url as "coverImageUrl",
         (select count(*)::int from photo_spot_image i where i.spot_id = s.id) as "photoCount"
@@ -125,7 +119,7 @@ export const spotsRouter = router({
 
     const [spotRows, photoRows] = await Promise.all([
       db`
-        select id, title, notes, postcode, latitude, longitude, status, tags
+        select id, title, notes, postcode, latitude, longitude, tags
         from photo_spot
         where id = ${input.id}
       `,
@@ -162,24 +156,6 @@ export const spotsRouter = router({
       }
     }),
 
-  setStatus: publicProcedure
-    .input(z.object({ id: z.uuid(), status: z.enum(SPOT_STATUSES) }))
-    .mutation(async ({ input }) => {
-      assertCanEdit();
-      const db = getSql();
-
-      const rows = await db`
-        update photo_spot
-        set status = ${input.status}
-        where id = ${input.id}
-        returning id
-      `;
-
-      if (!rows[0]) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Spot not found." });
-      }
-    }),
-
   create: publicProcedure.input(createSpotInputSchema).mutation(async ({ input }) => {
     assertCanEdit();
     const db = getSql();
@@ -188,7 +164,7 @@ export const spotsRouter = router({
     const id = crypto.randomUUID();
 
     const insertSpot = db`
-      insert into photo_spot (id, title, notes, postcode, latitude, longitude, status, tags)
+      insert into photo_spot (id, title, notes, postcode, latitude, longitude, tags)
       values (
         ${id},
         ${input.title},
@@ -196,7 +172,6 @@ export const spotsRouter = router({
         ${input.postcode.toUpperCase() || null},
         ${input.latitude},
         ${input.longitude},
-        ${input.status},
         ${input.tags}
       )
     `;
@@ -253,7 +228,6 @@ export const spotsRouter = router({
           title = ${input.title},
           notes = ${input.notes || null},
           postcode = ${input.postcode.toUpperCase() || null},
-          status = ${input.status},
           tags = ${input.tags}
         where id = ${input.id}
         returning id

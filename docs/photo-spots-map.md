@@ -12,12 +12,12 @@ Neon DB (photo_spot, photo_spot_image)
 tRPC spots router (server/routers/spots.ts)
             ↓
 /maps                → PhotoSpotsMap (MapLibre + Supercluster)
-/maps/[spotId]       → SpotDetail (carousel, per-photo notes, status)
+/maps/[spotId]       → SpotDetail (carousel, per-photo notes)
 ```
 
 ## Pieces
 
-1. **db/migrations/002_photo_spots.sql** creates `photo_spot` (location, status,
+1. **db/migrations/002_photo_spots.sql** creates `photo_spot` (location,
    tags) and `photo_spot_image` (image URL, caption, position). Run it manually
    in the Neon SQL editor, like `001`.
 2. **db/seeds/002_photo_spots_sample.sql** adds eight `[Sample]` spots around
@@ -27,7 +27,7 @@ tRPC spots router (server/routers/spots.ts)
    - `spots.list`: every spot with its first photo (used as the pin) and photo count.
    - `spots.byId`: one spot with all photos in carousel order.
    - `spots.delete`: removes the spot, its photos (cascade) and their files in Vercel Blob.
-   - `spots.create` / `spots.updatePhotoCaption` / `spots.setStatus` / `spots.delete`: edits. These throw
+   - `spots.create` / `spots.updatePhotoCaption` / `spots.delete`: edits. These throw
      `FORBIDDEN` in production until the site has sign-in, and the edit buttons
      are hidden there too (`CAN_EDIT_SPOTS` in `lib/photo-spots.ts`).
 4. **app/maps/components/PhotoSpotsMap.tsx** renders the map with
@@ -36,7 +36,7 @@ tRPC spots router (server/routers/spots.ts)
    `ssr: false` because MapLibre needs `window`.
 5. **app/maps/[spotId]/components/** holds the spot view: a scroll-snap carousel
    with thumbnails, a note editor for the photo on screen, tags, spot notes,
-   directions (Google Maps) and the idea/shot toggle.
+   directions (Google Maps).
 
 ## Searching
 

@@ -37,8 +37,6 @@ import {
   MAP_OVERLAY_BOTTOM_OFFSET,
   MAP_OVERLAY_TOP_OFFSET,
   MAP_STYLE_URL,
-  SPOT_STATUS_FILTERS,
-  type SpotStatusFilter,
 } from "./PhotoSpotsMap.constants";
 import { PlaceSearch } from "./PlaceSearch";
 import { PLACE_ZOOM } from "./PlaceSearch.constants";
@@ -77,7 +75,6 @@ export function PhotoSpotsMap() {
   const spotsQuery = api.spots.list.useQuery();
 
   const [viewport, setViewport] = useState<Viewport | null>(null);
-  const [statusFilter, setStatusFilter] = useState<SpotStatusFilter>("all");
   const [searchedPlace, setSearchedPlace] = useState<PlaceResult | null>(null);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isLocating, setIsLocating] = useState(false);
@@ -90,20 +87,6 @@ export function PhotoSpotsMap() {
 
   const spots = useMemo(() => spotsQuery.data ?? [], [spotsQuery.data]);
 
-  const visibleSpots = useMemo(
-    () => (statusFilter === "all" ? spots : spots.filter((spot) => spot.status === statusFilter)),
-    [spots, statusFilter],
-  );
-
-  const statusCounts = useMemo(
-    () => ({
-      all: spots.length,
-      idea: spots.filter((spot) => spot.status === "idea").length,
-      shot: spots.filter((spot) => spot.status === "shot").length,
-    }),
-    [spots],
-  );
-
   // Rebuild the cluster index only when the set of pins changes, not on every pan.
   const clusterIndex = useMemo(() => {
     const index = new Supercluster<{ spot: SpotSummary }>({
@@ -112,7 +95,7 @@ export function PhotoSpotsMap() {
     });
 
     index.load(
-      visibleSpots.map((spot) => ({
+      spots.map((spot) => ({
         type: "Feature",
         properties: { spot },
         geometry: { type: "Point", coordinates: [spot.longitude, spot.latitude] },
@@ -120,7 +103,7 @@ export function PhotoSpotsMap() {
     );
 
     return index;
-  }, [visibleSpots]);
+  }, [spots]);
 
   const clusters = useMemo(
     () => (viewport ? clusterIndex.getClusters(viewport.bounds, Math.floor(viewport.zoom)) : []),
@@ -128,10 +111,9 @@ export function PhotoSpotsMap() {
   );
 
   const spotsInView = useMemo(
-    () => (viewport ? visibleSpots.filter((spot) => isInBounds(spot, viewport.bounds)) : []),
-    [visibleSpots, viewport],
+    () => (viewport ? spots.filter((spot) => isInBounds(spot, viewport.bounds)) : []),
+    [spots, viewport],
   );
-  const shotInView = spotsInView.filter((spot) => spot.status === "shot").length;
 
   function updateViewport({ target: map }: { target: MapLibreMap }) {
     const bounds = map.getBounds();
@@ -309,46 +291,6 @@ export function PhotoSpotsMap() {
               onSelectSpot={showSpot}
               onClear={() => setSearchedPlace(null)}
             />
-            <Group gap="xs">
-              {SPOT_STATUS_FILTERS.map((filter) => {
-                const isActive = statusFilter === filter.value;
-
-                return (
-                  <Button
-                    key={filter.value}
-                    size="compact-sm"
-                    radius="xl"
-                    variant={isActive ? "filled" : "default"}
-                    autoContrast
-                    aria-pressed={isActive}
-                    onClick={() => setStatusFilter(filter.value)}
-                    rightSection={
-                      <Text
-                        component="span"
-                        ff="monospace"
-                        fz="xs"
-                        c={isActive ? undefined : "brown.1"}
-                      >
-                        {statusCounts[filter.value]}
-                      </Text>
-                    }
-                    styles={
-                      isActive
-                        ? undefined
-                        : {
-                            root: {
-                              backgroundColor: theme.colors.brown[7],
-                              borderColor: theme.colors.brown[4],
-                              color: theme.colors.brown[0],
-                            },
-                          }
-                    }
-                  >
-                    {filter.label}
-                  </Button>
-                );
-              })}
-            </Group>
           </Stack>
         )}
       </Box>
@@ -410,8 +352,7 @@ export function PhotoSpotsMap() {
                 In view
               </Text>
               <Text fz="sm" fw={600} c="brown.0">
-                {spotsInView.length} {spotsInView.length === 1 ? "spot" : "spots"} · {shotInView}{" "}
-                shot
+                {spotsInView.length} {spotsInView.length === 1 ? "spot" : "spots"}
               </Text>
             </Paper>
             <Tooltip label={locationError ?? "Centre on my location"}>

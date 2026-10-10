@@ -4,7 +4,6 @@ import { api } from "@/app/providers";
 import { MAX_SPOT_PHOTOS, MAX_SPOT_TAGS } from "@/lib/photo-spots";
 import { findNearestPostcode } from "@/lib/postcodes";
 import { getPhotoUploadErrorMessage, uploadSpotPhoto } from "@/lib/upload-spot-photo";
-import type { SpotStatus } from "@/server/routers/spots";
 import {
   ActionIcon,
   Badge,
@@ -13,7 +12,6 @@ import {
   Group,
   Image,
   Input,
-  SegmentedControl,
   Stack,
   TagsInput,
   Text,
@@ -22,7 +20,7 @@ import {
 } from "@mantine/core";
 import { IconMapPin, IconPhotoPlus, IconTrash } from "@tabler/icons-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { SPOT_STATUS_OPTIONS, SUGGESTED_SPOT_TAGS } from "./AddSpot.constants";
+import { SUGGESTED_SPOT_TAGS } from "./AddSpot.constants";
 
 export type DraftLocation = {
   latitude: number;
@@ -50,7 +48,6 @@ export function AddSpotForm({ location, onMovePin, onCancel, onCreated }: AddSpo
   const [title, setTitle] = useState("");
   const [titleError, setTitleError] = useState<string | null>(null);
   const [postcode, setPostcode] = useState("");
-  const [status, setStatus] = useState<SpotStatus>("idea");
   const [tags, setTags] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [photos, setPhotos] = useState<DraftPhoto[]>([]);
@@ -148,7 +145,6 @@ export function AddSpotForm({ location, onMovePin, onCancel, onCreated }: AddSpo
         postcode,
         latitude: location.latitude,
         longitude: location.longitude,
-        status,
         tags,
         photos: uploadedPhotos,
       });
@@ -187,23 +183,13 @@ export function AddSpotForm({ location, onMovePin, onCancel, onCreated }: AddSpo
           data-autofocus
         />
 
-        <Group grow align="flex-start" gap="sm">
-          <TextInput
-            label="Postcode"
-            value={postcode}
-            onChange={(event) => setPostcode(event.currentTarget.value)}
-            maxLength={10}
-            autoComplete="postal-code"
-          />
-          <Input.Wrapper label="Status">
-            <SegmentedControl
-              fullWidth
-              data={[...SPOT_STATUS_OPTIONS]}
-              value={status}
-              onChange={(value) => setStatus(value as SpotStatus)}
-            />
-          </Input.Wrapper>
-        </Group>
+        <TextInput
+          label="Postcode"
+          value={postcode}
+          onChange={(event) => setPostcode(event.currentTarget.value)}
+          maxLength={10}
+          autoComplete="postal-code"
+        />
 
         <TagsInput
           label="Tags"

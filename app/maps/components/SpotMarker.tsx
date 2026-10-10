@@ -2,7 +2,7 @@
 
 import type { SpotSummary } from "@/server/routers/spots";
 import { Center, Image, UnstyledButton, useMantineTheme } from "@mantine/core";
-import { IconCheck, IconPhoto } from "@tabler/icons-react";
+import { IconPhoto } from "@tabler/icons-react";
 
 type SpotMarkerProps = {
   spot: SpotSummary;
@@ -11,12 +11,11 @@ type SpotMarkerProps = {
 
 export function SpotMarker({ spot, onSelect }: SpotMarkerProps) {
   const theme = useMantineTheme();
-  const isShot = spot.status === "shot";
-  const ringColor = isShot ? theme.colors.brown[0] : theme.colors.yellow[5];
+  const ringColor = theme.colors.yellow[5];
 
   return (
     <UnstyledButton
-      aria-label={`${spot.title}, ${spot.photoCount} ${spot.photoCount === 1 ? "photo" : "photos"}${isShot ? ", shot" : ""}`}
+      aria-label={`${spot.title}, ${spot.photoCount} ${spot.photoCount === 1 ? "photo" : "photos"}`}
       onClick={() => onSelect(spot)}
       pos="relative"
       w={46}
@@ -33,20 +32,6 @@ export function SpotMarker({ spot, onSelect }: SpotMarkerProps) {
       ) : (
         <Center h="100%">
           <IconPhoto size={18} color={theme.colors.brown[1]} />
-        </Center>
-      )}
-      {isShot && (
-        <Center
-          pos="absolute"
-          right={-4}
-          bottom={-4}
-          w={18}
-          h={18}
-          bdrs="50%"
-          bg="brown.0"
-          aria-hidden
-        >
-          <IconCheck size={12} stroke={3} color={theme.colors.brown[9]} />
         </Center>
       )}
     </UnstyledButton>
