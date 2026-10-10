@@ -22,3 +22,6 @@ export const CLUSTER_MAX_ZOOM = 17;
 export const MAP_OVERLAY_TOP_OFFSET = "1rem";
 // Distance from the bottom edge; the map attribution is centred on the same row.
 export const MAP_OVERLAY_BOTTOM_OFFSET = "1.5rem";
+
+// Remembers the last opened spot so the map can centre on it when the user comes back.
+export const LAST_SPOT_STORAGE_KEY = "photo-spots:last-opened";

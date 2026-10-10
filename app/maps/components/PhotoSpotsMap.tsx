@@ -32,6 +32,7 @@ import {
   CLUSTER_MAX_ZOOM,
   CLUSTER_RADIUS,
   INITIAL_VIEW_STATE,
+  LAST_SPOT_STORAGE_KEY,
   MAP_MAX_ZOOM,
   MAP_OVERLAY_BOTTOM_OFFSET,
   MAP_OVERLAY_TOP_OFFSET,
@@ -125,7 +126,16 @@ export function PhotoSpotsMap() {
 
     if (!hasAutoLocated.current) {
       hasAutoLocated.current = true;
-      locateUser(true);
+
+      const lastSpot = sessionStorage.getItem(LAST_SPOT_STORAGE_KEY);
+      sessionStorage.removeItem(LAST_SPOT_STORAGE_KEY);
+
+      if (lastSpot) {
+        const [longitude, latitude, zoom] = JSON.parse(lastSpot) as [number, number, number?];
+        event.target.jumpTo({ center: [longitude, latitude], ...(zoom && { zoom }) });
+      } else {
+        locateUser(true);
+      }
     }
   }
 
@@ -265,7 +275,12 @@ export function PhotoSpotsMap() {
               <SpotMarker
                 spot={spot}
                 onSelect={() => {
-                  if (!isPlacing) router.push(`/maps/${spot.id}`);
+                  if (isPlacing) return;
+                  sessionStorage.setItem(
+                    LAST_SPOT_STORAGE_KEY,
+                    JSON.stringify([spot.longitude, spot.latitude, mapRef.current?.getZoom()]),
+                  );
+                  router.push(`/maps/${spot.id}`);
                 }}
               />
             </Marker>
