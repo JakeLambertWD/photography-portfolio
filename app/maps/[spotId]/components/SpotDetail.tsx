@@ -1,9 +1,10 @@
 "use client";
 
 import { api } from "@/app/providers";
-import { CAN_EDIT_SPOTS } from "@/lib/photo-spots";
+import { CAN_EDIT_SPOTS, getSpotStatusLabel } from "@/lib/photo-spots";
 import {
   ActionIcon,
+  Badge,
   Box,
   Button,
   Center,
@@ -66,6 +67,19 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
   const photoIndex = Math.max(0, Math.min(activeIndex, spot.photos.length - 1));
   const activePhoto = spot.photos[photoIndex];
 
+  const statusBadge = (
+    <Badge
+      size="lg"
+      radius="sm"
+      w="fit-content"
+      variant={spot.status === "ready_to_shoot" ? "filled" : "outline"}
+      autoContrast
+      style={{ flexShrink: 0 }}
+    >
+      {getSpotStatusLabel(spot.status)}
+    </Badge>
+  );
+
   return (
     <Container size="30rem" px={0} pb="xxl" w="100%">
       <Group justify="space-between" wrap="nowrap" px="xs" my="sm">
@@ -97,6 +111,7 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
           <SpotPhotoCarousel
             photos={spot.photos}
             tags={spot.tags}
+            tagsLeading={statusBadge}
             activeIndex={photoIndex}
             onActiveIndexChange={setActiveIndex}
             extraThumbnail={
@@ -132,6 +147,8 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
       )}
 
       <Stack gap="lg" px="md" pt="sm">
+        {spot.photos.length === 0 && statusBadge}
+
         {activePhoto && (
           <Stack gap="xs">
             <PhotoCaption

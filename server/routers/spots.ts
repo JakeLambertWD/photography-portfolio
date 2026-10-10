@@ -1,4 +1,10 @@
-import { CAN_EDIT_SPOTS, isSpotPhotoUrl, MAX_SPOT_PHOTOS, MAX_SPOT_TAGS } from "@/lib/photo-spots";
+import {
+  CAN_EDIT_SPOTS,
+  isSpotPhotoUrl,
+  MAX_SPOT_PHOTOS,
+  MAX_SPOT_TAGS,
+  SPOT_STATUSES,
+} from "@/lib/photo-spots";
 import { del } from "@vercel/blob";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -11,6 +17,7 @@ const spotSummarySchema = z.object({
   postcode: z.string().nullable(),
   latitude: z.number(),
   longitude: z.number(),
+  status: z.enum(SPOT_STATUSES),
   tags: z.array(z.string()),
   coverImageUrl: z.string().nullable(),
   photoCount: z.number(),
@@ -37,6 +44,7 @@ const spotDetailsInputSchema = z.object({
   title: z.string().trim().min(1).max(120),
   notes: z.string().trim().max(2000),
   postcode: z.string().trim().max(10),
+  status: z.enum(SPOT_STATUSES),
   tags: z.array(z.string().trim().min(1).max(40)).max(MAX_SPOT_TAGS),
 });
 
@@ -97,6 +105,7 @@ export const spotsRouter = router({
         s.postcode,
         s.latitude,
         s.longitude,
+        s.status,
         s.tags,
         cover.image_url as "coverImageUrl",
         (select count(*)::int from photo_spot_image i where i.spot_id = s.id) as "photoCount"
@@ -119,7 +128,7 @@ export const spotsRouter = router({
 
     const [spotRows, photoRows] = await Promise.all([
       db`
-        select id, title, notes, postcode, latitude, longitude, tags
+        select id, title, notes, postcode, latitude, longitude, status, tags
         from photo_spot
         where id = ${input.id}
       `,
@@ -164,7 +173,7 @@ export const spotsRouter = router({
     const id = crypto.randomUUID();
 
     const insertSpot = db`
-      insert into photo_spot (id, title, notes, postcode, latitude, longitude, tags)
+      insert into photo_spot (id, title, notes, postcode, latitude, longitude, status, tags)
       values (
         ${id},
         ${input.title},
@@ -172,6 +181,7 @@ export const spotsRouter = router({
         ${input.postcode.toUpperCase() || null},
         ${input.latitude},
         ${input.longitude},
+        ${input.status},
         ${input.tags}
       )
     `;
@@ -228,6 +238,7 @@ export const spotsRouter = router({
           title = ${input.title},
           notes = ${input.notes || null},
           postcode = ${input.postcode.toUpperCase() || null},
+          status = ${input.status},
           tags = ${input.tags}
         where id = ${input.id}
         returning id

@@ -17,6 +17,19 @@ export const SPOT_PHOTO_ALLOWED_TYPES = [
 export const MAX_SPOT_PHOTOS = 10;
 export const MAX_SPOT_TAGS = 8;
 
+export const SPOT_STATUSES = ["planning", "ready_to_shoot"] as const;
+export type SpotStatus = (typeof SPOT_STATUSES)[number];
+export const DEFAULT_SPOT_STATUS: SpotStatus = "planning";
+
+export const SPOT_STATUS_OPTIONS = [
+  { value: "planning", label: "Planning" },
+  { value: "ready_to_shoot", label: "Ready to shoot" },
+] as const satisfies readonly { value: SpotStatus; label: string }[];
+
+export function getSpotStatusLabel(status: SpotStatus) {
+  return SPOT_STATUS_OPTIONS.find((option) => option.value === status)?.label ?? status;
+}
+
 // Only accept photos that were uploaded to this project's public Vercel Blob store.
 export function isSpotPhotoUrl(value: string) {
   try {

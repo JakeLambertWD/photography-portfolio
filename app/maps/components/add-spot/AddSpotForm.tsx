@@ -1,7 +1,12 @@
 "use client";
 
 import { api } from "@/app/providers";
-import { MAX_SPOT_PHOTOS, MAX_SPOT_TAGS } from "@/lib/photo-spots";
+import {
+  DEFAULT_SPOT_STATUS,
+  MAX_SPOT_PHOTOS,
+  MAX_SPOT_TAGS,
+  type SpotStatus,
+} from "@/lib/photo-spots";
 import { findNearestPostcode } from "@/lib/postcodes";
 import { getPhotoUploadErrorMessage, uploadSpotPhoto } from "@/lib/upload-spot-photo";
 import {
@@ -20,6 +25,7 @@ import {
 } from "@mantine/core";
 import { IconMapPin, IconPhotoPlus, IconTrash } from "@tabler/icons-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { SpotStatusToggle } from "./SpotStatusToggle";
 import { WeatherPill } from "./WeatherPill";
 import { useSortedSpotTags } from "./useSortedSpotTags";
 
@@ -49,6 +55,7 @@ export function AddSpotForm({ location, onCancel, onCreated }: AddSpotFormProps)
   const [title, setTitle] = useState("");
   const [titleError, setTitleError] = useState<string | null>(null);
   const [postcode, setPostcode] = useState("");
+  const [status, setStatus] = useState<SpotStatus>(DEFAULT_SPOT_STATUS);
   const [tags, setTags] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [photos, setPhotos] = useState<DraftPhoto[]>([]);
@@ -146,6 +153,7 @@ export function AddSpotForm({ location, onCancel, onCreated }: AddSpotFormProps)
         postcode,
         latitude: location.latitude,
         longitude: location.longitude,
+        status,
         tags,
         photos: uploadedPhotos,
       });
@@ -178,6 +186,8 @@ export function AddSpotForm({ location, onCancel, onCreated }: AddSpotFormProps)
           withAsterisk
           data-autofocus
         />
+
+        <SpotStatusToggle value={status} onChange={setStatus} />
 
         <MultiSelect
           size="md"

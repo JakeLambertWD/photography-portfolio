@@ -1,9 +1,10 @@
 "use client";
 
 import { api } from "@/app/providers";
+import { SpotStatusToggle } from "@/app/maps/components/add-spot/SpotStatusToggle";
 import { WeatherPill } from "@/app/maps/components/add-spot/WeatherPill";
 import { useSortedSpotTags } from "@/app/maps/components/add-spot/useSortedSpotTags";
-import { MAX_SPOT_TAGS } from "@/lib/photo-spots";
+import { MAX_SPOT_TAGS, type SpotStatus } from "@/lib/photo-spots";
 import { getPhotoUploadErrorMessage } from "@/lib/upload-spot-photo";
 import type { SpotDetail } from "@/server/routers/spots";
 import {
@@ -34,6 +35,7 @@ function EditSpotForm({ spot, onDone }: EditSpotFormProps) {
 
   const [title, setTitle] = useState(spot.title);
   const postcode = spot.postcode ?? "";
+  const [status, setStatus] = useState<SpotStatus>(spot.status);
   const [tags, setTags] = useState<string[]>(spot.tags);
   const sortedTags = useSortedSpotTags(spot.tags);
   const [photos, setPhotos] = useState(spot.photos);
@@ -60,7 +62,14 @@ function EditSpotForm({ spot, onDone }: EditSpotFormProps) {
     setProgress("Saving…");
 
     try {
-      await updateSpot.mutateAsync({ id: spot.id, title, postcode, tags, notes: spot.notes ?? "" });
+      await updateSpot.mutateAsync({
+        id: spot.id,
+        title,
+        postcode,
+        status,
+        tags,
+        notes: spot.notes ?? "",
+      });
 
       const keptIds = new Set(photos.map((photo) => photo.id));
       const removed = spot.photos.filter((photo) => !keptIds.has(photo.id));
@@ -90,6 +99,8 @@ function EditSpotForm({ spot, onDone }: EditSpotFormProps) {
           withAsterisk
           data-autofocus
         />
+
+        <SpotStatusToggle value={status} onChange={setStatus} />
 
         <MultiSelect
           size="md"
