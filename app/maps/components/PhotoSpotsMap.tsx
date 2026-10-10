@@ -27,7 +27,7 @@ import type { Map as MapLibreMap } from "maplibre-gl";
 import MapGL, { AttributionControl, Marker, type MapRef } from "react-map-gl/maplibre";
 import Supercluster from "supercluster";
 import { AddSpotForm, type DraftLocation } from "./add-spot/AddSpotForm";
-import { PlacementPin } from "./add-spot/PlacementPin";
+import { PlacementCrosshair } from "./add-spot/PlacementCrosshair";
 import { ClusterMarker } from "./ClusterMarker";
 import {
   CLUSTER_MAX_ZOOM,
@@ -52,7 +52,7 @@ type Viewport = {
   zoom: number;
 };
 
-// closed: browsing the map. placing: moving the map under a fixed pin. details: filling in the form.
+// closed: browsing the map. placing: moving the map under a fixed crosshair. details: filling in the form.
 type AddSpotStep = "closed" | "placing" | "details";
 
 type UserLocation = {
@@ -293,7 +293,7 @@ export function PhotoSpotsMap() {
         )}
       </MapGL>
 
-      {isPlacing && <PlacementPin />}
+      {isPlacing && <PlacementCrosshair />}
 
       <Box pos="absolute" top={MAP_OVERLAY_TOP_OFFSET} left={0} right={0} px="md">
         {isPlacing ? (
@@ -383,7 +383,7 @@ export function PhotoSpotsMap() {
           >
             <Stack gap="sm">
               <Text fz="sm" c="brown.0">
-                Move the map so the pin is where you&apos;ll stand.
+                Move the map so the crosshair is where you&apos;ll stand.
               </Text>
               <Group gap="sm" grow>
                 <Button variant="default" onClick={closeAddSpot}>

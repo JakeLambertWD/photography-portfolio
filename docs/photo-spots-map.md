@@ -49,7 +49,7 @@ debounced and cached to stay within Photon's fair-use limits.
 
 ## Adding a spot
 
-1. **Add spot** (bottom right of the map) switches to placing mode: a fixed pin
+1. **Add spot** (bottom right of the map) switches to placing mode: a fixed crosshair
    sits in the middle of the map and you move the map under it. The search box
    at the top jumps to a place or postcode.
 2. **Use this spot** opens the form (`add-spot/AddSpotForm.tsx`) with the pin's
