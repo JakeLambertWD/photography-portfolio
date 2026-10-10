@@ -120,6 +120,12 @@ export function PhotoSpotsMap() {
   function handleLoad(event: { target: MapLibreMap }) {
     updateViewport(event);
 
+    // MapLibre opens the compact credits on wide screens; start them collapsed to the "i" button.
+    event.target
+      .getContainer()
+      .querySelector(".maplibregl-ctrl-attrib")
+      ?.classList.remove("maplibregl-compact-show");
+
     if (!hasAutoLocated.current) {
       hasAutoLocated.current = true;
       locateUser(true);
@@ -229,7 +235,12 @@ export function PhotoSpotsMap() {
         onMove={updateViewport}
         style={{ width: "100%", height: "100%" }}
       >
-        <AttributionControl position="bottom-left" compact />
+        <AttributionControl
+          position="bottom-left"
+          compact
+          // Centres the 24px credits button on the 56px buttons row, 1rem in from the edge.
+          style={{ margin: `0 0 calc(${MAP_OVERLAY_BOTTOM_OFFSET} + 16px) 1rem` }}
+        />
 
         {clusters.map((feature) => {
           const [longitude, latitude] = feature.geometry.coordinates;
@@ -355,19 +366,15 @@ export function PhotoSpotsMap() {
             </Stack>
           </Paper>
         ) : (
-          <Group gap="sm" maw="30rem" mx="auto" align="stretch" wrap="nowrap">
+          <Group gap="sm" align="stretch" justify="flex-end" wrap="nowrap">
             <Paper
-              flex={1}
               px="md"
-              py="sm"
+              display="flex"
+              style={{ alignItems: "center", borderColor: theme.colors.brown[4] }}
               radius="sm"
               bg="brown.7"
               withBorder
-              style={{ borderColor: theme.colors.brown[4] }}
             >
-              <Text ff="monospace" fz="xxs" c="brown.1" tt="uppercase" lts="0.08em">
-                In view
-              </Text>
               <Text fz="sm" fw={600} c="brown.0">
                 {spotsInView.length} {spotsInView.length === 1 ? "spot" : "spots"}
               </Text>
