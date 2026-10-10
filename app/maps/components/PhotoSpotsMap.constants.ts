@@ -5,10 +5,13 @@ export const MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/dark";
 export const INITIAL_VIEW_STATE = {
   longitude: -0.0877,
   latitude: 51.5076,
-  zoom: 14,
+  zoom: 12,
 } as const;
 
 export const MAP_MAX_ZOOM = 19;
+
+// Zoom used when centring on the user's location.
+export const USER_LOCATION_ZOOM = 14;
 
 // Pixel radius within which pins are grouped into one cluster.
 export const CLUSTER_RADIUS = 60;

@@ -37,6 +37,7 @@ import {
   MAP_OVERLAY_BOTTOM_OFFSET,
   MAP_OVERLAY_TOP_OFFSET,
   MAP_STYLE_URL,
+  USER_LOCATION_ZOOM,
 } from "./PhotoSpotsMap.constants";
 import { PlaceSearch } from "./PlaceSearch";
 import { PLACE_ZOOM } from "./PlaceSearch.constants";
@@ -155,7 +156,7 @@ export function PhotoSpotsMap() {
         setIsLocating(false);
         const view = {
           center: [location.longitude, location.latitude] as [number, number],
-          zoom: 15,
+          zoom: USER_LOCATION_ZOOM,
         };
         if (isAutomatic) mapRef.current?.jumpTo(view);
         else mapRef.current?.flyTo(view);
