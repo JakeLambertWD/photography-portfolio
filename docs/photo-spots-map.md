@@ -64,6 +64,20 @@ Setup: create a **public** Blob store in the Vercel dashboard (Storage → Blob)
 connect it to the project, and put `BLOB_READ_WRITE_TOKEN` in `.env.local`
 (`vercel env pull` does this). Restart `pnpm dev` after adding it.
 
+## Editing a spot
+
+On a spot's page (local only, like all edits):
+
+- **+ tile** at the end of the thumbnail strip uploads more photos
+  (`AddPhotosTile.tsx` → `spots.addPhotos`). They go after the existing ones.
+- **Use as map pin** / **Remove photo** under the photo note
+  (`PhotoActions.tsx` → `spots.setCoverPhoto` / `spots.deletePhoto`, which also
+  deletes the file from Vercel Blob).
+- **Pencil** in the header edits name, postcode, tags and spot notes
+  (`EditSpotButton.tsx` → `spots.update`).
+
+Uploads share `lib/upload-spot-photo.ts` with the Add spot form.
+
 ## Notes
 
 - Map tiles come from OpenFreeMap's free dark style (no API key). Keep the

@@ -18,7 +18,10 @@ import {
 import { IconChevronLeft, IconNavigation } from "@tabler/icons-react";
 import Link from "next/link";
 import { useState } from "react";
+import { AddPhotosTile } from "./AddPhotosTile";
 import { DeleteSpotButton } from "./DeleteSpotButton";
+import { EditSpotButton } from "./EditSpotButton";
+import { PhotoActions } from "./PhotoActions";
 import { PhotoCaption } from "./PhotoCaption";
 import { CAN_EDIT_SPOTS } from "@/lib/photo-spots";
 import { getDirectionsUrl } from "./SpotDetail.constants";
@@ -32,6 +35,8 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
   const theme = useMantineTheme();
   const utils = api.useUtils();
   const [activeIndex, setActiveIndex] = useState(0);
+  const [uploadProgress, setUploadProgress] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const spotQuery = api.spots.byId.useQuery({ id: spotId }, { retry: false });
 
@@ -66,7 +71,20 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
   }
 
   const spot = spotQuery.data;
-  const activePhoto = spot.photos[activeIndex];
+  // A photo may have just been removed, so never point past the end of the list.
+  const photoIndex = Math.max(0, Math.min(activeIndex, spot.photos.length - 1));
+  const activePhoto = spot.photos[photoIndex];
+
+  const addPhotosTile = CAN_EDIT_SPOTS ? (
+    <AddPhotosTile
+      spotId={spot.id}
+      spotTitle={spot.title}
+      photoCount={spot.photos.length}
+      onProgress={setUploadProgress}
+      onError={setUploadError}
+      onAdded={setActiveIndex}
+    />
+  ) : null;
   const isShot = spot.status === "shot";
 
   return (
@@ -92,30 +110,57 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
             </Text>
           )}
         </Stack>
-        <Box w={44} />
+        {CAN_EDIT_SPOTS ? <EditSpotButton spot={spot} /> : <Box w={44} />}
       </Group>
 
       {spot.photos.length > 0 ? (
         <SpotPhotoCarousel
           photos={spot.photos}
-          activeIndex={activeIndex}
+          activeIndex={photoIndex}
           onActiveIndexChange={setActiveIndex}
+          extraThumbnail={addPhotosTile}
         />
       ) : (
-        <Center h={200} bg="brown.7" c="brown.1" fz="sm">
-          No photos yet
-        </Center>
+        <>
+          <Center h={200} bg="brown.7" c="brown.1" fz="sm">
+            No photos yet
+          </Center>
+          {addPhotosTile && (
+            <Group px="md" py="sm">
+              {addPhotosTile}
+            </Group>
+          )}
+        </>
+      )}
+
+      {(uploadProgress || uploadError) && (
+        <Text px="md" fz="sm" c={uploadError ? "red.4" : "brown.1"} aria-live="polite">
+          {uploadError ?? uploadProgress}
+        </Text>
       )}
 
       <Stack gap="lg" px="md" pt="sm">
         {activePhoto && (
-          <PhotoCaption
-            key={activePhoto.id}
-            spotId={spot.id}
-            photoId={activePhoto.id}
-            photoIndex={activeIndex}
-            caption={activePhoto.caption}
-          />
+          <Stack gap="xs">
+            <PhotoCaption
+              key={activePhoto.id}
+              spotId={spot.id}
+              photoId={activePhoto.id}
+              photoIndex={photoIndex}
+              caption={activePhoto.caption}
+            />
+            {CAN_EDIT_SPOTS && (
+              <PhotoActions
+                key={`actions-${activePhoto.id}`}
+                spotId={spot.id}
+                photoId={activePhoto.id}
+                imageUrl={activePhoto.imageUrl}
+                isCover={photoIndex === 0}
+                onCoverChanged={() => setActiveIndex(0)}
+                onDeleted={() => setActiveIndex(Math.max(0, photoIndex - 1))}
+              />
+            )}
+          </Stack>
         )}
 
         {spot.tags.length > 0 && (

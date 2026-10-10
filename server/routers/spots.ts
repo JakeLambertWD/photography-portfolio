@@ -31,26 +31,28 @@ const spotDetailSchema = spotSummarySchema.omit({ coverImageUrl: true, photoCoun
   photos: z.array(spotPhotoSchema),
 });
 
-const createSpotInputSchema = z.object({
+const spotPhotoInputSchema = z.object({
+  imageUrl: z.string().refine(isSpotPhotoUrl, "Photos must be uploaded to Vercel Blob."),
+  caption: z.string().trim().max(2000),
+});
+
+const spotDetailsInputSchema = z.object({
   title: z.string().trim().min(1).max(120),
   notes: z.string().trim().max(2000),
   postcode: z.string().trim().max(10),
-  latitude: z.number().min(-90).max(90),
-  longitude: z.number().min(-180).max(180),
   status: z.enum(SPOT_STATUSES),
   tags: z.array(z.string().trim().min(1).max(40)).max(MAX_SPOT_TAGS),
-  photos: z
-    .array(
-      z.object({
-        imageUrl: z.string().refine(isSpotPhotoUrl, "Photos must be uploaded to Vercel Blob."),
-        caption: z.string().trim().max(2000),
-      }),
-    )
-    .max(MAX_SPOT_PHOTOS),
+});
+
+const createSpotInputSchema = spotDetailsInputSchema.extend({
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+  photos: z.array(spotPhotoInputSchema).max(MAX_SPOT_PHOTOS),
 });
 
 export type CreateSpotInput = z.infer<typeof createSpotInputSchema>;
 export type SpotStatus = (typeof SPOT_STATUSES)[number];
+export type SpotDetailsInput = z.infer<typeof spotDetailsInputSchema>;
 export type SpotSummary = z.infer<typeof spotSummarySchema>;
 export type SpotDetail = z.infer<typeof spotDetailSchema>;
 
@@ -72,6 +74,19 @@ function assertCanEdit() {
       code: "FORBIDDEN",
       message: "Editing spots is disabled in production until sign-in is added.",
     });
+  }
+}
+
+// Only files uploaded through the app live in Vercel Blob (not e.g. images in /public).
+async function deleteSpotPhotoFiles(imageUrls: string[]) {
+  const blobUrls = imageUrls.filter((url) => isSpotPhotoUrl(url));
+  if (blobUrls.length === 0 || !process.env.BLOB_READ_WRITE_TOKEN) return;
+
+  try {
+    await del(blobUrls);
+  } catch (error) {
+    // The database rows are already gone; a leftover file is harmless, so don't fail the request.
+    console.error("Failed to delete spot photos from Vercel Blob:", error);
   }
 }
 
@@ -223,18 +238,120 @@ export const spotsRouter = router({
       throw new TRPCError({ code: "NOT_FOUND", message: "Spot not found." });
     }
 
-    // Only files uploaded through the app live in Vercel Blob (not e.g. images in /public).
-    const blobUrls = photoRows
-      .map((row) => String(row.imageUrl))
-      .filter((url) => isSpotPhotoUrl(url));
-
-    if (blobUrls.length > 0 && process.env.BLOB_READ_WRITE_TOKEN) {
-      try {
-        await del(blobUrls);
-      } catch (error) {
-        // The spot is already gone; a leftover file is harmless, so don't fail the request.
-        console.error("Failed to delete spot photos from Vercel Blob:", error);
-      }
-    }
+    await deleteSpotPhotoFiles(photoRows.map((row) => String(row.imageUrl)));
   }),
+
+  update: publicProcedure
+    .input(spotDetailsInputSchema.extend({ id: z.uuid() }))
+    .mutation(async ({ input }) => {
+      assertCanEdit();
+      const db = getSql();
+
+      const rows = await db`
+        update photo_spot
+        set
+          title = ${input.title},
+          notes = ${input.notes || null},
+          postcode = ${input.postcode.toUpperCase() || null},
+          status = ${input.status},
+          tags = ${input.tags}
+        where id = ${input.id}
+        returning id
+      `;
+
+      if (!rows[0]) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Spot not found." });
+      }
+    }),
+
+  addPhotos: publicProcedure
+    .input(
+      z.object({
+        spotId: z.uuid(),
+        photos: z.array(spotPhotoInputSchema).min(1).max(MAX_SPOT_PHOTOS),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      assertCanEdit();
+      const db = getSql();
+
+      const [{ photoCount }] = await db`
+        select count(*)::int as "photoCount"
+        from photo_spot_image
+        where spot_id = ${input.spotId}
+      `;
+
+      if (Number(photoCount) + input.photos.length > MAX_SPOT_PHOTOS) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `A spot can have up to ${MAX_SPOT_PHOTOS} photos.`,
+        });
+      }
+
+      // New photos go after the existing ones, in the order they were picked.
+      const rows = await db`
+        insert into photo_spot_image (spot_id, image_url, caption, position)
+        select
+          spot.id,
+          photo.image_url,
+          nullif(photo.caption, ''),
+          coalesce(
+            (select max(position) from photo_spot_image where spot_id = spot.id),
+            -1
+          ) + photo.ordinality::int
+        from photo_spot spot
+        cross join unnest(
+          ${input.photos.map((photo) => photo.imageUrl)}::text[],
+          ${input.photos.map((photo) => photo.caption)}::text[]
+        ) with ordinality as photo(image_url, caption, ordinality)
+        where spot.id = ${input.spotId}
+        returning id
+      `;
+
+      if (rows.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Spot not found." });
+      }
+    }),
+
+  deletePhoto: publicProcedure
+    .input(z.object({ photoId: z.uuid() }))
+    .mutation(async ({ input }) => {
+      assertCanEdit();
+      const db = getSql();
+
+      const rows = await db`
+        delete from photo_spot_image
+        where id = ${input.photoId}
+        returning image_url as "imageUrl"
+      `;
+
+      if (!rows[0]) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Photo not found." });
+      }
+
+      await deleteSpotPhotoFiles([String(rows[0].imageUrl)]);
+    }),
+
+  // The first photo is the map pin, so moving a photo to the front makes it the cover.
+  setCoverPhoto: publicProcedure
+    .input(z.object({ photoId: z.uuid() }))
+    .mutation(async ({ input }) => {
+      assertCanEdit();
+      const db = getSql();
+
+      const rows = await db`
+        update photo_spot_image photo
+        set position = (
+          select min(position) - 1
+          from photo_spot_image
+          where spot_id = photo.spot_id
+        )
+        where photo.id = ${input.photoId}
+        returning id
+      `;
+
+      if (!rows[0]) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Photo not found." });
+      }
+    }),
 });

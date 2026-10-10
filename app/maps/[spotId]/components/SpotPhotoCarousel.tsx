@@ -10,7 +10,7 @@ import {
   UnstyledButton,
   useMantineTheme,
 } from "@mantine/core";
-import { useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { formatPhotoNumber } from "./SpotDetail.constants";
 import styles from "./SpotPhotoCarousel.module.css";
 
@@ -18,15 +18,25 @@ type SpotPhotoCarouselProps = {
   photos: SpotDetail["photos"];
   activeIndex: number;
   onActiveIndexChange: (index: number) => void;
+  // Shown at the end of the thumbnail strip, e.g. an "add photos" button.
+  extraThumbnail?: ReactNode;
 };
 
 export function SpotPhotoCarousel({
   photos,
   activeIndex,
   onActiveIndexChange,
+  extraThumbnail,
 }: SpotPhotoCarouselProps) {
   const theme = useMantineTheme();
   const trackRef = useRef<HTMLDivElement>(null);
+
+  // Keep the slide in view when the active photo changes from outside (e.g. after adding photos).
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track || Math.round(track.scrollLeft / track.clientWidth) === activeIndex) return;
+    track.scrollTo({ left: activeIndex * track.clientWidth, behavior: "smooth" });
+  }, [activeIndex]);
 
   function handleScroll() {
     const track = trackRef.current;
@@ -83,7 +93,7 @@ export function SpotPhotoCarousel({
         )}
       </Box>
 
-      {photos.length > 1 && (
+      {(photos.length > 1 || extraThumbnail) && (
         <Group gap="sm" px="md" py="sm">
           {photos.map((photo, index) => {
             const isActive = index === activeIndex;
@@ -108,6 +118,7 @@ export function SpotPhotoCarousel({
               </UnstyledButton>
             );
           })}
+          {extraThumbnail}
         </Group>
       )}
     </Box>
