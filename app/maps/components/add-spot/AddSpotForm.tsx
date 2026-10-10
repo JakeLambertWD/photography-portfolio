@@ -1,14 +1,9 @@
 "use client";
 
 import { api } from "@/app/providers";
-import {
-  MAX_SPOT_PHOTOS,
-  MAX_SPOT_TAGS,
-  SPOT_PHOTO_PATH_PREFIX,
-  SPOT_PHOTO_UPLOAD_URL,
-} from "@/lib/photo-spots";
+import { MAX_SPOT_PHOTOS, MAX_SPOT_TAGS } from "@/lib/photo-spots";
 import { findNearestPostcode } from "@/lib/postcodes";
-import { resizeImage } from "@/lib/resize-image";
+import { getPhotoUploadErrorMessage, uploadSpotPhoto } from "@/lib/upload-spot-photo";
 import type { SpotStatus } from "@/server/routers/spots";
 import {
   ActionIcon,
@@ -26,7 +21,6 @@ import {
   TextInput,
 } from "@mantine/core";
 import { IconMapPin, IconPhotoPlus, IconTrash } from "@tabler/icons-react";
-import { upload } from "@vercel/blob/client";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { SPOT_STATUS_OPTIONS, SUGGESTED_SPOT_TAGS } from "./AddSpot.constants";
 
@@ -48,27 +42,6 @@ type AddSpotFormProps = {
   onCancel: () => void;
   onCreated: (spotId: string) => void;
 };
-
-function toSlug(value: string) {
-  const slug = value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 40);
-
-  return slug || "photo";
-}
-
-function getSubmitErrorMessage(error: unknown) {
-  if (!(error instanceof Error)) return "Couldn't save the spot.";
-
-  // The Blob client hides the upload route's reason, which is almost always a missing token.
-  if (error.message.includes("client token")) {
-    return "Couldn't start the photo upload. Check BLOB_READ_WRITE_TOKEN is in .env.local and restart the dev server.";
-  }
-
-  return error.message;
-}
 
 export function AddSpotForm({ location, onMovePin, onCancel, onCreated }: AddSpotFormProps) {
   const utils = api.useUtils();
@@ -163,17 +136,8 @@ export function AddSpotForm({ location, onMovePin, onCancel, onCreated }: AddSpo
       for (const [index, photo] of photos.entries()) {
         setProgress(`Uploading photo ${index + 1} of ${photos.length}…`);
 
-        const image = await resizeImage(photo.file);
-        const extension =
-          image.type === "image/jpeg" ? "jpg" : (photo.file.name.split(".").pop() ?? "jpg");
-
-        const blob = await upload(`${SPOT_PHOTO_PATH_PREFIX}${toSlug(title)}.${extension}`, image, {
-          access: "public",
-          handleUploadUrl: SPOT_PHOTO_UPLOAD_URL,
-          contentType: image.type || photo.file.type,
-        });
-
-        uploadedPhotos.push({ imageUrl: blob.url, caption: photo.caption });
+        const imageUrl = await uploadSpotPhoto(photo.file, title);
+        uploadedPhotos.push({ imageUrl, caption: photo.caption });
       }
 
       setProgress("Saving spot…");
@@ -192,7 +156,7 @@ export function AddSpotForm({ location, onMovePin, onCancel, onCreated }: AddSpo
       await utils.spots.list.invalidate();
       onCreated(id);
     } catch (submitError) {
-      setError(getSubmitErrorMessage(submitError));
+      setError(getPhotoUploadErrorMessage(submitError));
       setProgress(null);
     }
   }
