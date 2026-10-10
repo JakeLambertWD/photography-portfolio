@@ -55,3 +55,19 @@ textarea,
 select {
   font-size: 16px !important;
 }
+
+/* Weather options are removed by deselecting them in the dropdown. */
+.weather-select .mantine-Pill-remove {
+  display: none;
+}
+
+.weather-select .mantine-Pill-root {
+  background: transparent;
+  padding-inline: 0.125rem;
+  height: auto;
+  padding-block: 4px;
+}
+
+.weather-select .mantine-PillGroup-group {
+  gap: 0;
+}

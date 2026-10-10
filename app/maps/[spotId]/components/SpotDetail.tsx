@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@/app/providers";
+import { formatSpotTag } from "@/app/maps/components/add-spot/AddSpot.constants";
 import {
   ActionIcon,
   Badge,
@@ -168,7 +169,7 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
                 tt="none"
                 fw={500}
               >
-                {tag}
+                {formatSpotTag(tag)}
               </Badge>
             ))}
           </Group>

@@ -35,7 +35,7 @@ tRPC spots router (server/routers/spots.ts)
    group zooms in until it splits. It's loaded with `next/dynamic` and
    `ssr: false` because MapLibre needs `window`.
 5. **app/maps/[spotId]/components/** holds the spot view: a scroll-snap carousel
-   with thumbnails, a note editor for the photo on screen, tags, spot notes,
+   with thumbnails, a note editor for the photo on screen, weather, spot notes,
    directions (Google Maps).
 
 ## Searching
@@ -53,8 +53,7 @@ debounced and cached to stay within Photon's fair-use limits.
    sits in the middle of the map and you move the map under it. The search box
    at the top jumps to a place or postcode.
 2. **Use this spot** opens the form (`add-spot/AddSpotForm.tsx`) with the pin's
-   coordinates. The nearest postcode is filled in automatically. **Move pin**
-   goes back to the map without losing what's been typed.
+   coordinates. The nearest postcode is filled in automatically.
 3. On save, each photo is shrunk to 2048px in the browser (`lib/resize-image.ts`)
    and uploaded straight to Vercel Blob. `app/api/spot-photos/upload/route.ts`
    only hands out the upload token. Then `spots.create` inserts the spot and its
@@ -73,7 +72,7 @@ On a spot's page (local only, like all edits):
 - **Use as map pin** / **Remove photo** under the photo note
   (`PhotoActions.tsx` → `spots.setCoverPhoto` / `spots.deletePhoto`, which also
   deletes the file from Vercel Blob).
-- **Pencil** in the header edits name, postcode, tags and spot notes
+- **Pencil** in the header edits name, weather and spot notes
   (`EditSpotButton.tsx` → `spots.update`).
 
 Uploads share `lib/upload-spot-photo.ts` with the Add spot form.
