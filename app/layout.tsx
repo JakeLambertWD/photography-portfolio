@@ -33,9 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body>
         <MantineProvider theme={theme} defaultColorScheme="auto">
-          <TRPCProvider>
-            {children}
-          </TRPCProvider>
+          <TRPCProvider>{children}</TRPCProvider>
         </MantineProvider>
       </body>
     </html>
