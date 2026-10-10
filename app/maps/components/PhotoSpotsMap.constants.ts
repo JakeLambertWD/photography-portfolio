@@ -15,7 +15,7 @@ export const CLUSTER_RADIUS = 60;
 // Above this zoom level pins are never grouped.
 export const CLUSTER_MAX_ZOOM = 17;
 
-// Leaves room for the site navigation bar that sits on top of the map.
-export const MAP_OVERLAY_TOP_OFFSET = "6.5rem";
+// Keeps the search bar clear of the top edge of the screen.
+export const MAP_OVERLAY_TOP_OFFSET = "1rem";
 // Sits above the map attribution in the bottom-left corner.
 export const MAP_OVERLAY_BOTTOM_OFFSET = "2.5rem";

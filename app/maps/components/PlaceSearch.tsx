@@ -4,6 +4,7 @@ import { api } from "@/app/providers";
 import type { PlaceResult } from "@/server/routers/places";
 import type { SpotSummary } from "@/server/routers/spots";
 import {
+  ActionIcon,
   CloseButton,
   Combobox,
   Group,
@@ -14,10 +15,37 @@ import {
   useMantineTheme,
 } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
-import { IconMapPin, IconPhoto, IconSearch } from "@tabler/icons-react";
+import { IconMapPin, IconMicrophone, IconPhoto, IconSearch } from "@tabler/icons-react";
 import { keepPreviousData } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { MAX_SPOT_MATCHES, PLACE_SEARCH_DEBOUNCE_MS } from "./PlaceSearch.constants";
+
+type SpeechRecognitionResultEvent = {
+  results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }>;
+};
+
+type SpeechRecognitionInstance = {
+  lang: string;
+  interimResults: boolean;
+  onresult: ((event: SpeechRecognitionResultEvent) => void) | null;
+  onend: (() => void) | null;
+  onerror: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
+
+// Chrome and Safari only expose speech recognition under the webkit prefix.
+function getSpeechRecognition(): SpeechRecognitionConstructor | null {
+  if (typeof window === "undefined") return null;
+  const speechWindow = window as unknown as {
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  };
+
+  return speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition ?? null;
+}
 
 type PlaceSearchProps = {
   placeholder: string;
@@ -52,6 +80,15 @@ export function PlaceSearch({
   const combobox = useCombobox({ onDropdownClose: () => combobox.resetSelectedOption() });
 
   const [search, setSearch] = useState("");
+  const [isListening, setIsListening] = useState(false);
+  const canListen = useSyncExternalStore(
+    () => () => undefined,
+    () => getSpeechRecognition() !== null,
+    () => false,
+  );
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+
+  useEffect(() => () => recognitionRef.current?.stop(), []);
   const [debouncedSearch] = useDebouncedValue(search.trim(), PLACE_SEARCH_DEBOUNCE_MS);
 
   const placesQuery = api.places.search.useQuery(
@@ -88,6 +125,31 @@ export function PlaceSearch({
     combobox.closeDropdown();
   }
 
+  function toggleListening() {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+
+    const Recognition = getSpeechRecognition();
+    if (!Recognition) return;
+
+    const recognition = new Recognition();
+    recognition.lang = "en-GB";
+    recognition.interimResults = true;
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results, (result) => result[0].transcript).join("");
+      setSearch(transcript);
+      combobox.openDropdown();
+    };
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => setIsListening(false);
+
+    recognitionRef.current = recognition;
+    setIsListening(true);
+    recognition.start();
+  }
+
   function clear() {
     setSearch("");
     combobox.closeDropdown();
@@ -114,17 +176,30 @@ export function PlaceSearch({
           rightSection={
             isSearching ? (
               <Loader size="xs" color="yellow" />
-            ) : search ? (
+            ) : search && !isListening ? (
               <CloseButton aria-label="Clear search" onClick={clear} />
+            ) : canListen ? (
+              <ActionIcon
+                aria-label={isListening ? "Stop voice search" : "Search by voice"}
+                aria-pressed={isListening}
+                variant={isListening ? "filled" : "subtle"}
+                color={isListening ? "red" : "brown.0"}
+                radius="xl"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={toggleListening}
+              >
+                <IconMicrophone size={18} />
+              </ActionIcon>
             ) : null
           }
           size="md"
-          radius="sm"
+          radius="xl"
           styles={{
             input: {
               backgroundColor: theme.colors.brown[7],
               borderColor: theme.colors.brown[4],
               color: theme.colors.brown[0],
+              boxShadow: "0 6px 16px rgba(0, 0, 0, 0.45)",
             },
           }}
         />
