@@ -48,3 +48,31 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+/* 16px inputs everywhere; iOS Safari zooms into fields with smaller text. */
+input,
+textarea,
+select {
+  font-size: 16px !important;
+}
+
+/* Matches the static note text; 18px is above the iOS zoom threshold. */
+textarea.photo-caption-input {
+  font-size: 18px !important;
+}
+
+/* Weather options are removed by deselecting them in the dropdown. */
+.weather-select .mantine-Pill-remove {
+  display: none;
+}
+
+.weather-select .mantine-Pill-root {
+  background: transparent;
+  padding-inline: 0.125rem;
+  height: auto;
+  padding-block: 4px;
+}
+
+.weather-select .mantine-PillGroup-group {
+  gap: 0;
+}

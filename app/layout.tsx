@@ -3,9 +3,6 @@ import "@mantine/core/styles.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { theme } from "../styles/theme";
-import { InstagramFollowerCount } from "./components/instagram-followers/InstagramFollowerCount";
-import { DarkModeToggle } from "./components/navigation-bar/DarkModeToggle";
-import { NavigationBar } from "./components/navigation-bar/NavigationBar";
 import "./globals.css";
 import { TRPCProvider } from "./providers";
 
@@ -22,6 +19,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Photography Portfolio",
   description: "A photography portfolio.",
+  // Stops iOS turning postcodes and place names into underlined address links.
+  formatDetection: { telephone: false, address: false, email: false },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -36,12 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body>
         <MantineProvider theme={theme} defaultColorScheme="auto">
-          <TRPCProvider>
-            <DarkModeToggle />
-            <NavigationBar />
-            <InstagramFollowerCount />
-            {children}
-          </TRPCProvider>
+          <TRPCProvider>{children}</TRPCProvider>
         </MantineProvider>
       </body>
     </html>
