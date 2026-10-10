@@ -48,3 +48,10 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+/* 16px inputs everywhere; iOS Safari zooms into fields with smaller text. */
+input,
+textarea,
+select {
+  font-size: 16px !important;
+}
