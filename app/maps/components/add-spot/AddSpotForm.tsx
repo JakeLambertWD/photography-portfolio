@@ -13,14 +13,15 @@ import {
   Image,
   Input,
   Stack,
-  TagsInput,
+  MultiSelect,
   Text,
   Textarea,
   TextInput,
 } from "@mantine/core";
 import { IconMapPin, IconPhotoPlus, IconTrash } from "@tabler/icons-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { SUGGESTED_SPOT_TAGS } from "./AddSpot.constants";
+import { WeatherPill } from "./WeatherPill";
+import { useSortedSpotTags } from "./useSortedSpotTags";
 
 export type DraftLocation = {
   latitude: number;
@@ -36,12 +37,12 @@ type DraftPhoto = {
 
 type AddSpotFormProps = {
   location: DraftLocation;
-  onMovePin: () => void;
   onCancel: () => void;
   onCreated: (spotId: string) => void;
 };
 
-export function AddSpotForm({ location, onMovePin, onCancel, onCreated }: AddSpotFormProps) {
+export function AddSpotForm({ location, onCancel, onCreated }: AddSpotFormProps) {
+  const sortedTags = useSortedSpotTags();
   const utils = api.useUtils();
   const createSpot = api.spots.create.useMutation();
 
@@ -158,23 +159,18 @@ export function AddSpotForm({ location, onMovePin, onCancel, onCreated }: AddSpo
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Stack gap="md">
-        <Group justify="space-between" wrap="nowrap" gap="sm">
-          <Group gap="xs" wrap="nowrap" miw={0}>
-            <IconMapPin size={18} aria-hidden />
-            <Text ff="monospace" fz="sm" truncate>
-              {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
-            </Text>
+    <form onSubmit={handleSubmit} style={{ height: "100%" }}>
+      <Stack gap="md" h="100%">
+        {postcode && (
+          <Group gap="xs" wrap="nowrap" c="dimmed">
+            <IconMapPin size={16} aria-hidden />
+            <Text fz="sm">Near {postcode}</Text>
           </Group>
-          <Button variant="subtle" size="compact-sm" onClick={onMovePin} disabled={isSaving}>
-            Move pin
-          </Button>
-        </Group>
+        )}
 
         <TextInput
+          size="md"
           label="Name"
-          placeholder="e.g. London Bridge arches"
           value={title}
           onChange={(event) => setTitle(event.currentTarget.value)}
           error={titleError}
@@ -183,28 +179,20 @@ export function AddSpotForm({ location, onMovePin, onCancel, onCreated }: AddSpo
           data-autofocus
         />
 
-        <TextInput
-          label="Postcode"
-          value={postcode}
-          onChange={(event) => setPostcode(event.currentTarget.value)}
-          maxLength={10}
-          autoComplete="postal-code"
-        />
-
-        <TagsInput
-          label="Tags"
-          placeholder={tags.length === 0 ? "Pick or type, then press Enter" : undefined}
-          data={[...SUGGESTED_SPOT_TAGS]}
+        <MultiSelect
+          size="md"
+          className="weather-select"
+          renderPill={({ value }) => <WeatherPill value={value ?? ""} />}
+          label="Weather"
+          data={sortedTags}
           value={tags}
           onChange={setTags}
-          maxTags={MAX_SPOT_TAGS}
-          acceptValueOnBlur
-          clearable
+          maxValues={MAX_SPOT_TAGS}
         />
 
         <Textarea
+          size="md"
           label="Spot notes"
-          placeholder="Where to stand, best time of day, anything to remember"
           value={notes}
           onChange={(event) => setNotes(event.currentTarget.value)}
           autosize
@@ -230,8 +218,8 @@ export function AddSpotForm({ location, onMovePin, onCancel, onCreated }: AddSpo
                 />
                 <Stack gap="xs" flex={1} miw={0}>
                   <Textarea
+                    size="md"
                     aria-label={`Note for photo ${index + 1}`}
-                    placeholder="Note for this photo"
                     value={photo.caption}
                     onChange={(event) => updateCaption(photo.id, event.currentTarget.value)}
                     autosize
@@ -288,16 +276,16 @@ export function AddSpotForm({ location, onMovePin, onCancel, onCreated }: AddSpo
           </Text>
         )}
 
-        <Group justify="flex-end" gap="sm">
+        <Group justify="flex-end" gap="sm" mt="auto">
           {progress && (
             <Text fz="sm" c="dimmed" mr="auto" aria-live="polite">
               {progress}
             </Text>
           )}
-          <Button variant="default" onClick={onCancel} disabled={isSaving}>
+          <Button h={56} radius="sm" variant="default" onClick={onCancel} disabled={isSaving}>
             Cancel
           </Button>
-          <Button type="submit" autoContrast loading={isSaving}>
+          <Button h={56} radius="sm" type="submit" autoContrast loading={isSaving}>
             Save spot
           </Button>
         </Group>

@@ -18,7 +18,6 @@ import {
 } from "@mantine/core";
 import { CAN_EDIT_SPOTS } from "@/lib/photo-spots";
 import type { PlaceResult } from "@/server/routers/places";
-import { useMediaQuery } from "@mantine/hooks";
 import { IconCurrentLocation, IconPlus } from "@tabler/icons-react";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useRouter } from "next/navigation";
@@ -83,8 +82,6 @@ export function PhotoSpotsMap() {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [addSpotStep, setAddSpotStep] = useState<AddSpotStep>("closed");
   const [draftLocation, setDraftLocation] = useState<DraftLocation | null>(null);
-
-  const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
   const isPlacing = addSpotStep === "placing";
 
   const spots = useMemo(() => spotsQuery.data ?? [], [spotsQuery.data]);
@@ -238,8 +235,8 @@ export function PhotoSpotsMap() {
         <AttributionControl
           position="bottom-left"
           compact
-          // Centres the 24px credits button on the 56px buttons row, 1rem in from the edge.
-          style={{ margin: `0 0 calc(${MAP_OVERLAY_BOTTOM_OFFSET} + 16px) 1rem` }}
+          // Centres the 24px credits button on the 56px buttons row, 1.5rem in from the edge.
+          style={{ margin: `0 0 calc(${MAP_OVERLAY_BOTTOM_OFFSET} + 16px) 1.5rem` }}
         />
 
         {clusters.map((feature) => {
@@ -303,7 +300,7 @@ export function PhotoSpotsMap() {
         )}
       </MapGL>
 
-      {isPlacing && <PlacementCrosshair />}
+      {CAN_EDIT_SPOTS && addSpotStep !== "details" && <PlacementCrosshair />}
 
       <Box pos="absolute" top={MAP_OVERLAY_TOP_OFFSET} left={0} right={0} px="md">
         {isPlacing ? (
@@ -340,7 +337,7 @@ export function PhotoSpotsMap() {
         </Center>
       )}
 
-      <Box pos="absolute" bottom={MAP_OVERLAY_BOTTOM_OFFSET} left={0} right={0} px="md">
+      <Box pos="absolute" bottom={MAP_OVERLAY_BOTTOM_OFFSET} left={0} right={0} px="lg">
         {isPlacing ? (
           <Paper
             maw="30rem"
@@ -403,7 +400,7 @@ export function PhotoSpotsMap() {
                 radius="sm"
                 autoContrast
                 leftSection={<IconPlus size={18} />}
-                onClick={() => setAddSpotStep("placing")}
+                onClick={confirmPlacement}
               >
                 Add spot
               </Button>
@@ -417,15 +414,20 @@ export function PhotoSpotsMap() {
         onClose={closeAddSpot}
         title="New spot"
         size="lg"
-        fullScreen={isMobile}
+        yOffset="var(--mantine-spacing-lg)"
+        styles={{
+          content: {
+            height: "calc(100dvh - 2 * var(--mantine-spacing-lg))",
+            display: "flex",
+            flexDirection: "column",
+          },
+          body: { flex: 1, minHeight: 0, overflowY: "auto" },
+        }}
         closeOnClickOutside={false}
-        // Keeps what's been typed while going back to move the pin.
-        keepMounted
       >
         {draftLocation && (
           <AddSpotForm
             location={draftLocation}
-            onMovePin={() => setAddSpotStep("placing")}
             onCancel={closeAddSpot}
             onCreated={(spotId) => router.push(`/maps/${spotId}`)}
           />

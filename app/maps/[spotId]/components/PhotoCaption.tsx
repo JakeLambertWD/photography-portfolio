@@ -47,6 +47,7 @@ export function PhotoCaption({ spotId, photoId, photoIndex, caption }: PhotoCapt
       {isEditing ? (
         <Stack gap="sm">
           <Textarea
+            size="md"
             aria-label={`Note for photo ${photoIndex + 1}`}
             value={draft}
             onChange={(event) => setDraft(event.currentTarget.value)}

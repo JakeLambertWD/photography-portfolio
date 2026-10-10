@@ -1,7 +1,8 @@
 "use client";
 
 import { api } from "@/app/providers";
-import { SUGGESTED_SPOT_TAGS } from "@/app/maps/components/add-spot/AddSpot.constants";
+import { WeatherPill } from "@/app/maps/components/add-spot/WeatherPill";
+import { useSortedSpotTags } from "@/app/maps/components/add-spot/useSortedSpotTags";
 import { MAX_SPOT_TAGS } from "@/lib/photo-spots";
 import type { SpotDetail } from "@/server/routers/spots";
 import {
@@ -10,7 +11,7 @@ import {
   Group,
   Modal,
   Stack,
-  TagsInput,
+  MultiSelect,
   Text,
   Textarea,
   TextInput,
@@ -25,8 +26,9 @@ type EditSpotButtonProps = {
 function EditSpotForm({ spot, onDone }: { spot: SpotDetail; onDone: () => void }) {
   const utils = api.useUtils();
   const [title, setTitle] = useState(spot.title);
-  const [postcode, setPostcode] = useState(spot.postcode ?? "");
+  const postcode = spot.postcode ?? "";
   const [tags, setTags] = useState<string[]>(spot.tags);
+  const sortedTags = useSortedSpotTags(spot.tags);
   const [notes, setNotes] = useState(spot.notes ?? "");
   const [titleError, setTitleError] = useState<string | null>(null);
 
@@ -53,9 +55,10 @@ function EditSpotForm({ spot, onDone }: { spot: SpotDetail; onDone: () => void }
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Stack gap="md">
+    <form onSubmit={handleSubmit} style={{ height: "100%" }}>
+      <Stack gap="md" h="100%">
         <TextInput
+          size="md"
           label="Name"
           value={title}
           onChange={(event) => setTitle(event.currentTarget.value)}
@@ -65,25 +68,19 @@ function EditSpotForm({ spot, onDone }: { spot: SpotDetail; onDone: () => void }
           data-autofocus
         />
 
-        <TextInput
-          label="Postcode"
-          value={postcode}
-          onChange={(event) => setPostcode(event.currentTarget.value)}
-          maxLength={10}
-          autoComplete="postal-code"
-        />
-
-        <TagsInput
-          label="Tags"
-          data={[...SUGGESTED_SPOT_TAGS]}
+        <MultiSelect
+          size="md"
+          className="weather-select"
+          renderPill={({ value }) => <WeatherPill value={value ?? ""} />}
+          label="Weather"
+          data={sortedTags}
           value={tags}
           onChange={setTags}
-          maxTags={MAX_SPOT_TAGS}
-          acceptValueOnBlur
-          clearable
+          maxValues={MAX_SPOT_TAGS}
         />
 
         <Textarea
+          size="md"
           label="Spot notes"
           value={notes}
           onChange={(event) => setNotes(event.currentTarget.value)}
@@ -98,7 +95,7 @@ function EditSpotForm({ spot, onDone }: { spot: SpotDetail; onDone: () => void }
           </Text>
         )}
 
-        <Group justify="flex-end" gap="sm">
+        <Group justify="flex-end" gap="sm" mt="auto">
           <Button variant="default" onClick={onDone} disabled={updateSpot.isPending}>
             Cancel
           </Button>
@@ -126,7 +123,20 @@ export function EditSpotButton({ spot }: EditSpotButtonProps) {
         <IconPencil size={20} />
       </ActionIcon>
 
-      <Modal opened={isEditing} onClose={() => setIsEditing(false)} title="Edit spot">
+      <Modal
+        opened={isEditing}
+        onClose={() => setIsEditing(false)}
+        title="Edit spot"
+        yOffset="var(--mantine-spacing-lg)"
+        styles={{
+          content: {
+            height: "calc(100dvh - 2 * var(--mantine-spacing-lg))",
+            display: "flex",
+            flexDirection: "column",
+          },
+          body: { flex: 1, minHeight: 0, overflowY: "auto" },
+        }}
+      >
         {isEditing && <EditSpotForm spot={spot} onDone={() => setIsEditing(false)} />}
       </Modal>
     </>

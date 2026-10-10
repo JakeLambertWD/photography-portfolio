@@ -21,4 +21,4 @@ export const CLUSTER_MAX_ZOOM = 17;
 // Keeps the search bar clear of the top edge of the screen.
 export const MAP_OVERLAY_TOP_OFFSET = "1rem";
 // Distance from the bottom edge; the map attribution is centred on the same row.
-export const MAP_OVERLAY_BOTTOM_OFFSET = "1.25rem";
+export const MAP_OVERLAY_BOTTOM_OFFSET = "1.5rem";
