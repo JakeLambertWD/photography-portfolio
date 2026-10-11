@@ -106,7 +106,7 @@ export function PhotoSpotsMap() {
   }, [spots]);
 
   const clusters = useMemo(
-    () => (viewport ? clusterIndex.getClusters(viewport.bounds, Math.floor(viewport.zoom)) : []),
+    () => (viewport ? clusterIndex.getClusters(viewport.bounds, Math.ceil(viewport.zoom)) : []),
     [clusterIndex, viewport],
   );
 

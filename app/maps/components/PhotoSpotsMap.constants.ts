@@ -13,8 +13,8 @@ export const MAP_MAX_ZOOM = 19;
 // Zoom used when centring on the user's location.
 export const USER_LOCATION_ZOOM = 14;
 
-// Pixel radius within which pins are grouped into one cluster.
-export const CLUSTER_RADIUS = 60;
+// Pins are grouped once their centres are closer than one pin width, i.e. when they start to overlap.
+export const CLUSTER_RADIUS = 46;
 // Above this zoom level pins are never grouped.
 export const CLUSTER_MAX_ZOOM = 17;
 
