@@ -54,8 +54,8 @@ type Viewport = {
   zoom: number;
 };
 
-// closed: browsing the map. placing: moving the map under a fixed crosshair. details: filling in the form.
-type AddSpotStep = "closed" | "placing" | "details";
+// closed: browsing the map. details: filling in the form for the spot under the crosshair.
+type AddSpotStep = "closed" | "details";
 
 type UserLocation = {
   longitude: number;
@@ -87,7 +87,8 @@ export function PhotoSpotsMap() {
   const [addSpotStep, setAddSpotStep] = useState<AddSpotStep>("closed");
   const [draftLocation, setDraftLocation] = useState<DraftLocation | null>(null);
   const [isSavingSpot, setIsSavingSpot] = useState(false);
-  const isPlacing = addSpotStep === "placing";
+  // The place the user searched for, used to pre-fill the new spot's name.
+  const [draftPlaceName, setDraftPlaceName] = useState<string | null>(null);
 
   const spots = useMemo(() => spotsQuery.data ?? [], [spotsQuery.data]);
 
@@ -191,6 +192,7 @@ export function PhotoSpotsMap() {
     if (!center) return;
 
     setDraftLocation({ latitude: center.lat, longitude: center.lng });
+    setDraftPlaceName(searchedPlace?.name ?? null);
     setAddSpotStep("details");
   }
 
@@ -223,15 +225,20 @@ export function PhotoSpotsMap() {
     mapRef.current?.flyTo({ center: [spot.longitude, spot.latitude], zoom: PLACE_ZOOM });
   }
 
-  function addSpotAtPlace(place: PlaceResult) {
-    mapRef.current?.flyTo({ center: [place.longitude, place.latitude], zoom: PLACE_ZOOM });
-    setSearchedPlace(null);
-    setAddSpotStep("placing");
-  }
-
   function closeAddSpot() {
     setAddSpotStep("closed");
     setDraftLocation(null);
+    setDraftPlaceName(null);
+  }
+
+  // After saving, stay on the map and centre it on the new spot.
+  function handleSpotCreated() {
+    const location = draftLocation;
+    closeAddSpot();
+    setSearchedPlace(null);
+    if (location) {
+      mapRef.current?.flyTo({ center: [location.longitude, location.latitude], zoom: PLACE_ZOOM });
+    }
   }
 
   return (
@@ -279,7 +286,6 @@ export function PhotoSpotsMap() {
               <SpotMarker
                 spot={spot}
                 onSelect={() => {
-                  if (isPlacing) return;
                   sessionStorage.setItem(
                     LAST_SPOT_STORAGE_KEY,
                     JSON.stringify([spot.longitude, spot.latitude, mapRef.current?.getZoom()]),
@@ -291,16 +297,13 @@ export function PhotoSpotsMap() {
           );
         })}
 
-        {searchedPlace && !isPlacing && (
+        {searchedPlace && (
           <Marker
             longitude={searchedPlace.longitude}
             latitude={searchedPlace.latitude}
             anchor="bottom"
           >
-            <SearchedPlaceMarker
-              place={searchedPlace}
-              onAddSpot={() => addSpotAtPlace(searchedPlace)}
-            />
+            <SearchedPlaceMarker place={searchedPlace} />
           </Marker>
         )}
 
@@ -322,21 +325,15 @@ export function PhotoSpotsMap() {
       {CAN_EDIT_SPOTS && addSpotStep !== "details" && <PlacementCrosshair />}
 
       <Box pos="absolute" top={MAP_OVERLAY_TOP_OFFSET} left={0} right={0} px="md">
-        {isPlacing ? (
-          <Stack gap="sm" maw="30rem" mx="auto">
-            <PlaceSearch placeholder="Jump to a place or postcode" onSelectPlace={goToPlace} />
-          </Stack>
-        ) : (
-          <Stack gap="sm" maw="30rem" mx="auto">
-            <PlaceSearch
-              placeholder="Search places, postcodes or your spots"
-              spots={spots}
-              onSelectPlace={showPlace}
-              onSelectSpot={showSpot}
-              onClear={() => setSearchedPlace(null)}
-            />
-          </Stack>
-        )}
+        <Stack gap="sm" maw="30rem" mx="auto">
+          <PlaceSearch
+            placeholder="Search places, postcodes or your spots"
+            spots={spots}
+            onSelectPlace={showPlace}
+            onSelectSpot={showSpot}
+            onClear={() => setSearchedPlace(null)}
+          />
+        </Stack>
       </Box>
 
       {(spotsQuery.isPending || spotsQuery.isError) && (
@@ -357,75 +354,49 @@ export function PhotoSpotsMap() {
       )}
 
       <Box pos="absolute" bottom={MAP_OVERLAY_BOTTOM_OFFSET} left={0} right={0} px="lg">
-        {isPlacing ? (
+        <Group gap="sm" align="stretch" justify="flex-end" wrap="nowrap">
           <Paper
-            maw="30rem"
-            mx="auto"
-            p="md"
+            px="md"
+            display="flex"
+            style={{ alignItems: "center", borderColor: theme.colors.brown[4] }}
             radius="sm"
             bg="brown.7"
             withBorder
-            style={{ borderColor: theme.colors.brown[4] }}
           >
-            <Stack gap="sm">
-              <Text fz="sm" c="brown.0">
-                Move the map so the crosshair is where you&apos;ll stand.
-              </Text>
-              <Group gap="sm" grow>
-                <Button variant="default" onClick={closeAddSpot}>
-                  Cancel
-                </Button>
-                <Button autoContrast onClick={confirmPlacement}>
-                  Use this spot
-                </Button>
-              </Group>
-            </Stack>
+            <Text fz="sm" fw={600} c="brown.0">
+              {spotsInView.length} {spotsInView.length === 1 ? "spot" : "spots"}
+            </Text>
           </Paper>
-        ) : (
-          <Group gap="sm" align="stretch" justify="flex-end" wrap="nowrap">
-            <Paper
-              px="md"
-              display="flex"
-              style={{ alignItems: "center", borderColor: theme.colors.brown[4] }}
+          <Tooltip label={locationError ?? "Centre on my location"}>
+            <ActionIcon
+              aria-label={locationError ?? "Centre on my location"}
+              onClick={() => locateUser()}
+              loading={isLocating}
+              variant="default"
+              size={56}
               radius="sm"
-              bg="brown.7"
-              withBorder
+              styles={{
+                root: {
+                  backgroundColor: theme.colors.brown[7],
+                  borderColor: theme.colors.brown[4],
+                },
+              }}
             >
-              <Text fz="sm" fw={600} c="brown.0">
-                {spotsInView.length} {spotsInView.length === 1 ? "spot" : "spots"}
-              </Text>
-            </Paper>
-            <Tooltip label={locationError ?? "Centre on my location"}>
-              <ActionIcon
-                aria-label={locationError ?? "Centre on my location"}
-                onClick={() => locateUser()}
-                loading={isLocating}
-                variant="default"
-                size={56}
-                radius="sm"
-                styles={{
-                  root: {
-                    backgroundColor: theme.colors.brown[7],
-                    borderColor: theme.colors.brown[4],
-                  },
-                }}
-              >
-                <IconCurrentLocation size={22} color={theme.colors.brown[0]} />
-              </ActionIcon>
-            </Tooltip>
-            {CAN_EDIT_SPOTS && (
-              <Button
-                h="auto"
-                radius="sm"
-                autoContrast
-                leftSection={<IconPlus size={18} />}
-                onClick={confirmPlacement}
-              >
-                Add spot
-              </Button>
-            )}
-          </Group>
-        )}
+              <IconCurrentLocation size={22} color={theme.colors.brown[0]} />
+            </ActionIcon>
+          </Tooltip>
+          {CAN_EDIT_SPOTS && (
+            <Button
+              h="auto"
+              radius="sm"
+              autoContrast
+              leftSection={<IconPlus size={18} />}
+              onClick={confirmPlacement}
+            >
+              Add spot
+            </Button>
+          )}
+        </Group>
       </Box>
 
       <Modal
@@ -452,7 +423,8 @@ export function PhotoSpotsMap() {
             location={draftLocation}
             formId={ADD_SPOT_FORM_ID}
             onSavingChange={setIsSavingSpot}
-            onCreated={(spotId) => router.push(`/maps/${spotId}`)}
+            initialTitle={draftPlaceName ?? ""}
+            onCreated={handleSpotCreated}
           />
         )}
       </Modal>

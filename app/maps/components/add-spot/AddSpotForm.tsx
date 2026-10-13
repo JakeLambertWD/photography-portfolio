@@ -5,6 +5,7 @@ import {
   applySpotTitleCase,
   DEFAULT_SPOT_GEAR,
   DEFAULT_SPOT_STATUS,
+  formatSpotTitle,
   MAX_SPOT_PHOTOS,
   MAX_SPOT_TAGS,
   SPOT_GEAR_OPTIONS,
@@ -49,23 +50,30 @@ type DraftPhoto = {
 
 type AddSpotFormProps = {
   location: DraftLocation;
+  // Pre-fills the name, e.g. with the place the user searched for.
+  initialTitle?: string;
   formId: string;
   onSavingChange: (isSaving: boolean) => void;
   onCreated: (spotId: string) => void;
 };
 
-export function AddSpotForm({ location, formId, onSavingChange, onCreated }: AddSpotFormProps) {
+export function AddSpotForm({
+  location,
+  initialTitle = "",
+  formId,
+  onSavingChange,
+  onCreated,
+}: AddSpotFormProps) {
   const sortedTags = useSortedSpotTags();
   const utils = api.useUtils();
   const createSpot = api.spots.create.useMutation();
 
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(() => formatSpotTitle(initialTitle));
   const [titleError, setTitleError] = useState<string | null>(null);
   const [postcode, setPostcode] = useState("");
   const [status, setStatus] = useState<SpotStatus>(DEFAULT_SPOT_STATUS);
   const [gear, setGear] = useState<SpotGear>(DEFAULT_SPOT_GEAR);
   const [tags, setTags] = useState<string[]>([]);
-  const [notes, setNotes] = useState("");
   const [photos, setPhotos] = useState<DraftPhoto[]>([]);
   const [progress, setProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -160,7 +168,8 @@ export function AddSpotForm({ location, formId, onSavingChange, onCreated }: Add
 
       const { id } = await createSpot.mutateAsync({
         title,
-        notes,
+        // Notes are added from the spot page, so new spots start without any.
+        notes: "",
         postcode,
         latitude: location.latitude,
         longitude: location.longitude,
@@ -219,16 +228,6 @@ export function AddSpotForm({ location, formId, onSavingChange, onCreated }: Add
           value={tags}
           onChange={setTags}
           maxValues={MAX_SPOT_TAGS}
-        />
-
-        <Textarea
-          size="md"
-          label="Spot notes"
-          value={notes}
-          onChange={(event) => setNotes(event.currentTarget.value)}
-          autosize
-          minRows={2}
-          maxLength={2000}
         />
 
         <Input.Wrapper
