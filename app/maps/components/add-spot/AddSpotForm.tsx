@@ -30,6 +30,7 @@ import {
 } from "@mantine/core";
 import { IconMapPin, IconPhotoPlus, IconTrash } from "@tabler/icons-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { SpotFormStatus } from "./SpotFormModalTitle";
 import { SpotToggle } from "./SpotToggle";
 import { WeatherPill } from "./WeatherPill";
 import { useSortedSpotTags } from "./useSortedSpotTags";
@@ -48,11 +49,12 @@ type DraftPhoto = {
 
 type AddSpotFormProps = {
   location: DraftLocation;
-  onCancel: () => void;
+  formId: string;
+  onSavingChange: (isSaving: boolean) => void;
   onCreated: (spotId: string) => void;
 };
 
-export function AddSpotForm({ location, onCancel, onCreated }: AddSpotFormProps) {
+export function AddSpotForm({ location, formId, onSavingChange, onCreated }: AddSpotFormProps) {
   const sortedTags = useSortedSpotTags();
   const utils = api.useUtils();
   const createSpot = api.spots.create.useMutation();
@@ -69,6 +71,9 @@ export function AddSpotForm({ location, onCancel, onCreated }: AddSpotFormProps)
   const [error, setError] = useState<string | null>(null);
 
   const isSaving = progress !== null;
+
+  // The Save button lives in the modal header, so it needs to know when we're saving.
+  useEffect(() => onSavingChange(isSaving), [isSaving, onSavingChange]);
 
   // Fill in the nearest postcode to wherever the pin was dropped.
   useEffect(() => {
@@ -174,8 +179,10 @@ export function AddSpotForm({ location, onCancel, onCreated }: AddSpotFormProps)
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ height: "100%" }}>
-      <Stack gap="md" h="100%">
+    <form id={formId} onSubmit={handleSubmit}>
+      <Stack gap="md">
+        <SpotFormStatus progress={progress} error={error} />
+
         {postcode && (
           <Group gap="xs" wrap="nowrap" c="dimmed">
             <IconMapPin size={16} aria-hidden />
@@ -293,26 +300,6 @@ export function AddSpotForm({ location, onCancel, onCreated }: AddSpotFormProps)
             </FileButton>
           </Stack>
         </Input.Wrapper>
-
-        {error && (
-          <Text fz="sm" c="red.5" role="alert">
-            {error}
-          </Text>
-        )}
-
-        <Group justify="flex-end" gap="sm" mt="auto">
-          {progress && (
-            <Text fz="sm" c="dimmed" mr="auto" aria-live="polite">
-              {progress}
-            </Text>
-          )}
-          <Button h={56} radius="sm" variant="default" onClick={onCancel} disabled={isSaving}>
-            Cancel
-          </Button>
-          <Button h={56} radius="sm" type="submit" autoContrast loading={isSaving}>
-            Save spot
-          </Button>
-        </Group>
       </Stack>
     </form>
   );

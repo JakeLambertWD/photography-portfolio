@@ -16,26 +16,33 @@ import { getPhotoUploadErrorMessage } from "@/lib/upload-spot-photo";
 import type { SpotDetail } from "@/server/routers/spots";
 import {
   ActionIcon,
-  Button,
   Group,
   Image,
   Input,
   Modal,
   MultiSelect,
   Stack,
-  Text,
   TextInput,
 } from "@mantine/core";
 import { IconPencil, IconTrash } from "@tabler/icons-react";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import {
+  SPOT_FORM_MODAL_TITLE_STYLES,
+  SpotFormModalTitle,
+  SpotFormStatus,
+} from "@/app/maps/components/add-spot/SpotFormModalTitle";
 
 type EditSpotButtonProps = {
   spot: SpotDetail;
 };
 
-type EditSpotFormProps = EditSpotButtonProps & { onDone: () => void };
+type EditSpotFormProps = EditSpotButtonProps & {
+  formId: string;
+  onSavingChange: (isSaving: boolean) => void;
+  onDone: () => void;
+};
 
-function EditSpotForm({ spot, onDone }: EditSpotFormProps) {
+function EditSpotForm({ spot, formId, onSavingChange, onDone }: EditSpotFormProps) {
   const utils = api.useUtils();
   const updateSpot = api.spots.update.useMutation();
   const deletePhoto = api.spots.deletePhoto.useMutation();
@@ -53,6 +60,9 @@ function EditSpotForm({ spot, onDone }: EditSpotFormProps) {
   const [error, setError] = useState<string | null>(null);
 
   const isSaving = progress !== null;
+
+  // The Save button lives in the modal header, so it needs to know when we're saving.
+  useEffect(() => onSavingChange(isSaving), [isSaving, onSavingChange]);
 
   function removePhoto(id: string) {
     setPhotos((current) => current.filter((photo) => photo.id !== id));
@@ -100,8 +110,10 @@ function EditSpotForm({ spot, onDone }: EditSpotFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ height: "100%" }}>
-      <Stack gap="md" h="100%" pb="sm">
+    <form id={formId} onSubmit={handleSubmit}>
+      <Stack gap="md" pb="sm">
+        <SpotFormStatus progress={progress} error={error} />
+
         <TextInput
           size="md"
           label="Name"
@@ -169,33 +181,16 @@ function EditSpotForm({ spot, onDone }: EditSpotFormProps) {
               </Input.Wrapper>
             ),
         )}
-
-        {error && (
-          <Text fz="sm" c="red.5" role="alert">
-            {error}
-          </Text>
-        )}
-
-        <Group justify="flex-end" gap="sm" mt="auto">
-          {progress && (
-            <Text fz="sm" c="dimmed" mr="auto" aria-live="polite">
-              {progress}
-            </Text>
-          )}
-          <Button h={56} radius="sm" variant="default" onClick={onDone} disabled={isSaving}>
-            Cancel
-          </Button>
-          <Button h={56} radius="sm" type="submit" autoContrast loading={isSaving}>
-            Save changes
-          </Button>
-        </Group>
       </Stack>
     </form>
   );
 }
 
+const EDIT_SPOT_FORM_ID = "edit-spot-form";
+
 export function EditSpotButton({ spot }: EditSpotButtonProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   return (
     <>
@@ -212,7 +207,9 @@ export function EditSpotButton({ spot }: EditSpotButtonProps) {
       <Modal
         opened={isEditing}
         onClose={() => setIsEditing(false)}
-        title="Edit spot"
+        title={
+          <SpotFormModalTitle title="Edit spot" formId={EDIT_SPOT_FORM_ID} isSaving={isSaving} />
+        }
         yOffset="var(--mantine-spacing-lg)"
         styles={{
           content: {
@@ -220,10 +217,18 @@ export function EditSpotButton({ spot }: EditSpotButtonProps) {
             display: "flex",
             flexDirection: "column",
           },
+          title: SPOT_FORM_MODAL_TITLE_STYLES,
           body: { flex: 1, minHeight: 0, overflowY: "auto" },
         }}
       >
-        {isEditing && <EditSpotForm spot={spot} onDone={() => setIsEditing(false)} />}
+        {isEditing && (
+          <EditSpotForm
+            spot={spot}
+            formId={EDIT_SPOT_FORM_ID}
+            onSavingChange={setIsSaving}
+            onDone={() => setIsEditing(false)}
+          />
+        )}
       </Modal>
     </>
   );

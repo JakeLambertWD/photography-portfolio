@@ -27,6 +27,7 @@ import MapGL, { AttributionControl, Marker, type MapRef } from "react-map-gl/map
 import Supercluster from "supercluster";
 import { AddSpotForm, type DraftLocation } from "./add-spot/AddSpotForm";
 import { PlacementCrosshair } from "./add-spot/PlacementCrosshair";
+import { SPOT_FORM_MODAL_TITLE_STYLES, SpotFormModalTitle } from "./add-spot/SpotFormModalTitle";
 import { ClusterMarker } from "./ClusterMarker";
 import {
   CLUSTER_MAX_ZOOM,
@@ -42,6 +43,8 @@ import {
 import { PlaceSearch } from "./PlaceSearch";
 import { PLACE_ZOOM } from "./PlaceSearch.constants";
 import { SearchedPlaceMarker } from "./SearchedPlaceMarker";
+
+const ADD_SPOT_FORM_ID = "add-spot-form";
 import { SpotMarker } from "./SpotMarker";
 
 type Bounds = [west: number, south: number, east: number, north: number];
@@ -83,6 +86,7 @@ export function PhotoSpotsMap() {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [addSpotStep, setAddSpotStep] = useState<AddSpotStep>("closed");
   const [draftLocation, setDraftLocation] = useState<DraftLocation | null>(null);
+  const [isSavingSpot, setIsSavingSpot] = useState(false);
   const isPlacing = addSpotStep === "placing";
 
   const spots = useMemo(() => spotsQuery.data ?? [], [spotsQuery.data]);
@@ -427,7 +431,9 @@ export function PhotoSpotsMap() {
       <Modal
         opened={addSpotStep === "details" && draftLocation !== null}
         onClose={closeAddSpot}
-        title="New spot"
+        title={
+          <SpotFormModalTitle title="New spot" formId={ADD_SPOT_FORM_ID} isSaving={isSavingSpot} />
+        }
         size="lg"
         yOffset="var(--mantine-spacing-lg)"
         styles={{
@@ -436,6 +442,7 @@ export function PhotoSpotsMap() {
             display: "flex",
             flexDirection: "column",
           },
+          title: SPOT_FORM_MODAL_TITLE_STYLES,
           body: { flex: 1, minHeight: 0, overflowY: "auto" },
         }}
         closeOnClickOutside={false}
@@ -443,7 +450,8 @@ export function PhotoSpotsMap() {
         {draftLocation && (
           <AddSpotForm
             location={draftLocation}
-            onCancel={closeAddSpot}
+            formId={ADD_SPOT_FORM_ID}
+            onSavingChange={setIsSavingSpot}
             onCreated={(spotId) => router.push(`/maps/${spotId}`)}
           />
         )}
