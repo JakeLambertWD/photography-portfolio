@@ -4,6 +4,7 @@ import { Button, Menu } from "@mantine/core";
 import {
   IconAdjustments,
   IconBulb,
+  IconCameraSelfie,
   IconCheck,
   IconChevronDown,
   IconClipboardCheck,
@@ -16,6 +17,7 @@ import { CONTENT_TABS, type ContentTabId } from "./SpotContentTabs.constants";
 
 const TAB_ICONS: Record<ContentTabId, typeof IconPhoto> = {
   showcase: IconPhoto,
+  creator: IconCameraSelfie,
   editing: IconAdjustments,
   bts: IconVideo,
   educational: IconBulb,

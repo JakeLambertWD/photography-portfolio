@@ -1,5 +1,5 @@
 export type ContentTabId =
-  "showcase" | "editing" | "bts" | "educational" | "technique" | "pov" | "shoot-day";
+  "showcase" | "creator" | "editing" | "bts" | "educational" | "technique" | "pov" | "shoot-day";
 
 export type ContentTabConfig = {
   id: ContentTabId;
@@ -28,6 +28,18 @@ export const CONTENT_TABS = [
       "Goes out first, as the anchor post for this spot.",
     ],
     captureOnDay: ["The hero compositions, each empty, with a figure, and with a train."],
+  },
+  {
+    id: "creator",
+    label: "Creator Shots",
+    type: "Cover Shot",
+    title: "Creator shots",
+    summary: "You or your camera in frame, with a bold title over the top.",
+    description: [
+      "A cover-style shot with you, your phone or your camera in the frame, e.g. a mirror selfie or a top-down shot of the camera in hand.",
+      "Leave space at the top for a big title like the lens, phone or location.",
+    ],
+    captureOnDay: ["A creator shot with you or your camera in frame and space above for a title."],
   },
   {
     id: "editing",
@@ -182,6 +194,7 @@ export const CONTENT_TABS = [
       "The hero compositions, each empty, with a figure, and with a train.",
       "1–2 held-back compositions for the editing carousel.",
       "The cover portrait, with space above your head for text.",
+      "A creator shot with you or your camera in frame and space above for a title.",
       "A 15–20 minute phone video pass for the BTS and educational reels.",
       "2–3 takes of the 1 clip shot, filmed side-on and low.",
       "Trial reel clips filmed with the phone held at eye level next to your camera, or on a chest mount (one walk-in, one setup, and one shutter moment at each hero spot).",

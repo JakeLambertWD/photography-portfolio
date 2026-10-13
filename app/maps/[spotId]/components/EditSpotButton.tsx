@@ -54,6 +54,7 @@ function EditSpotForm({ spot, formId, onSavingChange, onDone }: EditSpotFormProp
   const [tags, setTags] = useState<string[]>(spot.tags);
   const sortedTags = useSortedSpotTags(spot.tags);
   const [photos, setPhotos] = useState(spot.photos);
+  const [creatorPhotos, setCreatorPhotos] = useState(spot.creatorPhotos);
   const [editingPhotos, setEditingPhotos] = useState(spot.editingPhotos);
   const [titleError, setTitleError] = useState<string | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
@@ -66,6 +67,7 @@ function EditSpotForm({ spot, formId, onSavingChange, onDone }: EditSpotFormProp
 
   function removePhoto(id: string) {
     setPhotos((current) => current.filter((photo) => photo.id !== id));
+    setCreatorPhotos((current) => current.filter((photo) => photo.id !== id));
     setEditingPhotos((current) => current.filter((photo) => photo.id !== id));
   }
 
@@ -92,8 +94,10 @@ function EditSpotForm({ spot, formId, onSavingChange, onDone }: EditSpotFormProp
         notes: spot.notes ?? "",
       });
 
-      const keptIds = new Set([...photos, ...editingPhotos].map((photo) => photo.id));
-      const removed = [...spot.photos, ...spot.editingPhotos].filter(
+      const keptIds = new Set(
+        [...photos, ...creatorPhotos, ...editingPhotos].map((photo) => photo.id),
+      );
+      const removed = [...spot.photos, ...spot.creatorPhotos, ...spot.editingPhotos].filter(
         (photo) => !keptIds.has(photo.id),
       );
       for (const photo of removed) await deletePhoto.mutateAsync({ photoId: photo.id });
@@ -148,6 +152,7 @@ function EditSpotForm({ spot, formId, onSavingChange, onDone }: EditSpotFormProp
         {(
           [
             ["Showcase photos", photos],
+            ["Creator shots", creatorPhotos],
             ["Editing photos", editingPhotos],
           ] as const
         ).map(
@@ -169,7 +174,7 @@ function EditSpotForm({ spot, formId, onSavingChange, onDone }: EditSpotFormProp
                         variant="transparent"
                         color="red.5"
                         size={44}
-                        aria-label={`Remove ${label.toLowerCase().replace("photos", "photo")} ${index + 1}`}
+                        aria-label={`Remove ${label.toLowerCase().replace(/s$/, "")} ${index + 1}`}
                         onClick={() => removePhoto(photo.id)}
                         disabled={isSaving}
                       >

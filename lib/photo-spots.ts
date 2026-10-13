@@ -17,7 +17,7 @@ export const SPOT_PHOTO_ALLOWED_TYPES = [
 export const MAX_SPOT_PHOTOS = 10;
 export const MAX_SPOT_TAGS = 8;
 
-export const PHOTO_KINDS = ["showcase", "editing"] as const;
+export const PHOTO_KINDS = ["showcase", "creator", "editing"] as const;
 export type PhotoKind = (typeof PHOTO_KINDS)[number];
 
 export const SPOT_STATUSES = ["planning", "ready_to_shoot"] as const;

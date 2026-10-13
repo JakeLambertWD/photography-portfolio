@@ -134,6 +134,15 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
           </SpotPhotoTab>
         </Tabs.Panel>
 
+        <Tabs.Panel value="creator">
+          <SpotPhotoTab
+            spot={spot}
+            photos={spot.creatorPhotos}
+            kind="creator"
+            labels={spotLabels}
+          />
+        </Tabs.Panel>
+
         <Tabs.Panel value="editing">
           <SpotPhotoTab spot={spot} photos={spot.editingPhotos} kind="editing" labels={spotLabels}>
             <EditingNotes spotId={spot.id} notes={spot.editingNotes ?? null} />

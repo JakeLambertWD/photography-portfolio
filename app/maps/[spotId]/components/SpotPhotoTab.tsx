@@ -19,7 +19,7 @@ type SpotPhotoTabProps = {
   children?: ReactNode;
 };
 
-// A photo carousel with a note per photo. Used by the Showcase and Editing tabs.
+// A photo carousel with a note per photo. Used by the Showcase, Creator Shots and Editing tabs.
 export function SpotPhotoTab({ spot, photos, kind, labels, children }: SpotPhotoTabProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [progress, setProgress] = useState<string | null>(null);

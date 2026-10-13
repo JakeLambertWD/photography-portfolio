@@ -1,7 +1,7 @@
 "use client";
 
 import { api } from "@/app/providers";
-import { MAX_SPOT_PHOTOS } from "@/lib/photo-spots";
+import { MAX_SPOT_PHOTOS, type PhotoKind } from "@/lib/photo-spots";
 import { getPhotoUploadErrorMessage, uploadSpotPhoto } from "@/lib/upload-spot-photo";
 import { FileButton, Loader, UnstyledButton, useMantineTheme } from "@mantine/core";
 import { IconPlus } from "@tabler/icons-react";
@@ -11,7 +11,7 @@ type AddPhotosTileProps = {
   spotId: string;
   spotTitle: string;
   photoCount: number;
-  kind?: "showcase" | "editing";
+  kind?: PhotoKind;
   onProgress: (message: string | null) => void;
   onError: (message: string | null) => void;
   // Called with the index of the first new photo once they're saved.

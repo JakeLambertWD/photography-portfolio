@@ -38,6 +38,7 @@ const spotDetailSchema = spotSummarySchema.omit({ coverImageUrl: true, photoCoun
   notes: z.string().nullable(),
   editingNotes: z.string().nullable().optional(),
   photos: z.array(spotPhotoSchema),
+  creatorPhotos: z.array(spotPhotoSchema).default([]),
   editingPhotos: z.array(spotPhotoSchema).default([]),
 });
 
@@ -153,11 +154,13 @@ export const spotsRouter = router({
     }
 
     const photos = photoRows.filter((p) => (p.kind || "showcase") === "showcase");
+    const creatorPhotos = photoRows.filter((p) => p.kind === "creator");
     const editingPhotos = photoRows.filter((p) => p.kind === "editing");
 
     return spotDetailSchema.parse({
       ...spotRows[0],
       photos,
+      creatorPhotos,
       editingPhotos,
     });
   }),
