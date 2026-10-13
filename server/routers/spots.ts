@@ -239,7 +239,8 @@ export const spotsRouter = router({
       throw new TRPCError({ code: "NOT_FOUND", message: "Spot not found." });
     }
 
-    await deleteSpotPhotoFiles(photoRows.map((row) => String(row.imageUrl)));
+    // The same file can appear in more than one tab, so delete each one once.
+    await deleteSpotPhotoFiles([...new Set(photoRows.map((row) => String(row.imageUrl)))]);
   }),
 
   update: publicProcedure
@@ -351,7 +352,13 @@ export const spotsRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Photo not found." });
       }
 
-      await deleteSpotPhotoFiles([String(rows[0].imageUrl)]);
+      // A Showcase photo can also be used in the Editing tab, so keep the file while it's in use.
+      const imageUrl = String(rows[0].imageUrl);
+      const [{ stillUsed }] = await db`
+        select exists (select 1 from photo_spot_image where image_url = ${imageUrl}) as "stillUsed"
+      `;
+
+      if (!stillUsed) await deleteSpotPhotoFiles([imageUrl]);
     }),
 
   // The first photo is the map pin, so moving a photo to the front makes it the cover.

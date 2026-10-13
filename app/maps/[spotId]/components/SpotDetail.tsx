@@ -30,15 +30,13 @@ import {
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { useState } from "react";
-import { AddPhotosTile } from "./AddPhotosTile";
 import { ContentGuidePanel } from "./ContentGuidePanel";
 import { DeleteSpotButton } from "./DeleteSpotButton";
 import { EditSpotButton } from "./EditSpotButton";
-import { EditingTabPanel } from "./EditingTabPanel";
-import { PhotoCaption } from "./PhotoCaption";
+import { EditingNotes } from "./EditingNotes";
 import { CONTENT_TABS, type ContentTabId } from "./SpotContentTabs.constants";
 import { getDirectionsUrl } from "./SpotDetail.constants";
-import { SpotPhotoCarousel } from "./SpotPhotoCarousel";
+import { SpotPhotoTab } from "./SpotPhotoTab";
 
 const TAB_ICONS: Record<ContentTabId, typeof IconPhoto> = {
   showcase: IconPhoto,
@@ -56,9 +54,6 @@ type SpotDetailProps = {
 
 export function SpotDetail({ spotId }: SpotDetailProps) {
   const [activeTab, setActiveTab] = useState<string>("showcase");
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [progress, setProgress] = useState<string | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const spotQuery = api.spots.byId.useQuery({ id: spotId }, { retry: false });
 
@@ -88,9 +83,6 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
   }
 
   const spot = spotQuery.data;
-  // A photo may have just been removed, so never point past the end of the list.
-  const photoIndex = Math.max(0, Math.min(activeIndex, spot.photos.length - 1));
-  const activePhoto = spot.photos[photoIndex];
 
   const statusBadge = (
     <Badge
@@ -177,65 +169,7 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
         </Tabs.List>
 
         <Tabs.Panel value="showcase">
-          {spot.photos.length > 0 ? (
-            <>
-              <SpotPhotoCarousel
-                photos={spot.photos}
-                tags={spot.tags}
-                tagsLeading={spotLabels}
-                activeIndex={photoIndex}
-                onActiveIndexChange={setActiveIndex}
-                extraThumbnail={
-                  CAN_EDIT_SPOTS && (
-                    <AddPhotosTile
-                      spotId={spot.id}
-                      spotTitle={spot.title}
-                      photoCount={spot.photos.length}
-                      onProgress={setProgress}
-                      onError={setUploadError}
-                      onAdded={setActiveIndex}
-                    />
-                  )
-                }
-              />
-              {(progress || uploadError) && (
-                <Text
-                  fz="sm"
-                  px="md"
-                  c={uploadError ? "red.5" : "brown.1"}
-                  role={uploadError ? "alert" : "status"}
-                >
-                  {uploadError ?? progress}
-                </Text>
-              )}
-            </>
-          ) : (
-            <>
-              <Center h={200} bg="brown.7" c="brown.1" fz="sm">
-                No photos yet
-              </Center>
-            </>
-          )}
-
-          <Stack gap="lg" px="md" pt="sm">
-            {spot.photos.length === 0 && (
-              <Group gap="sm" wrap="nowrap" fz="xl">
-                {spotLabels}
-              </Group>
-            )}
-
-            {activePhoto && (
-              <Stack gap="xs">
-                <PhotoCaption
-                  key={activePhoto.id}
-                  spotId={spot.id}
-                  photoId={activePhoto.id}
-                  photoIndex={photoIndex}
-                  caption={activePhoto.caption}
-                />
-              </Stack>
-            )}
-
+          <SpotPhotoTab spot={spot} photos={spot.photos} kind="showcase" labels={spotLabels}>
             {spot.notes && (
               <Stack gap="xs" component="section">
                 <Text component="h2" ff="monospace" fz="xs" c="brown.1" tt="uppercase" lts="0.08em">
@@ -244,11 +178,13 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
                 <Text c="brown.0">{spot.notes}</Text>
               </Stack>
             )}
-          </Stack>
+          </SpotPhotoTab>
         </Tabs.Panel>
 
         <Tabs.Panel value="editing">
-          <EditingTabPanel spot={spot} />
+          <SpotPhotoTab spot={spot} photos={spot.editingPhotos} kind="editing" labels={spotLabels}>
+            <EditingNotes spotId={spot.id} notes={spot.editingNotes ?? null} />
+          </SpotPhotoTab>
         </Tabs.Panel>
 
         {CONTENT_TABS.filter((tab) => tab.id !== "showcase" && tab.id !== "editing").map((tab) => (
