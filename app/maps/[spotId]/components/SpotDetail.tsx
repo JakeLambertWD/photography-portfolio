@@ -1,12 +1,7 @@
 "use client";
 
 import { api } from "@/app/providers";
-import {
-  CAN_EDIT_SPOTS,
-  getSpotGearOption,
-  getSpotStatusLabel,
-  REEL_KINDS,
-} from "@/lib/photo-spots";
+import { getSpotGearOption, getSpotStatusLabel, REEL_KINDS } from "@/lib/photo-spots";
 import {
   ActionIcon,
   Badge,
@@ -22,44 +17,23 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import {
-  IconAdjustments,
-  IconBulb,
-  IconChevronLeft,
-  IconClipboardCheck,
-  IconEye,
-  IconNavigation,
-  IconPhoto,
-  IconSparkles,
-  IconVideo,
-} from "@tabler/icons-react";
+import { IconChevronLeft } from "@tabler/icons-react";
 import Link from "next/link";
 import { useState } from "react";
 import { ContentGuidePanel } from "./ContentGuidePanel";
 import { ReelsPanel } from "./reels/ReelsPanel";
-import { DeleteSpotButton } from "./DeleteSpotButton";
-import { EditSpotButton } from "./EditSpotButton";
+import { ContentTabMenu } from "./ContentTabMenu";
 import { EditingNotes } from "./EditingNotes";
 import { CONTENT_TABS, type ContentTabId } from "./SpotContentTabs.constants";
-import { getDirectionsUrl } from "./SpotDetail.constants";
+import { SpotActions } from "./SpotActions";
 import { SpotPhotoTab } from "./SpotPhotoTab";
-
-const TAB_ICONS: Record<ContentTabId, typeof IconPhoto> = {
-  showcase: IconPhoto,
-  editing: IconAdjustments,
-  bts: IconVideo,
-  educational: IconBulb,
-  technique: IconSparkles,
-  pov: IconEye,
-  "shoot-day": IconClipboardCheck,
-};
 
 type SpotDetailProps = {
   spotId: string;
 };
 
 export function SpotDetail({ spotId }: SpotDetailProps) {
-  const [activeTab, setActiveTab] = useState<string>("showcase");
+  const [activeTab, setActiveTab] = useState<ContentTabId>("showcase");
 
   const spotQuery = api.spots.byId.useQuery({ id: spotId }, { retry: false });
 
@@ -137,43 +111,16 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
             </Text>
           )}
         </Flex>
-        {CAN_EDIT_SPOTS ? <EditSpotButton spot={spot} /> : <Box w={44} />}
+        <Box w={44} />
       </Group>
 
-      <Tabs
-        value={activeTab}
-        onChange={(val) => val && setActiveTab(val)}
-        variant="pills"
-        color="yellow"
-        styles={{
-          list: {
-            flexWrap: "nowrap",
-            overflowX: "auto",
-            scrollbarWidth: "none",
-            paddingLeft: "var(--mantine-spacing-xs)",
-            paddingRight: "var(--mantine-spacing-xs)",
-            paddingBottom: "var(--mantine-spacing-xs)",
-            gap: "var(--mantine-spacing-xs)",
-          },
-          tab: {
-            flexShrink: 0,
-            fontWeight: 500,
-            fontSize: "var(--mantine-font-size-xs)",
-            borderRadius: "var(--mantine-radius-sm)",
-          },
-        }}
-      >
-        <Tabs.List>
-          {CONTENT_TABS.map((tab) => {
-            const Icon = TAB_ICONS[tab.id];
-            return (
-              <Tabs.Tab key={tab.id} value={tab.id} leftSection={<Icon size={14} />}>
-                {tab.label}
-              </Tabs.Tab>
-            );
-          })}
-        </Tabs.List>
+      {/* Content type picker on the left, spot actions grouped on the right. */}
+      <Group justify="space-between" wrap="nowrap" px="xs" mb="sm">
+        <ContentTabMenu value={activeTab} onChange={setActiveTab} />
+        <SpotActions spot={spot} />
+      </Group>
 
+      <Tabs value={activeTab}>
         <Tabs.Panel value="showcase">
           <SpotPhotoTab spot={spot} photos={spot.photos} kind="showcase" labels={spotLabels}>
             {spot.notes && (
@@ -206,39 +153,6 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
           </Tabs.Panel>
         ))}
       </Tabs>
-
-      <Group
-        pos="fixed"
-        bottom="var(--mantine-spacing-sm)"
-        left={0}
-        right={0}
-        maw="30rem"
-        mx="auto"
-        px="xs"
-        wrap="nowrap"
-        justify="space-between"
-        style={{ pointerEvents: "none" }}
-      >
-        {CAN_EDIT_SPOTS && (
-          <Box style={{ pointerEvents: "auto" }}>
-            <DeleteSpotButton spotId={spot.id} title={spot.title} photoCount={spot.photos.length} />
-          </Box>
-        )}
-        <ActionIcon
-          component="a"
-          href={getDirectionsUrl(spot.latitude, spot.longitude)}
-          target="_blank"
-          rel="noreferrer"
-          aria-label="Directions"
-          variant="transparent"
-          color="blue.4"
-          size={44}
-          ml="auto"
-          style={{ pointerEvents: "auto" }}
-        >
-          <IconNavigation size={20} />
-        </ActionIcon>
-      </Group>
     </Container>
   );
 }

@@ -202,7 +202,7 @@ export function EditSpotButton({ spot }: EditSpotButtonProps) {
         aria-label="Edit spot details"
         variant="subtle"
         color="brown.0"
-        size={44}
+        size={40}
         onClick={() => setIsEditing(true)}
       >
         <IconPencil size={20} />
