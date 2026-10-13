@@ -35,7 +35,7 @@ tRPC spots router (server/routers/spots.ts)
    group zooms in until it splits. It's loaded with `next/dynamic` and
    `ssr: false` because MapLibre needs `window`.
 5. **app/maps/[spotId]/components/** holds the spot view: a tab system covering the
-   content pieces shot at this location (Showcase carousel, Creator shots, Editing carousel,
+   content pieces shot at this location (Showcase carousels, Creator shots, Editing carousel,
    BTS reel, Educational reel, 1 Clip reel, Trial Reels, and
    Shoot Day checklist & posting schedule), with a scroll-snap photo carousel, inline
    caption editing, weather tags, spot notes, and directions.

@@ -34,10 +34,21 @@ const spotPhotoSchema = z.object({
   kind: z.enum(PHOTO_KINDS).default("showcase"),
 });
 
+// A named set of Showcase photos. id is null for a spot that has no carousel saved yet.
+const spotCarouselSchema = z.object({
+  id: z.string().nullable(),
+  title: z.string(),
+  photos: z.array(spotPhotoSchema),
+});
+
+export type SpotCarousel = z.infer<typeof spotCarouselSchema>;
+
 const spotDetailSchema = spotSummarySchema.omit({ coverImageUrl: true, photoCount: true }).extend({
   notes: z.string().nullable(),
   editingNotes: z.string().nullable().optional(),
+  // Every Showcase photo, carousel by carousel.
   photos: z.array(spotPhotoSchema),
+  carousels: z.array(spotCarouselSchema),
   creatorPhotos: z.array(spotPhotoSchema).default([]),
   editingPhotos: z.array(spotPhotoSchema).default([]),
 });
@@ -89,7 +100,55 @@ export function assertCanEdit() {
 }
 
 // Only files uploaded through the app live in Vercel Blob (not e.g. images in /public).
-async function deleteSpotPhotoFiles(imageUrls: string[]) {
+// Puts each Showcase photo in its carousel. Photos without one go in the first carousel,
+// which is a placeholder "Carousel 1" (id null) if the spot has none saved yet.
+function groupIntoCarousels(
+  carouselRows: { id: string; title: string }[],
+  photoRows: Record<string, unknown>[],
+) {
+  const carousels: { id: string | null; title: string; photos: Record<string, unknown>[] }[] =
+    carouselRows.map((row) => ({ id: row.id, title: row.title, photos: [] }));
+  if (carousels.length === 0) carousels.push({ id: null, title: "Carousel 1", photos: [] });
+
+  for (const photo of photoRows) {
+    const carousel = carousels.find((c) => c.id && c.id === photo.carouselId) ?? carousels[0];
+    carousel.photos.push(photo);
+  }
+
+  return carousels;
+}
+
+// Checks the carousel belongs to the spot, or falls back to the spot's first carousel,
+// creating "Carousel 1" if it has none yet.
+async function resolveCarouselId(spotId: string, carouselId?: string | null) {
+  const db = getSql();
+
+  if (carouselId) {
+    const rows = await db`
+      select id from photo_spot_carousel where id = ${carouselId} and spot_id = ${spotId}
+    `;
+    if (!rows[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Carousel not found." });
+    return carouselId;
+  }
+
+  const [first] = await db`
+    select id from photo_spot_carousel
+    where spot_id = ${spotId}
+    order by position, created_at
+    limit 1
+  `;
+  if (first) return String(first.id);
+
+  const [created] = await db`
+    insert into photo_spot_carousel (spot_id, title, position)
+    select id, 'Carousel 1', 0 from photo_spot where id = ${spotId}
+    returning id
+  `;
+  if (!created) throw new TRPCError({ code: "NOT_FOUND", message: "Spot not found." });
+  return String(created.id);
+}
+
+export async function deleteSpotPhotoFiles(imageUrls: string[]) {
   const blobUrls = imageUrls.filter((url) => isSpotPhotoUrl(url));
   if (blobUrls.length === 0 || !process.env.BLOB_READ_WRITE_TOKEN) return;
 
@@ -135,17 +194,24 @@ export const spotsRouter = router({
   byId: publicProcedure.input(z.object({ id: z.uuid() })).query(async ({ input }) => {
     const db = getSql();
 
-    const [spotRows, photoRows] = await Promise.all([
+    const [spotRows, photoRows, carouselRows] = await Promise.all([
       db`
         select id, title, notes, editing_notes as "editingNotes", postcode, latitude, longitude, status, gear, tags
         from photo_spot
         where id = ${input.id}
       `,
       db`
-        select id, image_url as "imageUrl", caption, position, coalesce(kind, 'showcase') as "kind"
+        select id, image_url as "imageUrl", caption, position, coalesce(kind, 'showcase') as "kind",
+          carousel_id as "carouselId"
         from photo_spot_image
         where spot_id = ${input.id}
         order by position
+      `,
+      db`
+        select id, title
+        from photo_spot_carousel
+        where spot_id = ${input.id}
+        order by position, created_at
       `,
     ]);
 
@@ -153,13 +219,18 @@ export const spotsRouter = router({
       throw new TRPCError({ code: "NOT_FOUND", message: "Spot not found." });
     }
 
-    const photos = photoRows.filter((p) => (p.kind || "showcase") === "showcase");
+    const carousels = groupIntoCarousels(
+      carouselRows as { id: string; title: string }[],
+      photoRows.filter((p) => (p.kind || "showcase") === "showcase"),
+    );
+    const photos = carousels.flatMap((carousel) => carousel.photos);
     const creatorPhotos = photoRows.filter((p) => p.kind === "creator");
     const editingPhotos = photoRows.filter((p) => p.kind === "editing");
 
     return spotDetailSchema.parse({
       ...spotRows[0],
       photos,
+      carousels,
       creatorPhotos,
       editingPhotos,
     });
@@ -205,10 +276,16 @@ export const spotsRouter = router({
       )
     `;
 
+    const carouselId = crypto.randomUUID();
+    const insertCarousel = db`
+      insert into photo_spot_carousel (id, spot_id, title, position)
+      values (${carouselId}, ${id}, 'Carousel 1', 0)
+    `;
+
     // unnest turns the three arrays into one row per photo, keeping the order they were added in.
     const insertPhotos = db`
-      insert into photo_spot_image (spot_id, image_url, caption, position)
-      select ${id}, photo.image_url, nullif(photo.caption, ''), photo.position
+      insert into photo_spot_image (spot_id, image_url, caption, position, carousel_id)
+      select ${id}, photo.image_url, nullif(photo.caption, ''), photo.position, ${carouselId}
       from unnest(
         ${input.photos.map((photo) => photo.imageUrl)}::text[],
         ${input.photos.map((photo) => photo.caption)}::text[],
@@ -216,7 +293,11 @@ export const spotsRouter = router({
       ) as photo(image_url, caption, position)
     `;
 
-    await db.transaction(input.photos.length > 0 ? [insertSpot, insertPhotos] : [insertSpot]);
+    await db.transaction(
+      input.photos.length > 0
+        ? [insertSpot, insertCarousel, insertPhotos]
+        : [insertSpot, insertCarousel],
+    );
 
     return { id };
   }),
@@ -276,28 +357,42 @@ export const spotsRouter = router({
         spotId: z.uuid(),
         photos: z.array(spotPhotoInputSchema).min(1).max(MAX_SPOT_PHOTOS),
         kind: z.enum(PHOTO_KINDS).default("showcase"),
+        // Showcase only: the carousel to add to. Left out, the spot's first carousel is used.
+        carouselId: z.uuid().nullish(),
       }),
     )
     .mutation(async ({ input }) => {
       assertCanEdit();
       const db = getSql();
 
-      const [{ photoCount }] = await db`
-        select count(*)::int as "photoCount"
-        from photo_spot_image
-        where spot_id = ${input.spotId} and coalesce(kind, 'showcase') = ${input.kind}
-      `;
+      const carouselId =
+        input.kind === "showcase" ? await resolveCarouselId(input.spotId, input.carouselId) : null;
+
+      // Showcase photos are limited per carousel; the other tabs per spot.
+      const [{ photoCount }] = carouselId
+        ? await db`
+            select count(*)::int as "photoCount"
+            from photo_spot_image
+            where carousel_id = ${carouselId}
+          `
+        : await db`
+            select count(*)::int as "photoCount"
+            from photo_spot_image
+            where spot_id = ${input.spotId} and coalesce(kind, 'showcase') = ${input.kind}
+          `;
 
       if (Number(photoCount) + input.photos.length > MAX_SPOT_PHOTOS) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: `A spot can have up to ${MAX_SPOT_PHOTOS} photos in this section.`,
+          message: carouselId
+            ? `A carousel can have up to ${MAX_SPOT_PHOTOS} photos.`
+            : `A spot can have up to ${MAX_SPOT_PHOTOS} photos in this section.`,
         });
       }
 
       // New photos go after the existing ones for this kind, in the order they were picked.
       const rows = await db`
-        insert into photo_spot_image (spot_id, image_url, caption, position, kind)
+        insert into photo_spot_image (spot_id, image_url, caption, position, kind, carousel_id)
         select
           spot.id,
           photo.image_url,
@@ -306,7 +401,8 @@ export const spotsRouter = router({
             (select max(position) from photo_spot_image where spot_id = spot.id and coalesce(kind, 'showcase') = ${input.kind}),
             -1
           ) + photo.ordinality::int,
-          ${input.kind}
+          ${input.kind},
+          ${carouselId}
         from photo_spot spot
         cross join unnest(
           ${input.photos.map((photo) => photo.imageUrl)}::text[],

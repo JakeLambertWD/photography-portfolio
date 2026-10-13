@@ -26,6 +26,7 @@ import { ContentTabMenu } from "./ContentTabMenu";
 import { EditingNotes } from "./EditingNotes";
 import { CONTENT_TABS, type ContentTabId } from "./SpotContentTabs.constants";
 import { SpotActions } from "./SpotActions";
+import { ShowcaseCarousels } from "./ShowcaseCarousels";
 import { SpotPhotoTab } from "./SpotPhotoTab";
 
 type SpotDetailProps = {
@@ -122,7 +123,7 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
 
       <Tabs value={activeTab}>
         <Tabs.Panel value="showcase">
-          <SpotPhotoTab spot={spot} photos={spot.photos} kind="showcase" labels={spotLabels}>
+          <ShowcaseCarousels spot={spot} labels={spotLabels}>
             {spot.notes && (
               <Stack gap="xs" component="section">
                 <Text component="h2" ff="monospace" fz="xs" c="brown.1" tt="uppercase" lts="0.08em">
@@ -131,7 +132,7 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
                 <Text c="brown.0">{spot.notes}</Text>
               </Stack>
             )}
-          </SpotPhotoTab>
+          </ShowcaseCarousels>
         </Tabs.Panel>
 
         <Tabs.Panel value="creator">

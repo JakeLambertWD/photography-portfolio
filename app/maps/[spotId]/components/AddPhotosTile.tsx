@@ -12,6 +12,7 @@ type AddPhotosTileProps = {
   spotTitle: string;
   photoCount: number;
   kind?: PhotoKind;
+  carouselId?: string | null;
   onProgress: (message: string | null) => void;
   onError: (message: string | null) => void;
   // Called with the index of the first new photo once they're saved.
@@ -23,6 +24,7 @@ export function AddPhotosTile({
   spotTitle,
   photoCount,
   kind = "showcase",
+  carouselId,
   onProgress,
   onError,
   onAdded,
@@ -50,7 +52,7 @@ export function AddPhotosTile({
       }
 
       onProgress("Saving…");
-      await addPhotos.mutateAsync({ spotId, photos, kind });
+      await addPhotos.mutateAsync({ spotId, photos, kind, carouselId });
       await Promise.all([
         utils.spots.byId.invalidate({ id: spotId }),
         utils.spots.list.invalidate(),

@@ -1,6 +1,7 @@
 import { router } from "../trpc";
 import { followerRouter } from "./follower";
 import { placesRouter } from "./places";
+import { carouselsRouter } from "./carousels";
 import { reelsRouter } from "./reels";
 import { spotsRouter } from "./spots";
 
@@ -9,6 +10,7 @@ export const appRouter = router({
   followers: followerRouter,
   places: placesRouter,
   reels: reelsRouter,
+  carousels: carouselsRouter,
   spots: spotsRouter,
 });
 

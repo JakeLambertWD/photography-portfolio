@@ -149,16 +149,18 @@ function EditSpotForm({ spot, formId, onSavingChange, onDone }: EditSpotFormProp
           maxValues={MAX_SPOT_TAGS}
         />
 
-        {(
-          [
-            ["Showcase photos", photos],
-            ["Creator shots", creatorPhotos],
-            ["Editing photos", editingPhotos],
-          ] as const
-        ).map(
+        {[
+          // One list per Showcase carousel, then the other photo tabs.
+          ...spot.carousels.map((carousel) => {
+            const ids = new Set(carousel.photos.map((photo) => photo.id));
+            return [carousel.title, photos.filter((photo) => ids.has(photo.id))] as const;
+          }),
+          ["Creator shots", creatorPhotos] as const,
+          ["Editing photos", editingPhotos] as const,
+        ].map(
           ([label, list]) =>
             list.length > 0 && (
-              <Input.Wrapper key={label} label={label}>
+              <Input.Wrapper key={`${label}-${list[0]?.id}`} label={label}>
                 <Stack gap="sm" mt="xs">
                   {list.map((photo, index) => (
                     <Group key={photo.id} wrap="nowrap" gap="sm">
@@ -174,7 +176,7 @@ function EditSpotForm({ spot, formId, onSavingChange, onDone }: EditSpotFormProp
                         variant="transparent"
                         color="red.5"
                         size={44}
-                        aria-label={`Remove ${label.toLowerCase().replace(/s$/, "")} ${index + 1}`}
+                        aria-label={`Remove photo ${index + 1} from ${label}`}
                         onClick={() => removePhoto(photo.id)}
                         disabled={isSaving}
                       >

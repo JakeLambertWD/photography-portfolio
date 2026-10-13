@@ -13,14 +13,23 @@ type SpotPhotoTabProps = {
   spot: SpotDetail;
   photos: SpotDetail["photos"];
   kind: PhotoKind;
-  // Status badge and gear, shown at the start of the weather row.
-  labels: ReactNode;
+  // Showcase only: the carousel new photos are added to.
+  carouselId?: string | null;
+  // Status badge and gear, shown at the start of the weather row. Left out, the row is hidden.
+  labels?: ReactNode;
   // Shown under the photo note, e.g. spot notes.
   children?: ReactNode;
 };
 
 // A photo carousel with a note per photo. Used by the Showcase, Creator Shots and Editing tabs.
-export function SpotPhotoTab({ spot, photos, kind, labels, children }: SpotPhotoTabProps) {
+export function SpotPhotoTab({
+  spot,
+  photos,
+  kind,
+  carouselId,
+  labels,
+  children,
+}: SpotPhotoTabProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [progress, setProgress] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -35,6 +44,7 @@ export function SpotPhotoTab({ spot, photos, kind, labels, children }: SpotPhoto
       spotTitle={spot.title}
       photoCount={photos.length}
       kind={kind}
+      carouselId={carouselId}
       onProgress={setProgress}
       onError={setUploadError}
       onAdded={setActiveIndex}
@@ -46,7 +56,7 @@ export function SpotPhotoTab({ spot, photos, kind, labels, children }: SpotPhoto
       {photos.length > 0 ? (
         <SpotPhotoCarousel
           photos={photos}
-          tags={spot.tags}
+          tags={labels ? spot.tags : []}
           tagsLeading={labels}
           activeIndex={photoIndex}
           onActiveIndexChange={setActiveIndex}
@@ -89,7 +99,7 @@ export function SpotPhotoTab({ spot, photos, kind, labels, children }: SpotPhoto
       )}
 
       <Stack gap="lg" px="md" pt="sm">
-        {photos.length === 0 && (
+        {photos.length === 0 && labels && (
           <Group gap="sm" wrap="nowrap" fz="xl">
             {labels}
           </Group>
