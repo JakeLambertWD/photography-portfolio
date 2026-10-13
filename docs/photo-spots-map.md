@@ -34,9 +34,11 @@ tRPC spots router (server/routers/spots.ts)
    `react-map-gl/maplibre`. Pins are grouped with `supercluster`; tapping a
    group zooms in until it splits. It's loaded with `next/dynamic` and
    `ssr: false` because MapLibre needs `window`.
-5. **app/maps/[spotId]/components/** holds the spot view: a scroll-snap carousel
-   with thumbnails, the note for the photo on screen, weather, spot notes,
-   directions (Google Maps).
+5. **app/maps/[spotId]/components/** holds the spot view: a tab system covering the
+   content pieces shot at this location (Showcase carousel, Editing carousel,
+   BTS reel, Educational reel, 1 Clip reel, Trial Reels, and
+   Shoot Day checklist & posting schedule), with a scroll-snap photo carousel, inline
+   caption editing, weather tags, spot notes, and directions.
 
 ## Searching
 

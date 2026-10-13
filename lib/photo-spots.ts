@@ -17,6 +17,9 @@ export const SPOT_PHOTO_ALLOWED_TYPES = [
 export const MAX_SPOT_PHOTOS = 10;
 export const MAX_SPOT_TAGS = 8;
 
+export const PHOTO_KINDS = ["showcase", "editing"] as const;
+export type PhotoKind = (typeof PHOTO_KINDS)[number];
+
 export const SPOT_STATUSES = ["planning", "ready_to_shoot"] as const;
 export type SpotStatus = (typeof SPOT_STATUSES)[number];
 export const DEFAULT_SPOT_STATUS: SpotStatus = "planning";
@@ -56,4 +59,46 @@ export function isSpotPhotoUrl(value: string) {
   } catch {
     return false;
   }
+}
+
+// Saved ids for the reel tabs. "technique" shows as "1 Clip" and "pov" as "Trial Reels".
+export const REEL_KINDS = ["bts", "educational", "technique", "pov"] as const;
+export type ReelKind = (typeof REEL_KINDS)[number];
+
+// Reel inspo links must point at Instagram (a reel, post, etc.).
+export function isInstagramUrl(value: string) {
+  try {
+    const url = new URL(value.trim());
+    return (
+      url.protocol === "https:" &&
+      (url.hostname === "instagram.com" || url.hostname.endsWith(".instagram.com")) &&
+      url.pathname.length > 1
+    );
+  } catch {
+    return false;
+  }
+}
+
+// Drops tracking parameters like ?igsh=… so saved links stay tidy.
+export function cleanInstagramUrl(value: string) {
+  const url = new URL(value.trim());
+  return `https://www.instagram.com${url.pathname}`;
+}
+
+// Capitalises every word of a spot name as it is typed, e.g. "view from the shard" → "View From The Shard".
+// Only the first letter of each word changes, so "LSEG" or "McDonald's" stay as typed,
+// and the length never changes, which keeps the cursor in place.
+export function formatSpotTitle(value: string) {
+  return value.replace(/\S+/g, (word) => word.charAt(0).toUpperCase() + word.slice(1));
+}
+
+// Formats the spot name input in place and keeps the cursor where it was.
+export function applySpotTitleCase(input: HTMLInputElement) {
+  const formatted = formatSpotTitle(input.value);
+  if (formatted !== input.value) {
+    const { selectionStart, selectionEnd } = input;
+    input.value = formatted;
+    input.setSelectionRange(selectionStart, selectionEnd);
+  }
+  return formatted;
 }

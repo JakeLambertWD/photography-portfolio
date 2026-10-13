@@ -5,6 +5,7 @@ import { WeatherPill } from "@/app/maps/components/add-spot/WeatherPill";
 import { useSortedSpotTags } from "@/app/maps/components/add-spot/useSortedSpotTags";
 import { api } from "@/app/providers";
 import {
+  applySpotTitleCase,
   MAX_SPOT_TAGS,
   SPOT_GEAR_OPTIONS,
   SPOT_STATUS_OPTIONS,
@@ -46,6 +47,7 @@ function EditSpotForm({ spot, onDone }: EditSpotFormProps) {
   const [tags, setTags] = useState<string[]>(spot.tags);
   const sortedTags = useSortedSpotTags(spot.tags);
   const [photos, setPhotos] = useState(spot.photos);
+  const [editingPhotos, setEditingPhotos] = useState(spot.editingPhotos);
   const [titleError, setTitleError] = useState<string | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +56,7 @@ function EditSpotForm({ spot, onDone }: EditSpotFormProps) {
 
   function removePhoto(id: string) {
     setPhotos((current) => current.filter((photo) => photo.id !== id));
+    setEditingPhotos((current) => current.filter((photo) => photo.id !== id));
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -79,8 +82,10 @@ function EditSpotForm({ spot, onDone }: EditSpotFormProps) {
         notes: spot.notes ?? "",
       });
 
-      const keptIds = new Set(photos.map((photo) => photo.id));
-      const removed = spot.photos.filter((photo) => !keptIds.has(photo.id));
+      const keptIds = new Set([...photos, ...editingPhotos].map((photo) => photo.id));
+      const removed = [...spot.photos, ...spot.editingPhotos].filter(
+        (photo) => !keptIds.has(photo.id),
+      );
       for (const photo of removed) await deletePhoto.mutateAsync({ photoId: photo.id });
 
       await Promise.all([
@@ -101,7 +106,7 @@ function EditSpotForm({ spot, onDone }: EditSpotFormProps) {
           size="md"
           label="Name"
           value={title}
-          onChange={(event) => setTitle(event.currentTarget.value)}
+          onChange={(event) => setTitle(applySpotTitleCase(event.currentTarget))}
           error={titleError}
           maxLength={120}
           withAsterisk
@@ -128,33 +133,41 @@ function EditSpotForm({ spot, onDone }: EditSpotFormProps) {
           maxValues={MAX_SPOT_TAGS}
         />
 
-        {photos.length > 0 && (
-          <Input.Wrapper label="Photos">
-            <Stack gap="sm" mt="xs">
-              {photos.map((photo, index) => (
-                <Group key={photo.id} wrap="nowrap" gap="sm">
-                  <Image
-                    src={photo.imageUrl}
-                    alt={`Photo ${index + 1}`}
-                    w={72}
-                    h={72}
-                    radius="sm"
-                    fit="cover"
-                  />
-                  <ActionIcon
-                    variant="transparent"
-                    color="red.5"
-                    size={44}
-                    aria-label={`Remove photo ${index + 1}`}
-                    onClick={() => removePhoto(photo.id)}
-                    disabled={isSaving}
-                  >
-                    <IconTrash size={24} stroke={1.75} />
-                  </ActionIcon>
-                </Group>
-              ))}
-            </Stack>
-          </Input.Wrapper>
+        {(
+          [
+            ["Showcase photos", photos],
+            ["Editing photos", editingPhotos],
+          ] as const
+        ).map(
+          ([label, list]) =>
+            list.length > 0 && (
+              <Input.Wrapper key={label} label={label}>
+                <Stack gap="sm" mt="xs">
+                  {list.map((photo, index) => (
+                    <Group key={photo.id} wrap="nowrap" gap="sm">
+                      <Image
+                        src={photo.imageUrl}
+                        alt={`${label} ${index + 1}`}
+                        w={72}
+                        h={72}
+                        radius="sm"
+                        fit="cover"
+                      />
+                      <ActionIcon
+                        variant="transparent"
+                        color="red.5"
+                        size={44}
+                        aria-label={`Remove ${label.toLowerCase().replace("photos", "photo")} ${index + 1}`}
+                        onClick={() => removePhoto(photo.id)}
+                        disabled={isSaving}
+                      >
+                        <IconTrash size={24} stroke={1.75} />
+                      </ActionIcon>
+                    </Group>
+                  ))}
+                </Stack>
+              </Input.Wrapper>
+            ),
         )}
 
         {error && (
@@ -190,7 +203,7 @@ export function EditSpotButton({ spot }: EditSpotButtonProps) {
         aria-label="Edit spot details"
         variant="subtle"
         color="brown.0"
-        size={44}
+        size={40}
         onClick={() => setIsEditing(true)}
       >
         <IconPencil size={20} />

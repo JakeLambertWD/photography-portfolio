@@ -1,7 +1,7 @@
 "use client";
 
 import { api } from "@/app/providers";
-import { CAN_EDIT_SPOTS, getSpotGearOption, getSpotStatusLabel } from "@/lib/photo-spots";
+import { getSpotGearOption, getSpotStatusLabel, REEL_KINDS } from "@/lib/photo-spots";
 import {
   ActionIcon,
   Badge,
@@ -13,27 +13,27 @@ import {
   Group,
   Loader,
   Stack,
+  Tabs,
   Text,
   Title,
 } from "@mantine/core";
-import { IconChevronLeft, IconNavigation } from "@tabler/icons-react";
+import { IconChevronLeft } from "@tabler/icons-react";
 import Link from "next/link";
 import { useState } from "react";
-import { AddPhotosTile } from "./AddPhotosTile";
-import { DeleteSpotButton } from "./DeleteSpotButton";
-import { EditSpotButton } from "./EditSpotButton";
-import { PhotoCaption } from "./PhotoCaption";
-import { getDirectionsUrl } from "./SpotDetail.constants";
-import { SpotPhotoCarousel } from "./SpotPhotoCarousel";
+import { ContentGuidePanel } from "./ContentGuidePanel";
+import { ReelsPanel } from "./reels/ReelsPanel";
+import { ContentTabMenu } from "./ContentTabMenu";
+import { EditingNotes } from "./EditingNotes";
+import { CONTENT_TABS, type ContentTabId } from "./SpotContentTabs.constants";
+import { SpotActions } from "./SpotActions";
+import { SpotPhotoTab } from "./SpotPhotoTab";
 
 type SpotDetailProps = {
   spotId: string;
 };
 
 export function SpotDetail({ spotId }: SpotDetailProps) {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [progress, setProgress] = useState<string | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<ContentTabId>("showcase");
 
   const spotQuery = api.spots.byId.useQuery({ id: spotId }, { retry: false });
 
@@ -63,9 +63,6 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
   }
 
   const spot = spotQuery.data;
-  // A photo may have just been removed, so never point past the end of the list.
-  const photoIndex = Math.max(0, Math.min(activeIndex, spot.photos.length - 1));
-  const activePhoto = spot.photos[photoIndex];
 
   const statusBadge = (
     <Badge
@@ -114,110 +111,48 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
             </Text>
           )}
         </Flex>
-        {CAN_EDIT_SPOTS ? <EditSpotButton spot={spot} /> : <Box w={44} />}
+        <Box w={44} />
       </Group>
 
-      {spot.photos.length > 0 ? (
-        <>
-          <SpotPhotoCarousel
-            photos={spot.photos}
-            tags={spot.tags}
-            tagsLeading={spotLabels}
-            activeIndex={photoIndex}
-            onActiveIndexChange={setActiveIndex}
-            extraThumbnail={
-              CAN_EDIT_SPOTS && (
-                <AddPhotosTile
-                  spotId={spot.id}
-                  spotTitle={spot.title}
-                  photoCount={spot.photos.length}
-                  onProgress={setProgress}
-                  onError={setUploadError}
-                  onAdded={setActiveIndex}
-                />
-              )
-            }
-          />
-          {(progress || uploadError) && (
-            <Text
-              fz="sm"
-              px="md"
-              c={uploadError ? "red.5" : "brown.1"}
-              role={uploadError ? "alert" : "status"}
-            >
-              {uploadError ?? progress}
-            </Text>
-          )}
-        </>
-      ) : (
-        <>
-          <Center h={200} bg="brown.7" c="brown.1" fz="sm">
-            No photos yet
-          </Center>
-        </>
-      )}
-
-      <Stack gap="lg" px="md" pt="sm">
-        {spot.photos.length === 0 && (
-          <Group gap="sm" wrap="nowrap" fz="xl">
-            {spotLabels}
-          </Group>
-        )}
-
-        {activePhoto && (
-          <Stack gap="xs">
-            <PhotoCaption
-              key={activePhoto.id}
-              spotId={spot.id}
-              photoId={activePhoto.id}
-              photoIndex={photoIndex}
-              caption={activePhoto.caption}
-            />
-          </Stack>
-        )}
-
-        {spot.notes && (
-          <Stack gap="xs" component="section">
-            <Text component="h2" ff="monospace" fz="xs" c="brown.1" tt="uppercase" lts="0.08em">
-              Spot notes
-            </Text>
-            <Text c="brown.0">{spot.notes}</Text>
-          </Stack>
-        )}
-      </Stack>
-
-      <Group
-        pos="fixed"
-        bottom="var(--mantine-spacing-sm)"
-        left={0}
-        right={0}
-        maw="30rem"
-        mx="auto"
-        px="xs"
-        wrap="nowrap"
-        justify="space-between"
-        style={{ pointerEvents: "none" }}
-      >
-        {CAN_EDIT_SPOTS && (
-          <Box style={{ pointerEvents: "auto" }}>
-            <DeleteSpotButton spotId={spot.id} title={spot.title} photoCount={spot.photos.length} />
-          </Box>
-        )}
-        <ActionIcon
-          component="a"
-          href={getDirectionsUrl(spot.latitude, spot.longitude)}
-          target="_blank"
-          rel="noreferrer"
-          aria-label="Directions"
-          variant="transparent"
-          color="blue.4"
-          size={44}
-          ml="auto"
-          style={{ pointerEvents: "auto" }}
-        >
-          <IconNavigation size={20} />
-        </ActionIcon>
+      {/* Content type picker on the left, spot actions grouped on the right. */}
+      <Group justify="space-between" wrap="nowrap" px="xs" mb="sm">
+        <ContentTabMenu value={activeTab} onChange={setActiveTab} />
+        <SpotActions spot={spot} />
       </Group>
+
+      <Tabs value={activeTab}>
+        <Tabs.Panel value="showcase">
+          <SpotPhotoTab spot={spot} photos={spot.photos} kind="showcase" labels={spotLabels}>
+            {spot.notes && (
+              <Stack gap="xs" component="section">
+                <Text component="h2" ff="monospace" fz="xs" c="brown.1" tt="uppercase" lts="0.08em">
+                  Spot notes
+                </Text>
+                <Text c="brown.0">{spot.notes}</Text>
+              </Stack>
+            )}
+          </SpotPhotoTab>
+        </Tabs.Panel>
+
+        <Tabs.Panel value="editing">
+          <SpotPhotoTab spot={spot} photos={spot.editingPhotos} kind="editing" labels={spotLabels}>
+            <EditingNotes spotId={spot.id} notes={spot.editingNotes ?? null} />
+          </SpotPhotoTab>
+        </Tabs.Panel>
+
+        {REEL_KINDS.map((kind) => (
+          <Tabs.Panel key={kind} value={kind}>
+            <ReelsPanel spotId={spot.id} kind={kind} />
+          </Tabs.Panel>
+        ))}
+
+        {/* Shoot Day is still a guide; the other tabs hold this spot's own content. */}
+        {CONTENT_TABS.filter((tab) => tab.id === "shoot-day").map((tab) => (
+          <Tabs.Panel key={tab.id} value={tab.id}>
+            <ContentGuidePanel tabId={tab.id} spotTitle={spot.title} />
+          </Tabs.Panel>
+        ))}
+      </Tabs>
     </Container>
   );
 }

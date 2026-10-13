@@ -28,12 +28,12 @@ export function DeleteSpotButton({ spotId, title, photoCount }: DeleteSpotButton
     <>
       <ActionIcon
         aria-label="Delete spot"
-        variant="transparent"
+        variant="subtle"
         color="red.5"
-        size={44}
+        size={40}
         onClick={() => setIsConfirming(true)}
       >
-        <IconTrash size={24} stroke={1.75} />
+        <IconTrash size={20} />
       </ActionIcon>
 
       <Modal
