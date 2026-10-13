@@ -1,5 +1,6 @@
 // Free vector tiles from OpenFreeMap (no API key). Keep the attribution control visible.
-export const MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/dark";
+// OpenFreeMap's Liberty style, recoloured like Google Maps' dark mode in mapStyle.ts.
+export const MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
 
 // Centred on London Bridge.
 export const INITIAL_VIEW_STATE = {

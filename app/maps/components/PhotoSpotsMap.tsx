@@ -37,12 +37,12 @@ import {
   MAP_MAX_ZOOM,
   MAP_OVERLAY_BOTTOM_OFFSET,
   MAP_OVERLAY_TOP_OFFSET,
-  MAP_STYLE_URL,
   USER_LOCATION_ZOOM,
 } from "./PhotoSpotsMap.constants";
 import { PlaceSearch } from "./PlaceSearch";
 import { PLACE_ZOOM } from "./PlaceSearch.constants";
 import { SearchedPlaceMarker } from "./SearchedPlaceMarker";
+import { MAP_COLOURS, useMapStyle } from "./mapStyle";
 
 const ADD_SPOT_FORM_ID = "add-spot-form";
 import { SpotMarker } from "./SpotMarker";
@@ -78,6 +78,7 @@ export function PhotoSpotsMap() {
   const hasAutoLocated = useRef(false);
 
   const spotsQuery = api.spots.list.useQuery();
+  const mapStyle = useMapStyle();
 
   const [viewport, setViewport] = useState<Viewport | null>(null);
   const [searchedPlace, setSearchedPlace] = useState<PlaceResult | null>(null);
@@ -242,85 +243,87 @@ export function PhotoSpotsMap() {
   }
 
   return (
-    <Box pos="fixed" inset={0}>
-      <MapGL
-        ref={mapRef}
-        initialViewState={INITIAL_VIEW_STATE}
-        maxZoom={MAP_MAX_ZOOM}
-        mapStyle={MAP_STYLE_URL}
-        attributionControl={false}
-        onLoad={handleLoad}
-        onMove={updateViewport}
-        style={{ width: "100%", height: "100%" }}
-      >
-        <AttributionControl
-          position="bottom-left"
-          compact
-          // Centres the 24px credits button on the 56px buttons row, 1.5rem in from the edge.
-          style={{ margin: `0 0 calc(${MAP_OVERLAY_BOTTOM_OFFSET} + 16px) 1.5rem` }}
-        />
+    <Box pos="fixed" inset={0} bg={MAP_COLOURS.land}>
+      {mapStyle && (
+        <MapGL
+          ref={mapRef}
+          initialViewState={INITIAL_VIEW_STATE}
+          maxZoom={MAP_MAX_ZOOM}
+          mapStyle={mapStyle}
+          attributionControl={false}
+          onLoad={handleLoad}
+          onMove={updateViewport}
+          style={{ width: "100%", height: "100%" }}
+        >
+          <AttributionControl
+            position="bottom-left"
+            compact
+            // Centres the 24px credits button on the 56px buttons row, 1.5rem in from the edge.
+            style={{ margin: `0 0 calc(${MAP_OVERLAY_BOTTOM_OFFSET} + 16px) 1.5rem` }}
+          />
 
-        {clusters.map((feature) => {
-          const [longitude, latitude] = feature.geometry.coordinates;
-          const properties = feature.properties;
+          {clusters.map((feature) => {
+            const [longitude, latitude] = feature.geometry.coordinates;
+            const properties = feature.properties;
 
-          if ("cluster" in properties && properties.cluster) {
+            if ("cluster" in properties && properties.cluster) {
+              return (
+                <Marker
+                  key={`cluster-${properties.cluster_id}`}
+                  longitude={longitude}
+                  latitude={latitude}
+                >
+                  <ClusterMarker
+                    count={properties.point_count}
+                    onSelect={() => zoomIntoCluster(properties.cluster_id, longitude, latitude)}
+                  />
+                </Marker>
+              );
+            }
+
+            const { spot } = properties as { spot: SpotSummary };
+
             return (
-              <Marker
-                key={`cluster-${properties.cluster_id}`}
-                longitude={longitude}
-                latitude={latitude}
-              >
-                <ClusterMarker
-                  count={properties.point_count}
-                  onSelect={() => zoomIntoCluster(properties.cluster_id, longitude, latitude)}
+              <Marker key={spot.id} longitude={spot.longitude} latitude={spot.latitude}>
+                <SpotMarker
+                  spot={spot}
+                  onSelect={() => {
+                    sessionStorage.setItem(
+                      LAST_SPOT_STORAGE_KEY,
+                      JSON.stringify([spot.longitude, spot.latitude, mapRef.current?.getZoom()]),
+                    );
+                    router.push(`/maps/${spot.id}`);
+                  }}
                 />
               </Marker>
             );
-          }
+          })}
 
-          const { spot } = properties as { spot: SpotSummary };
+          {searchedPlace && (
+            <Marker
+              longitude={searchedPlace.longitude}
+              latitude={searchedPlace.latitude}
+              anchor="bottom"
+            >
+              <SearchedPlaceMarker place={searchedPlace} />
+            </Marker>
+          )}
 
-          return (
-            <Marker key={spot.id} longitude={spot.longitude} latitude={spot.latitude}>
-              <SpotMarker
-                spot={spot}
-                onSelect={() => {
-                  sessionStorage.setItem(
-                    LAST_SPOT_STORAGE_KEY,
-                    JSON.stringify([spot.longitude, spot.latitude, mapRef.current?.getZoom()]),
-                  );
-                  router.push(`/maps/${spot.id}`);
-                }}
+          {userLocation && (
+            <Marker longitude={userLocation.longitude} latitude={userLocation.latitude}>
+              <Box
+                role="img"
+                aria-label="Your location"
+                w={18}
+                h={18}
+                bdrs="50%"
+                bg="blue.4"
+                style={{ border: `3px solid ${theme.colors.brown[0]}` }}
               />
             </Marker>
-          );
-        })}
-
-        {searchedPlace && (
-          <Marker
-            longitude={searchedPlace.longitude}
-            latitude={searchedPlace.latitude}
-            anchor="bottom"
-          >
-            <SearchedPlaceMarker place={searchedPlace} />
-          </Marker>
-        )}
-
-        {userLocation && (
-          <Marker longitude={userLocation.longitude} latitude={userLocation.latitude}>
-            <Box
-              role="img"
-              aria-label="Your location"
-              w={18}
-              h={18}
-              bdrs="50%"
-              bg="blue.4"
-              style={{ border: `3px solid ${theme.colors.brown[0]}` }}
-            />
-          </Marker>
-        )}
-      </MapGL>
+          )}
+        </MapGL>
+      )}
 
       {CAN_EDIT_SPOTS && addSpotStep !== "details" && <PlacementCrosshair />}
 
