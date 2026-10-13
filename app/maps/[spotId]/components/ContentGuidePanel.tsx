@@ -133,7 +133,7 @@ export function ContentGuidePanel({ tabId, spotTitle }: ContentGuidePanelProps) 
                     Trial Reels
                   </Badge>
                   <Text fw={600} fz="sm" c="brown.0">
-                    POV BTS Variants (3–4)
+                    Trial reel variants (3–4)
                   </Text>
                 </Group>
                 <Text fz="xs" c="brown.1" fw={500}>
@@ -234,7 +234,7 @@ export function ContentGuidePanel({ tabId, spotTitle }: ContentGuidePanelProps) 
         </Box>
       )}
 
-      {/* Options if present (e.g. Technique) */}
+      {/* Options if present (e.g. 1 Clip) */}
       {config.options && config.options.length > 0 && (
         <Box>
           <Group gap="xs" mb="xs">
@@ -242,7 +242,7 @@ export function ContentGuidePanel({ tabId, spotTitle }: ContentGuidePanelProps) 
               <IconSparkles size={16} />
             </ThemeIcon>
             <Text fw={600} fz="sm" c="brown.0">
-              Technique options for this scene
+              1 Clip options for this scene
             </Text>
           </Group>
           <Stack gap="xs">

@@ -66,7 +66,7 @@ export type SpotDetailsInput = z.infer<typeof spotDetailsInputSchema>;
 export type SpotSummary = z.infer<typeof spotSummarySchema>;
 export type SpotDetail = z.infer<typeof spotDetailSchema>;
 
-function getSql() {
+export function getSql() {
   // Check if the SQL client is available before querying the database.
   if (!sql) {
     throw new TRPCError({
@@ -78,7 +78,7 @@ function getSql() {
   return sql;
 }
 
-function assertCanEdit() {
+export function assertCanEdit() {
   if (!CAN_EDIT_SPOTS) {
     throw new TRPCError({
       code: "FORBIDDEN",

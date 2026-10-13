@@ -1,7 +1,12 @@
 "use client";
 
 import { api } from "@/app/providers";
-import { CAN_EDIT_SPOTS, getSpotGearOption, getSpotStatusLabel } from "@/lib/photo-spots";
+import {
+  CAN_EDIT_SPOTS,
+  getSpotGearOption,
+  getSpotStatusLabel,
+  REEL_KINDS,
+} from "@/lib/photo-spots";
 import {
   ActionIcon,
   Badge,
@@ -31,6 +36,7 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 import { ContentGuidePanel } from "./ContentGuidePanel";
+import { ReelsPanel } from "./reels/ReelsPanel";
 import { DeleteSpotButton } from "./DeleteSpotButton";
 import { EditSpotButton } from "./EditSpotButton";
 import { EditingNotes } from "./EditingNotes";
@@ -187,7 +193,14 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
           </SpotPhotoTab>
         </Tabs.Panel>
 
-        {CONTENT_TABS.filter((tab) => tab.id !== "showcase" && tab.id !== "editing").map((tab) => (
+        {REEL_KINDS.map((kind) => (
+          <Tabs.Panel key={kind} value={kind}>
+            <ReelsPanel spotId={spot.id} kind={kind} />
+          </Tabs.Panel>
+        ))}
+
+        {/* Shoot Day is still a guide; the other tabs hold this spot's own content. */}
+        {CONTENT_TABS.filter((tab) => tab.id === "shoot-day").map((tab) => (
           <Tabs.Panel key={tab.id} value={tab.id}>
             <ContentGuidePanel tabId={tab.id} spotTitle={spot.title} />
           </Tabs.Panel>

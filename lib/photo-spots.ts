@@ -60,3 +60,27 @@ export function isSpotPhotoUrl(value: string) {
     return false;
   }
 }
+
+// Saved ids for the reel tabs. "technique" shows as "1 Clip" and "pov" as "Trial Reels".
+export const REEL_KINDS = ["bts", "educational", "technique", "pov"] as const;
+export type ReelKind = (typeof REEL_KINDS)[number];
+
+// Reel inspo links must point at Instagram (a reel, post, etc.).
+export function isInstagramUrl(value: string) {
+  try {
+    const url = new URL(value.trim());
+    return (
+      url.protocol === "https:" &&
+      (url.hostname === "instagram.com" || url.hostname.endsWith(".instagram.com")) &&
+      url.pathname.length > 1
+    );
+  } catch {
+    return false;
+  }
+}
+
+// Drops tracking parameters like ?igsh=… so saved links stay tidy.
+export function cleanInstagramUrl(value: string) {
+  const url = new URL(value.trim());
+  return `https://www.instagram.com${url.pathname}`;
+}

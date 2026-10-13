@@ -66,10 +66,10 @@ export const CONTENT_TABS = [
   },
   {
     id: "bts",
-    label: "BTS Reel",
+    label: "BTS",
     orderBadge: "Post #3",
     type: "Long Reel",
-    title: "BTS reel (long)",
+    title: "BTS (long reel)",
     summary: "The 'how I got these' follow-up to the showcase.",
     description: [
       "The storytelling follow-up to the anchor showcase post.",
@@ -124,15 +124,15 @@ export const CONTENT_TABS = [
   },
   {
     id: "technique",
-    label: "Technique",
+    label: "1 Clip",
     orderBadge: "Post #2",
     type: "Recurring Series",
-    title: "One-clip technique reel",
+    title: "1 Clip reel",
     summary:
       "One side-on clip showing the trick, then a hard cut to the photo when you press the shutter.",
     description: [
       "One side-on clip that clearly shows the trick, then a hard cut to the photo the split-second you press the shutter.",
-      "The technique is named on screen, like 'Technique #01: the puddle'.",
+      "The trick is named on screen, like '1 Clip #01: the puddle'.",
       "The scene looks ordinary in the clip, the photo is the surprise, and it loops seamlessly.",
     ],
     options: [
@@ -140,16 +140,16 @@ export const CONTENT_TABS = [
       "Low-angle leading lines along tiles, tracks, or platform edges.",
       "Railings, pillars, or archways used as a natural frame.",
     ],
-    captureOnDay: ["2–3 takes of the technique clip, filmed side-on and low."],
+    captureOnDay: ["2–3 takes of the 1 clip shot, filmed side-on and low."],
   },
   {
     id: "pov",
-    label: "POV Reels",
-    orderBadge: "Trial Reels",
+    label: "Trial Reels",
+    orderBadge: "Any time",
     type: "Short Series (3–4)",
-    title: "POV BTS Trial Reels",
+    title: "Trial Reels",
     summary:
-      "Short 5–15s first-person reels to test with non-followers without cluttering your grid.",
+      "Short 5–15s first-person trial reels to test with non-followers without cluttering your grid.",
     description: [
       "Shot from your eyes: walking onto the platform, spotting the frame, raising the camera, the back screen, then a cut to the photo.",
       "Short (5–15 seconds), with a strong text hook in the first second (e.g. 'POV: you wait 20 mins for one train').",
@@ -163,7 +163,7 @@ export const CONTENT_TABS = [
       "Distribution: Post as Instagram Trial Reels to reach non-followers first.",
     ],
     captureOnDay: [
-      "POV clips filmed with phone held at eye level next to your camera, or on a chest mount.",
+      "Trial reel clips filmed with phone held at eye level next to your camera, or on a chest mount.",
       "Get one walk-in, one setup, and one shutter moment at each hero spot.",
     ],
   },
@@ -182,9 +182,9 @@ export const CONTENT_TABS = [
       "The hero compositions, each empty, with a figure, and with a train.",
       "1–2 held-back compositions for the editing carousel.",
       "The cover portrait, with space above your head for text.",
-      "A 15–20 minute phone video pass for the long BTS and educational reels.",
-      "2–3 takes of the technique clip, filmed side-on and low.",
-      "POV clips filmed with the phone held at eye level next to your camera, or on a chest mount (one walk-in, one setup, and one shutter moment at each hero spot).",
+      "A 15–20 minute phone video pass for the BTS and educational reels.",
+      "2–3 takes of the 1 clip shot, filmed side-on and low.",
+      "Trial reel clips filmed with the phone held at eye level next to your camera, or on a chest mount (one walk-in, one setup, and one shutter moment at each hero spot).",
     ],
   },
 ] as const;
@@ -199,14 +199,14 @@ export const POSTING_SCHEDULE = [
   },
   {
     step: 2,
-    title: "Technique reel",
+    title: "1 Clip reel",
     timing: "Week 1–2",
     role: "Recurring series",
-    note: "One-clip side-on reveal with loop ('Technique #01'). High shareability.",
+    note: "One-clip side-on reveal with loop ('1 Clip #01'). High shareability.",
   },
   {
     step: 3,
-    title: "Long BTS reel",
+    title: "BTS reel",
     timing: "Week 2",
     role: "Storytelling",
     note: "'How I got these' follow-up to the showcase with phone-to-final transition.",
