@@ -13,24 +13,49 @@ import {
   Group,
   Loader,
   Stack,
+  Tabs,
   Text,
   Title,
 } from "@mantine/core";
-import { IconChevronLeft, IconNavigation } from "@tabler/icons-react";
+import {
+  IconAdjustments,
+  IconBulb,
+  IconChevronLeft,
+  IconClipboardCheck,
+  IconEye,
+  IconNavigation,
+  IconPhoto,
+  IconSparkles,
+  IconVideo,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import { useState } from "react";
 import { AddPhotosTile } from "./AddPhotosTile";
+import { ContentGuidePanel } from "./ContentGuidePanel";
 import { DeleteSpotButton } from "./DeleteSpotButton";
 import { EditSpotButton } from "./EditSpotButton";
+import { EditingTabPanel } from "./EditingTabPanel";
 import { PhotoCaption } from "./PhotoCaption";
+import { CONTENT_TABS, type ContentTabId } from "./SpotContentTabs.constants";
 import { getDirectionsUrl } from "./SpotDetail.constants";
 import { SpotPhotoCarousel } from "./SpotPhotoCarousel";
+
+const TAB_ICONS: Record<ContentTabId, typeof IconPhoto> = {
+  showcase: IconPhoto,
+  editing: IconAdjustments,
+  bts: IconVideo,
+  educational: IconBulb,
+  technique: IconSparkles,
+  pov: IconEye,
+  "shoot-day": IconClipboardCheck,
+};
 
 type SpotDetailProps = {
   spotId: string;
 };
 
 export function SpotDetail({ spotId }: SpotDetailProps) {
+  const [activeTab, setActiveTab] = useState<string>("showcase");
   const [activeIndex, setActiveIndex] = useState(0);
   const [progress, setProgress] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -117,74 +142,121 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
         {CAN_EDIT_SPOTS ? <EditSpotButton spot={spot} /> : <Box w={44} />}
       </Group>
 
-      {spot.photos.length > 0 ? (
-        <>
-          <SpotPhotoCarousel
-            photos={spot.photos}
-            tags={spot.tags}
-            tagsLeading={spotLabels}
-            activeIndex={photoIndex}
-            onActiveIndexChange={setActiveIndex}
-            extraThumbnail={
-              CAN_EDIT_SPOTS && (
-                <AddPhotosTile
-                  spotId={spot.id}
-                  spotTitle={spot.title}
-                  photoCount={spot.photos.length}
-                  onProgress={setProgress}
-                  onError={setUploadError}
-                  onAdded={setActiveIndex}
-                />
-              )
-            }
-          />
-          {(progress || uploadError) && (
-            <Text
-              fz="sm"
-              px="md"
-              c={uploadError ? "red.5" : "brown.1"}
-              role={uploadError ? "alert" : "status"}
-            >
-              {uploadError ?? progress}
-            </Text>
+      <Tabs
+        value={activeTab}
+        onChange={(val) => val && setActiveTab(val)}
+        variant="pills"
+        color="yellow"
+        styles={{
+          list: {
+            flexWrap: "nowrap",
+            overflowX: "auto",
+            scrollbarWidth: "none",
+            paddingLeft: "var(--mantine-spacing-xs)",
+            paddingRight: "var(--mantine-spacing-xs)",
+            paddingBottom: "var(--mantine-spacing-xs)",
+            gap: "var(--mantine-spacing-xs)",
+          },
+          tab: {
+            flexShrink: 0,
+            fontWeight: 500,
+            fontSize: "var(--mantine-font-size-xs)",
+            borderRadius: "var(--mantine-radius-sm)",
+          },
+        }}
+      >
+        <Tabs.List>
+          {CONTENT_TABS.map((tab) => {
+            const Icon = TAB_ICONS[tab.id];
+            return (
+              <Tabs.Tab key={tab.id} value={tab.id} leftSection={<Icon size={14} />}>
+                {tab.label}
+              </Tabs.Tab>
+            );
+          })}
+        </Tabs.List>
+
+        <Tabs.Panel value="showcase">
+          {spot.photos.length > 0 ? (
+            <>
+              <SpotPhotoCarousel
+                photos={spot.photos}
+                tags={spot.tags}
+                tagsLeading={spotLabels}
+                activeIndex={photoIndex}
+                onActiveIndexChange={setActiveIndex}
+                extraThumbnail={
+                  CAN_EDIT_SPOTS && (
+                    <AddPhotosTile
+                      spotId={spot.id}
+                      spotTitle={spot.title}
+                      photoCount={spot.photos.length}
+                      onProgress={setProgress}
+                      onError={setUploadError}
+                      onAdded={setActiveIndex}
+                    />
+                  )
+                }
+              />
+              {(progress || uploadError) && (
+                <Text
+                  fz="sm"
+                  px="md"
+                  c={uploadError ? "red.5" : "brown.1"}
+                  role={uploadError ? "alert" : "status"}
+                >
+                  {uploadError ?? progress}
+                </Text>
+              )}
+            </>
+          ) : (
+            <>
+              <Center h={200} bg="brown.7" c="brown.1" fz="sm">
+                No photos yet
+              </Center>
+            </>
           )}
-        </>
-      ) : (
-        <>
-          <Center h={200} bg="brown.7" c="brown.1" fz="sm">
-            No photos yet
-          </Center>
-        </>
-      )}
 
-      <Stack gap="lg" px="md" pt="sm">
-        {spot.photos.length === 0 && (
-          <Group gap="sm" wrap="nowrap" fz="xl">
-            {spotLabels}
-          </Group>
-        )}
+          <Stack gap="lg" px="md" pt="sm">
+            {spot.photos.length === 0 && (
+              <Group gap="sm" wrap="nowrap" fz="xl">
+                {spotLabels}
+              </Group>
+            )}
 
-        {activePhoto && (
-          <Stack gap="xs">
-            <PhotoCaption
-              key={activePhoto.id}
-              spotId={spot.id}
-              photoId={activePhoto.id}
-              photoIndex={photoIndex}
-              caption={activePhoto.caption}
-            />
+            {activePhoto && (
+              <Stack gap="xs">
+                <PhotoCaption
+                  key={activePhoto.id}
+                  spotId={spot.id}
+                  photoId={activePhoto.id}
+                  photoIndex={photoIndex}
+                  caption={activePhoto.caption}
+                />
+              </Stack>
+            )}
+
+            {spot.notes && (
+              <Stack gap="xs" component="section">
+                <Text component="h2" ff="monospace" fz="xs" c="brown.1" tt="uppercase" lts="0.08em">
+                  Spot notes
+                </Text>
+                <Text c="brown.0">{spot.notes}</Text>
+              </Stack>
+            )}
           </Stack>
-        )}
+        </Tabs.Panel>
 
-        {spot.notes && (
-          <Stack gap="xs" component="section">
-            <Text component="h2" ff="monospace" fz="xs" c="brown.1" tt="uppercase" lts="0.08em">
-              Spot notes
-            </Text>
-            <Text c="brown.0">{spot.notes}</Text>
-          </Stack>
-        )}
-      </Stack>
+        <Tabs.Panel value="editing">
+          <EditingTabPanel spot={spot} />
+        </Tabs.Panel>
+
+        {CONTENT_TABS.filter((tab) => tab.id !== "showcase" && tab.id !== "editing").map((tab) => (
+          <Tabs.Panel key={tab.id} value={tab.id}>
+            <ContentGuidePanel tabId={tab.id} spotTitle={spot.title} />
+          </Tabs.Panel>
+        ))}
+      </Tabs>
 
       <Group
         pos="fixed"

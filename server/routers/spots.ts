@@ -3,6 +3,7 @@ import {
   isSpotPhotoUrl,
   MAX_SPOT_PHOTOS,
   MAX_SPOT_TAGS,
+  PHOTO_KINDS,
   SPOT_GEAR,
   SPOT_STATUSES,
 } from "@/lib/photo-spots";
@@ -30,11 +31,14 @@ const spotPhotoSchema = z.object({
   imageUrl: z.string(),
   caption: z.string().nullable(),
   position: z.number(),
+  kind: z.enum(PHOTO_KINDS).default("showcase"),
 });
 
 const spotDetailSchema = spotSummarySchema.omit({ coverImageUrl: true, photoCount: true }).extend({
   notes: z.string().nullable(),
+  editingNotes: z.string().nullable().optional(),
   photos: z.array(spotPhotoSchema),
+  editingPhotos: z.array(spotPhotoSchema).default([]),
 });
 
 const spotPhotoInputSchema = z.object({
@@ -112,12 +116,12 @@ export const spotsRouter = router({
         s.gear,
         s.tags,
         cover.image_url as "coverImageUrl",
-        (select count(*)::int from photo_spot_image i where i.spot_id = s.id) as "photoCount"
+        (select count(*)::int from photo_spot_image i where i.spot_id = s.id and coalesce(i.kind, 'showcase') = 'showcase') as "photoCount"
       from photo_spot s
       left join lateral (
         select image_url
         from photo_spot_image
-        where spot_id = s.id
+        where spot_id = s.id and coalesce(kind, 'showcase') = 'showcase'
         order by position
         limit 1
       ) cover on true
@@ -132,12 +136,12 @@ export const spotsRouter = router({
 
     const [spotRows, photoRows] = await Promise.all([
       db`
-        select id, title, notes, postcode, latitude, longitude, status, gear, tags
+        select id, title, notes, editing_notes as "editingNotes", postcode, latitude, longitude, status, gear, tags
         from photo_spot
         where id = ${input.id}
       `,
       db`
-        select id, image_url as "imageUrl", caption, position
+        select id, image_url as "imageUrl", caption, position, coalesce(kind, 'showcase') as "kind"
         from photo_spot_image
         where spot_id = ${input.id}
         order by position
@@ -148,7 +152,14 @@ export const spotsRouter = router({
       throw new TRPCError({ code: "NOT_FOUND", message: "Spot not found." });
     }
 
-    return spotDetailSchema.parse({ ...spotRows[0], photos: photoRows });
+    const photos = photoRows.filter((p) => (p.kind || "showcase") === "showcase");
+    const editingPhotos = photoRows.filter((p) => p.kind === "editing");
+
+    return spotDetailSchema.parse({
+      ...spotRows[0],
+      photos,
+      editingPhotos,
+    });
   }),
 
   updatePhotoCaption: publicProcedure
@@ -260,6 +271,7 @@ export const spotsRouter = router({
       z.object({
         spotId: z.uuid(),
         photos: z.array(spotPhotoInputSchema).min(1).max(MAX_SPOT_PHOTOS),
+        kind: z.enum(PHOTO_KINDS).default("showcase"),
       }),
     )
     .mutation(async ({ input }) => {
@@ -269,27 +281,28 @@ export const spotsRouter = router({
       const [{ photoCount }] = await db`
         select count(*)::int as "photoCount"
         from photo_spot_image
-        where spot_id = ${input.spotId}
+        where spot_id = ${input.spotId} and coalesce(kind, 'showcase') = ${input.kind}
       `;
 
       if (Number(photoCount) + input.photos.length > MAX_SPOT_PHOTOS) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: `A spot can have up to ${MAX_SPOT_PHOTOS} photos.`,
+          message: `A spot can have up to ${MAX_SPOT_PHOTOS} photos in this section.`,
         });
       }
 
-      // New photos go after the existing ones, in the order they were picked.
+      // New photos go after the existing ones for this kind, in the order they were picked.
       const rows = await db`
-        insert into photo_spot_image (spot_id, image_url, caption, position)
+        insert into photo_spot_image (spot_id, image_url, caption, position, kind)
         select
           spot.id,
           photo.image_url,
           nullif(photo.caption, ''),
           coalesce(
-            (select max(position) from photo_spot_image where spot_id = spot.id),
+            (select max(position) from photo_spot_image where spot_id = spot.id and coalesce(kind, 'showcase') = ${input.kind}),
             -1
-          ) + photo.ordinality::int
+          ) + photo.ordinality::int,
+          ${input.kind}
         from photo_spot spot
         cross join unnest(
           ${input.photos.map((photo) => photo.imageUrl)}::text[],
@@ -300,6 +313,24 @@ export const spotsRouter = router({
       `;
 
       if (rows.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Spot not found." });
+      }
+    }),
+
+  updateEditingNotes: publicProcedure
+    .input(z.object({ spotId: z.uuid(), notes: z.string().trim().max(4000) }))
+    .mutation(async ({ input }) => {
+      assertCanEdit();
+      const db = getSql();
+
+      const rows = await db`
+        update photo_spot
+        set editing_notes = ${input.notes || null}
+        where id = ${input.spotId}
+        returning id
+      `;
+
+      if (!rows[0]) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Spot not found." });
       }
     }),
