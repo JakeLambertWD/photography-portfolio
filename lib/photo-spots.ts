@@ -84,3 +84,21 @@ export function cleanInstagramUrl(value: string) {
   const url = new URL(value.trim());
   return `https://www.instagram.com${url.pathname}`;
 }
+
+// Capitalises every word of a spot name as it is typed, e.g. "view from the shard" → "View From The Shard".
+// Only the first letter of each word changes, so "LSEG" or "McDonald's" stay as typed,
+// and the length never changes, which keeps the cursor in place.
+export function formatSpotTitle(value: string) {
+  return value.replace(/\S+/g, (word) => word.charAt(0).toUpperCase() + word.slice(1));
+}
+
+// Formats the spot name input in place and keeps the cursor where it was.
+export function applySpotTitleCase(input: HTMLInputElement) {
+  const formatted = formatSpotTitle(input.value);
+  if (formatted !== input.value) {
+    const { selectionStart, selectionEnd } = input;
+    input.value = formatted;
+    input.setSelectionRange(selectionStart, selectionEnd);
+  }
+  return formatted;
+}

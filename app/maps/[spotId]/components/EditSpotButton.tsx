@@ -5,6 +5,7 @@ import { WeatherPill } from "@/app/maps/components/add-spot/WeatherPill";
 import { useSortedSpotTags } from "@/app/maps/components/add-spot/useSortedSpotTags";
 import { api } from "@/app/providers";
 import {
+  applySpotTitleCase,
   MAX_SPOT_TAGS,
   SPOT_GEAR_OPTIONS,
   SPOT_STATUS_OPTIONS,
@@ -105,7 +106,7 @@ function EditSpotForm({ spot, onDone }: EditSpotFormProps) {
           size="md"
           label="Name"
           value={title}
-          onChange={(event) => setTitle(event.currentTarget.value)}
+          onChange={(event) => setTitle(applySpotTitleCase(event.currentTarget))}
           error={titleError}
           maxLength={120}
           withAsterisk

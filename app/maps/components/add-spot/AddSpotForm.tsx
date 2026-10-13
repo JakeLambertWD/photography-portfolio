@@ -2,6 +2,7 @@
 
 import { api } from "@/app/providers";
 import {
+  applySpotTitleCase,
   DEFAULT_SPOT_GEAR,
   DEFAULT_SPOT_STATUS,
   MAX_SPOT_PHOTOS,
@@ -186,7 +187,7 @@ export function AddSpotForm({ location, onCancel, onCreated }: AddSpotFormProps)
           size="md"
           label="Name"
           value={title}
-          onChange={(event) => setTitle(event.currentTarget.value)}
+          onChange={(event) => setTitle(applySpotTitleCase(event.currentTarget))}
           error={titleError}
           maxLength={120}
           withAsterisk
