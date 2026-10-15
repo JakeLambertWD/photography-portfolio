@@ -96,12 +96,16 @@ async function searchPhoton(query: string) {
   const { features } = photonResponseSchema.parse(await response.json());
   const places = features.map(toPlaceResult);
 
-  // Photon often returns the same place twice (e.g. a building and its entrance).
-  const seen = new Set<string>();
+  // Photon often returns the same place twice: the same map object more than once (same id),
+  // or a building and its entrance with the same name and address. Keep the first of each,
+  // since the id is also the React key in the search dropdown and must be unique.
+  const seenIds = new Set<string>();
+  const seenLabels = new Set<string>();
   return places.filter((place) => {
-    const key = `${place.name}|${place.description}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
+    const label = `${place.name}|${place.description}`;
+    if (seenIds.has(place.id) || seenLabels.has(label)) return false;
+    seenIds.add(place.id);
+    seenLabels.add(label);
     return true;
   });
 }

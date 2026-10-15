@@ -1,12 +1,10 @@
 "use client";
 
-import { api } from "@/app/providers";
-import { CAN_EDIT_SPOTS } from "@/lib/photo-spots";
 import type { SpotDetail } from "@/server/routers/spots";
-import { Box, Button, Stack, Text } from "@mantine/core";
-import { IconPlus } from "@tabler/icons-react";
+import { Box, Stack } from "@mantine/core";
 import type { ReactNode } from "react";
 import { ShowcaseCarouselSection } from "./ShowcaseCarouselSection";
+import { SpotPhotoTab } from "./SpotPhotoTab";
 
 type ShowcaseCarouselsProps = {
   spot: SpotDetail;
@@ -16,12 +14,25 @@ type ShowcaseCarouselsProps = {
   children?: ReactNode;
 };
 
-// The Showcase tab: the spot's photos grouped into named carousels, stacked one after another.
+// The Showcase tab: the spot's carousel of photos, shown on its own with no title. A spot that
+// still has more than one carousel from before shows each with its title and menu, so the
+// extras can be deleted.
 export function ShowcaseCarousels({ spot, labels, children }: ShowcaseCarouselsProps) {
-  const utils = api.useUtils();
-  const createCarousel = api.carousels.create.useMutation({
-    onSuccess: () => utils.spots.byId.invalidate({ id: spot.id }),
-  });
+  const [onlyCarousel] = spot.carousels;
+
+  if (spot.carousels.length === 1) {
+    return (
+      <SpotPhotoTab
+        spot={spot}
+        photos={onlyCarousel.photos}
+        kind="showcase"
+        carouselId={onlyCarousel.id}
+        labels={labels}
+      >
+        {children}
+      </SpotPhotoTab>
+    );
+  }
 
   return (
     <Stack gap="lg">
@@ -34,25 +45,6 @@ export function ShowcaseCarousels({ spot, labels, children }: ShowcaseCarouselsP
           canDelete={spot.carousels.length > 1}
         />
       ))}
-
-      {CAN_EDIT_SPOTS && (
-        <Stack gap={4} px="md">
-          <Button
-            variant="default"
-            radius="sm"
-            leftSection={<IconPlus size={16} />}
-            loading={createCarousel.isPending}
-            onClick={() => createCarousel.mutate({ spotId: spot.id })}
-          >
-            New carousel
-          </Button>
-          {createCarousel.error && (
-            <Text fz="sm" c="red.5" role="alert">
-              {createCarousel.error.message}
-            </Text>
-          )}
-        </Stack>
-      )}
 
       {children && <Box px="md">{children}</Box>}
     </Stack>

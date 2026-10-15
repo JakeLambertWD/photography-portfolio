@@ -5,29 +5,26 @@ import { getSpotGearOption, getSpotStatusLabel, REEL_KINDS } from "@/lib/photo-s
 import {
   ActionIcon,
   Badge,
-  Box,
   Button,
   Center,
   Container,
-  Flex,
   Group,
   Loader,
   Stack,
   Tabs,
   Text,
-  Title,
 } from "@mantine/core";
 import { IconChevronLeft } from "@tabler/icons-react";
 import Link from "next/link";
 import { useState } from "react";
 import { ContentGuidePanel } from "./ContentGuidePanel";
 import { ReelsPanel } from "./reels/ReelsPanel";
-import { ContentTabMenu } from "./ContentTabMenu";
 import { EditingNotes } from "./EditingNotes";
 import { CONTENT_TABS, type ContentTabId } from "./SpotContentTabs.constants";
 import { SpotActions } from "./SpotActions";
 import { ShowcaseCarousels } from "./ShowcaseCarousels";
 import { SpotPhotoTab } from "./SpotPhotoTab";
+import { SpotTitle } from "./SpotTitle";
 
 type SpotDetailProps = {
   spotId: string;
@@ -102,23 +99,14 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
         >
           <IconChevronLeft size={24} />
         </ActionIcon>
-        <Flex gap="sm" justify="center" align="baseline" wrap="nowrap" miw={0}>
-          <Title order={1} fz="lg" c="brown.0" ta="center" lineClamp={1}>
-            {spot.title}
-          </Title>
-          {spot.postcode && (
-            <Text ff="monospace" fz="xs" c="brown.1">
-              - {spot.postcode}
-            </Text>
-          )}
-        </Flex>
-        <Box w={44} />
-      </Group>
-
-      {/* Content type picker on the left, spot actions grouped on the right. */}
-      <Group justify="space-between" wrap="nowrap" px="xs" mb="sm">
-        <ContentTabMenu value={activeTab} onChange={setActiveTab} />
-        <SpotActions spot={spot} />
+        {/* The spot name, with the content tab being shown next to it. */}
+        <Group gap={6} justify="center" align="baseline" wrap="nowrap" miw={0}>
+          <SpotTitle title={spot.title} />
+          <Text fz="sm" c="brown.1" style={{ flexShrink: 0 }}>
+            · {CONTENT_TABS.find((tab) => tab.id === activeTab)?.label}
+          </Text>
+        </Group>
+        <SpotActions spot={spot} activeTab={activeTab} onTabChange={setActiveTab} />
       </Group>
 
       <Tabs value={activeTab}>

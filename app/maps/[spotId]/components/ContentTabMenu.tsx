@@ -1,12 +1,11 @@
 "use client";
 
-import { Button, Menu } from "@mantine/core";
+import { Menu } from "@mantine/core";
 import {
   IconAdjustments,
   IconBulb,
   IconCameraSelfie,
   IconCheck,
-  IconChevronDown,
   IconClipboardCheck,
   IconEye,
   IconPhoto,
@@ -26,50 +25,32 @@ const TAB_ICONS: Record<ContentTabId, typeof IconPhoto> = {
   "shoot-day": IconClipboardCheck,
 };
 
-type ContentTabMenuProps = {
+type ContentTabMenuItemsProps = {
   value: ContentTabId;
   onChange: (value: ContentTabId) => void;
 };
 
-// The content tabs live behind one dropdown so the spot page stays uncluttered.
-export function ContentTabMenu({ value, onChange }: ContentTabMenuProps) {
-  const active = CONTENT_TABS.find((tab) => tab.id === value) ?? CONTENT_TABS[0];
-  const ActiveIcon = TAB_ICONS[active.id];
-
+// The content tabs as items in the spot's ☰ menu, with a tick on the one being shown.
+export function ContentTabMenuItems({ value, onChange }: ContentTabMenuItemsProps) {
   return (
-    <Menu position="bottom-start" width={220} radius="md" shadow="md">
-      <Menu.Target>
-        <Button
-          color="yellow"
-          autoContrast
-          radius="md"
-          size="xs"
-          h={32}
-          px="sm"
-          leftSection={<ActiveIcon size={14} />}
-          rightSection={<IconChevronDown size={14} />}
-          aria-label={`Content: ${active.label}. Change content type`}
-        >
-          {active.label}
-        </Button>
-      </Menu.Target>
-      <Menu.Dropdown>
-        {CONTENT_TABS.map((tab) => {
-          const Icon = TAB_ICONS[tab.id];
-          const isActive = tab.id === value;
-          return (
-            <Menu.Item
-              key={tab.id}
-              leftSection={<Icon size={16} />}
-              rightSection={isActive ? <IconCheck size={16} /> : null}
-              fw={isActive ? 700 : 400}
-              onClick={() => onChange(tab.id)}
-            >
-              {tab.label}
-            </Menu.Item>
-          );
-        })}
-      </Menu.Dropdown>
-    </Menu>
+    <>
+      <Menu.Label>Content</Menu.Label>
+      {CONTENT_TABS.map((tab) => {
+        const Icon = TAB_ICONS[tab.id];
+        const isActive = tab.id === value;
+        return (
+          <Menu.Item
+            key={tab.id}
+            leftSection={<Icon size={16} />}
+            rightSection={isActive ? <IconCheck size={16} /> : null}
+            fw={isActive ? 700 : 400}
+            c={isActive ? "yellow.5" : undefined}
+            onClick={() => onChange(tab.id)}
+          >
+            {tab.label}
+          </Menu.Item>
+        );
+      })}
+    </>
   );
 }

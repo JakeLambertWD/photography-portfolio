@@ -24,7 +24,7 @@ import {
   Stack,
   TextInput,
 } from "@mantine/core";
-import { IconPencil, IconTrash } from "@tabler/icons-react";
+import { IconTrash } from "@tabler/icons-react";
 import { useEffect, useState, type FormEvent } from "react";
 import {
   SPOT_FORM_MODAL_TITLE_STYLES,
@@ -195,48 +195,41 @@ function EditSpotForm({ spot, formId, onSavingChange, onDone }: EditSpotFormProp
 
 const EDIT_SPOT_FORM_ID = "edit-spot-form";
 
-export function EditSpotButton({ spot }: EditSpotButtonProps) {
-  const [isEditing, setIsEditing] = useState(false);
+type EditSpotModalProps = EditSpotButtonProps & {
+  opened: boolean;
+  onClose: () => void;
+};
+
+// The edit spot form in a full-height modal. Opened from the spot menu.
+export function EditSpotModal({ spot, opened, onClose }: EditSpotModalProps) {
   const [isSaving, setIsSaving] = useState(false);
 
   return (
-    <>
-      <ActionIcon
-        aria-label="Edit spot details"
-        variant="subtle"
-        color="brown.0"
-        size={40}
-        onClick={() => setIsEditing(true)}
-      >
-        <IconPencil size={20} />
-      </ActionIcon>
-
-      <Modal
-        opened={isEditing}
-        onClose={() => setIsEditing(false)}
-        title={
-          <SpotFormModalTitle title="Edit spot" formId={EDIT_SPOT_FORM_ID} isSaving={isSaving} />
-        }
-        yOffset="var(--mantine-spacing-lg)"
-        styles={{
-          content: {
-            height: "calc(100dvh - 2 * var(--mantine-spacing-lg))",
-            display: "flex",
-            flexDirection: "column",
-          },
-          title: SPOT_FORM_MODAL_TITLE_STYLES,
-          body: { flex: 1, minHeight: 0, overflowY: "auto" },
-        }}
-      >
-        {isEditing && (
-          <EditSpotForm
-            spot={spot}
-            formId={EDIT_SPOT_FORM_ID}
-            onSavingChange={setIsSaving}
-            onDone={() => setIsEditing(false)}
-          />
-        )}
-      </Modal>
-    </>
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={
+        <SpotFormModalTitle title="Edit spot" formId={EDIT_SPOT_FORM_ID} isSaving={isSaving} />
+      }
+      yOffset="var(--mantine-spacing-lg)"
+      styles={{
+        content: {
+          height: "calc(100dvh - 2 * var(--mantine-spacing-lg))",
+          display: "flex",
+          flexDirection: "column",
+        },
+        title: SPOT_FORM_MODAL_TITLE_STYLES,
+        body: { flex: 1, minHeight: 0, overflowY: "auto" },
+      }}
+    >
+      {opened && (
+        <EditSpotForm
+          spot={spot}
+          formId={EDIT_SPOT_FORM_ID}
+          onSavingChange={setIsSaving}
+          onDone={onClose}
+        />
+      )}
+    </Modal>
   );
 }
