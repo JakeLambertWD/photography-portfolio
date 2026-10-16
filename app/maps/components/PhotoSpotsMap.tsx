@@ -18,7 +18,12 @@ import {
 } from "@mantine/core";
 import { CAN_EDIT_SPOTS } from "@/lib/photo-spots";
 import type { PlaceResult } from "@/server/routers/places";
-import { IconCalendar, IconCurrentLocation, IconPlus } from "@tabler/icons-react";
+import {
+  IconAdjustmentsHorizontal,
+  IconCalendar,
+  IconCurrentLocation,
+  IconPlus,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useRouter } from "next/navigation";
@@ -45,6 +50,14 @@ import { PLACE_ZOOM } from "./PlaceSearch.constants";
 import { SearchedPlaceMarker } from "./SearchedPlaceMarker";
 import { MAP_COLOURS, useMapStyle } from "./mapStyle";
 import { useTodayShoot } from "../today/useTodayShoot";
+import { ActiveFilterChips, FilterResultCount } from "./filters/ActiveFilters";
+import { SpotFilterSheet } from "./filters/SpotFilterSheet";
+import {
+  countActiveFilters,
+  EMPTY_SPOT_FILTERS,
+  matchesSpotFilters,
+} from "./filters/SpotFilters.constants";
+import { useSpotFilters } from "./filters/useSpotFilters";
 
 const ADD_SPOT_FORM_ID = "add-spot-form";
 import { SpotMarker } from "./SpotMarker";
@@ -85,7 +98,34 @@ export function PhotoSpotsMap() {
   // The place the user searched for, used to pre-fill the new spot's name.
   const [draftPlaceName, setDraftPlaceName] = useState<string | null>(null);
 
+  const [filters, setFilters] = useSpotFilters();
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+
   const spots = useMemo(() => spotsQuery.data ?? [], [spotsQuery.data]);
+  const activeFilterCount = countActiveFilters(filters);
+
+  // Spots that match the filters get full pins; the rest shrink to small dots.
+  const [matchingSpots, filteredOutSpots] = useMemo(() => {
+    if (activeFilterCount === 0) return [spots, []];
+    const matching: SpotSummary[] = [];
+    const filteredOut: SpotSummary[] = [];
+    for (const spot of spots) {
+      (matchesSpotFilters(spot, filters) ? matching : filteredOut).push(spot);
+    }
+    return [matching, filteredOut];
+  }, [spots, filters, activeFilterCount]);
+
+  const visibleFilteredOutSpots = useMemo(() => {
+    if (!viewport) return [];
+    const [west, south, east, north] = viewport.bounds;
+    return filteredOutSpots.filter(
+      (spot) =>
+        spot.longitude >= west &&
+        spot.longitude <= east &&
+        spot.latitude >= south &&
+        spot.latitude <= north,
+    );
+  }, [filteredOutSpots, viewport]);
 
   // Rebuild the cluster index only when the set of pins changes, not on every pan.
   const clusterIndex = useMemo(() => {
@@ -95,7 +135,7 @@ export function PhotoSpotsMap() {
     });
 
     index.load(
-      spots.map((spot) => ({
+      matchingSpots.map((spot) => ({
         type: "Feature",
         properties: { spot },
         geometry: { type: "Point", coordinates: [spot.longitude, spot.latitude] },
@@ -103,7 +143,7 @@ export function PhotoSpotsMap() {
     );
 
     return index;
-  }, [spots]);
+  }, [matchingSpots]);
 
   const clusters = useMemo(
     () => (viewport ? clusterIndex.getClusters(viewport.bounds, Math.ceil(viewport.zoom)) : []),
@@ -251,6 +291,19 @@ export function PhotoSpotsMap() {
             style={{ margin: `0 0 calc(${MAP_OVERLAY_BOTTOM_OFFSET} + 16px) 1.5rem` }}
           />
 
+          {visibleFilteredOutSpots.map((spot) => (
+            <Marker key={`filtered-${spot.id}`} longitude={spot.longitude} latitude={spot.latitude}>
+              <Box
+                aria-hidden
+                w={16}
+                h={16}
+                bdrs="50%"
+                bg="brown.6"
+                style={{ border: `1.5px solid ${theme.colors.brown[2]}`, pointerEvents: "none" }}
+              />
+            </Marker>
+          ))}
+
           {clusters.map((feature) => {
             const [longitude, latitude] = feature.geometry.coordinates;
             const properties = feature.properties;
@@ -320,13 +373,62 @@ export function PhotoSpotsMap() {
 
       <Box pos="absolute" top={MAP_OVERLAY_TOP_OFFSET} left={0} right={0} px="md">
         <Stack gap="sm" maw="30rem" mx="auto">
-          <PlaceSearch
-            placeholder="Search places, postcodes or your spots"
-            spots={spots}
-            onSelectPlace={showPlace}
-            onSelectSpot={showSpot}
-            onClear={() => setSearchedPlace(null)}
-          />
+          <Group gap="xs" wrap="nowrap" align="flex-start">
+            <Box flex={1} miw={0}>
+              <PlaceSearch
+                placeholder="Search places, postcodes or your spots"
+                spots={spots}
+                onSelectPlace={showPlace}
+                onSelectSpot={showSpot}
+                onClear={() => setSearchedPlace(null)}
+              />
+            </Box>
+            <ActionIcon
+              aria-label={
+                activeFilterCount > 0 ? `Filters, ${activeFilterCount} on` : "Filters"
+              }
+              aria-haspopup="dialog"
+              aria-expanded={isFilterSheetOpen}
+              onClick={() => setIsFilterSheetOpen(true)}
+              size={42}
+              radius="xl"
+              pos="relative"
+              variant="default"
+              style={{ flex: "none", overflow: "visible" }}
+              styles={{
+                root: {
+                  backgroundColor: theme.colors.brown[7],
+                  border: `${activeFilterCount > 0 ? 1.5 : 1}px solid ${
+                    activeFilterCount > 0 ? theme.colors.yellow[5] : theme.colors.brown[4]
+                  }`,
+                  boxShadow: "0 6px 16px rgba(0, 0, 0, 0.45)",
+                },
+              }}
+            >
+              <IconAdjustmentsHorizontal
+                size={20}
+                color={activeFilterCount > 0 ? theme.colors.yellow[5] : theme.colors.brown[0]}
+              />
+              {activeFilterCount > 0 && (
+                <Center
+                  aria-hidden
+                  pos="absolute"
+                  top={-4}
+                  right={-4}
+                  w={20}
+                  h={20}
+                  bg="yellow.5"
+                  c="brown.9"
+                  fz={11}
+                  fw={900}
+                  style={{ borderRadius: "50%" }}
+                >
+                  {activeFilterCount}
+                </Center>
+              )}
+            </ActionIcon>
+          </Group>
+          <ActiveFilterChips filters={filters} onChange={setFilters} />
         </Stack>
       </Box>
 
@@ -348,6 +450,15 @@ export function PhotoSpotsMap() {
       )}
 
       <Box pos="absolute" bottom={MAP_OVERLAY_BOTTOM_OFFSET} left={0} right={0} px="lg">
+        {activeFilterCount > 0 && (
+          <Box mb="md">
+            <FilterResultCount
+              shown={matchingSpots.length}
+              total={spots.length}
+              onClear={() => setFilters(EMPTY_SPOT_FILTERS)}
+            />
+          </Box>
+        )}
         <Group gap="sm" align="stretch" justify="flex-end" wrap="nowrap">
           {/* Today's shoot, with how many spots are on it. */}
           <Button
@@ -416,6 +527,14 @@ export function PhotoSpotsMap() {
           )}
         </Group>
       </Box>
+
+      <SpotFilterSheet
+        opened={isFilterSheetOpen}
+        onClose={() => setIsFilterSheetOpen(false)}
+        filters={filters}
+        onApply={setFilters}
+        spots={spots}
+      />
 
       <Modal
         opened={addSpotStep === "details" && draftLocation !== null}
