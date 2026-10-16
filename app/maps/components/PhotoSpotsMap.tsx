@@ -18,7 +18,8 @@ import {
 } from "@mantine/core";
 import { CAN_EDIT_SPOTS } from "@/lib/photo-spots";
 import type { PlaceResult } from "@/server/routers/places";
-import { IconCurrentLocation, IconPlus } from "@tabler/icons-react";
+import { IconCalendar, IconCurrentLocation, IconPlus } from "@tabler/icons-react";
+import Link from "next/link";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
@@ -43,6 +44,7 @@ import { PlaceSearch } from "./PlaceSearch";
 import { PLACE_ZOOM } from "./PlaceSearch.constants";
 import { SearchedPlaceMarker } from "./SearchedPlaceMarker";
 import { MAP_COLOURS, useMapStyle } from "./mapStyle";
+import { useTodayShoot } from "../today/useTodayShoot";
 
 const ADD_SPOT_FORM_ID = "add-spot-form";
 import { SpotMarker } from "./SpotMarker";
@@ -62,15 +64,6 @@ type UserLocation = {
   latitude: number;
 };
 
-function isInBounds(spot: SpotSummary, [west, south, east, north]: Bounds) {
-  return (
-    spot.longitude >= west &&
-    spot.longitude <= east &&
-    spot.latitude >= south &&
-    spot.latitude <= north
-  );
-}
-
 export function PhotoSpotsMap() {
   const theme = useMantineTheme();
   const router = useRouter();
@@ -79,6 +72,7 @@ export function PhotoSpotsMap() {
 
   const spotsQuery = api.spots.list.useQuery();
   const mapStyle = useMapStyle();
+  const shoot = useTodayShoot();
 
   const [viewport, setViewport] = useState<Viewport | null>(null);
   const [searchedPlace, setSearchedPlace] = useState<PlaceResult | null>(null);
@@ -114,11 +108,6 @@ export function PhotoSpotsMap() {
   const clusters = useMemo(
     () => (viewport ? clusterIndex.getClusters(viewport.bounds, Math.ceil(viewport.zoom)) : []),
     [clusterIndex, viewport],
-  );
-
-  const spotsInView = useMemo(
-    () => (viewport ? spots.filter((spot) => isInBounds(spot, viewport.bounds)) : []),
-    [spots, viewport],
   );
 
   function handleLoad(event: { target: MapLibreMap }) {
@@ -287,6 +276,8 @@ export function PhotoSpotsMap() {
               <Marker key={spot.id} longitude={spot.longitude} latitude={spot.latitude}>
                 <SpotMarker
                   spot={spot}
+                  shootNumber={shoot.indexOf(spot.id) + 1 || undefined}
+                  isShot={Boolean(shoot.spots[shoot.indexOf(spot.id)]?.shotAt)}
                   onSelect={() => {
                     sessionStorage.setItem(
                       LAST_SPOT_STORAGE_KEY,
@@ -358,18 +349,42 @@ export function PhotoSpotsMap() {
 
       <Box pos="absolute" bottom={MAP_OVERLAY_BOTTOM_OFFSET} left={0} right={0} px="lg">
         <Group gap="sm" align="stretch" justify="flex-end" wrap="nowrap">
-          <Paper
-            px="md"
-            display="flex"
-            style={{ alignItems: "center", borderColor: theme.colors.brown[4] }}
+          {/* Today's shoot, with how many spots are on it. */}
+          <Button
+            component={Link}
+            href="/maps/today"
+            h="auto"
             radius="sm"
-            bg="brown.7"
-            withBorder
+            variant="default"
+            leftSection={<IconCalendar size={18} color={theme.colors.yellow[5]} />}
+            rightSection={
+              shoot.spots.length > 0 ? (
+                <Text
+                  component="span"
+                  fz="xs"
+                  fw={900}
+                  c="brown.9"
+                  bg="yellow.5"
+                  px={6}
+                  miw={22}
+                  ta="center"
+                  style={{ borderRadius: 11, lineHeight: "22px" }}
+                >
+                  {shoot.spots.length}
+                </Text>
+              ) : null
+            }
+            styles={{
+              root: {
+                backgroundColor: theme.colors.brown[7],
+                borderColor:
+                  shoot.spots.length > 0 ? theme.colors.yellow[5] : theme.colors.brown[4],
+                color: theme.colors.brown[0],
+              },
+            }}
           >
-            <Text fz="sm" fw={600} c="brown.0">
-              {spotsInView.length} {spotsInView.length === 1 ? "spot" : "spots"}
-            </Text>
-          </Paper>
+            Today
+          </Button>
           <Tooltip label={locationError ?? "Centre on my location"}>
             <ActionIcon
               aria-label={locationError ?? "Centre on my location"}
