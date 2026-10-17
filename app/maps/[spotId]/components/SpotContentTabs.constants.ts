@@ -42,70 +42,6 @@ export const CONTENT_TABS = [
     captureOnDay: ["A creator shot with you or your camera in frame and space above for a title."],
   },
   {
-    id: "editing",
-    label: "Editing",
-    orderBadge: "Post #4",
-    type: "Process Carousel",
-    title: "Editing carousel",
-    summary:
-      "A held-back shot with the biggest transformation from RAW to final, not the showcase hero.",
-    description: [
-      "Spotlights your editing workflow and preset value.",
-      "Uses a held-back shot with the biggest transformation from RAW to final, not the showcase hero.",
-    ],
-    structure: [
-      {
-        label: "Cover slide",
-        text: "You on location in moody light, either holding the camera or with the laptop on a platform bench, plus your reusable text template.",
-      },
-      {
-        label: "Slide 2",
-        text: "A desk shot with the edit open in Lightroom.",
-      },
-      {
-        label: "Slides 3+",
-        text: "The RAW image, followed by the key edit steps, then the final graded photograph.",
-      },
-      {
-        label: "Last slide",
-        text: "A clear preset call to action (link in bio / DM for preset).",
-      },
-    ],
-    captureOnDay: [
-      "1–2 held-back compositions specifically for the editing carousel.",
-      "The cover portrait, with plenty of negative space above your head for text overlay.",
-    ],
-  },
-  {
-    id: "bts",
-    label: "BTS",
-    orderBadge: "Post #3",
-    type: "Long Reel",
-    title: "BTS (long reel)",
-    summary: "The 'how I got these' follow-up to the showcase.",
-    description: [
-      "The storytelling follow-up to the anchor showcase post.",
-      "Gives viewers the atmosphere and journey behind getting the hero shots.",
-    ],
-    structure: [
-      {
-        label: "The Journey",
-        text: "You setting up, waiting for the train, observing the space.",
-      },
-      {
-        label: "In Action",
-        text: "The camera's back screen as you compose, dial settings, and shoot.",
-      },
-      {
-        label: "The Climax",
-        text: "A matched phone-to-final reveal transition that lands on the finished frame.",
-      },
-    ],
-    captureOnDay: [
-      "A 15–20 minute phone video pass covering wide ambient shots, waiting moments, and screen-view shooting.",
-    ],
-  },
-  {
     id: "educational",
     label: "Educational",
     orderBadge: "Post #5",
@@ -177,6 +113,70 @@ export const CONTENT_TABS = [
     captureOnDay: [
       "Trial reel clips filmed with phone held at eye level next to your camera, or on a chest mount.",
       "Get one walk-in, one setup, and one shutter moment at each hero spot.",
+    ],
+  },
+  {
+    id: "editing",
+    label: "Editing",
+    orderBadge: "Post #4",
+    type: "Process Carousel",
+    title: "Editing carousel",
+    summary:
+      "A held-back shot with the biggest transformation from RAW to final, not the showcase hero.",
+    description: [
+      "Spotlights your editing workflow and preset value.",
+      "Uses a held-back shot with the biggest transformation from RAW to final, not the showcase hero.",
+    ],
+    structure: [
+      {
+        label: "Cover slide",
+        text: "You on location in moody light, either holding the camera or with the laptop on a platform bench, plus your reusable text template.",
+      },
+      {
+        label: "Slide 2",
+        text: "A desk shot with the edit open in Lightroom.",
+      },
+      {
+        label: "Slides 3+",
+        text: "The RAW image, followed by the key edit steps, then the final graded photograph.",
+      },
+      {
+        label: "Last slide",
+        text: "A clear preset call to action (link in bio / DM for preset).",
+      },
+    ],
+    captureOnDay: [
+      "1–2 held-back compositions specifically for the editing carousel.",
+      "The cover portrait, with plenty of negative space above your head for text overlay.",
+    ],
+  },
+  {
+    id: "bts",
+    label: "BTS",
+    orderBadge: "Post #3",
+    type: "Long Reel",
+    title: "BTS (long reel)",
+    summary: "The 'how I got these' follow-up to the showcase.",
+    description: [
+      "The storytelling follow-up to the anchor showcase post.",
+      "Gives viewers the atmosphere and journey behind getting the hero shots.",
+    ],
+    structure: [
+      {
+        label: "The Journey",
+        text: "You setting up, waiting for the train, observing the space.",
+      },
+      {
+        label: "In Action",
+        text: "The camera's back screen as you compose, dial settings, and shoot.",
+      },
+      {
+        label: "The Climax",
+        text: "A matched phone-to-final reveal transition that lands on the finished frame.",
+      },
+    ],
+    captureOnDay: [
+      "A 15–20 minute phone video pass covering wide ambient shots, waiting moments, and screen-view shooting.",
     ],
   },
   {

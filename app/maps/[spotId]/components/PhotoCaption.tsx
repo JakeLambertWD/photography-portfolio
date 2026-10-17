@@ -69,8 +69,14 @@ export function PhotoCaption({ spotId, photoId, photoIndex, caption }: PhotoCapt
         onClick={() => setDraft(caption ?? "")}
         w="100%"
         ta="left"
-        display="block"
-        style={{ ...fieldBox, alignSelf: "stretch" }}
+        // A button centres its content vertically; keep the note at the top of the box.
+        style={{
+          ...fieldBox,
+          alignSelf: "stretch",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "flex-start",
+        }}
       >
         {text}
       </UnstyledButton>
