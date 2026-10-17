@@ -13,7 +13,9 @@
 .slide {
   flex: 0 0 100%;
   scroll-snap-align: start;
-  padding-inline: calc(var(--mantine-spacing-xl) * 1.5);
+  /* The photo is 90% of the space between the side gutters, centred. */
+  --slide-gutter: calc(var(--mantine-spacing-xl) * 1.5);
+  padding-inline: calc(var(--slide-gutter) + (100% - 2 * var(--slide-gutter)) * 0.05);
 }
 
 .viewerTrack {
