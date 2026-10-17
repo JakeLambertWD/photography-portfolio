@@ -24,6 +24,12 @@ export function PhotoCaption({ spotId, photoId, photoIndex, caption }: PhotoCapt
   });
 
   const label = `Note for photo ${photoIndex + 1}`;
+  // The same yellow box while reading and typing, so the note doesn't shift when tapped.
+  const fieldBox = {
+    padding: "10px 12px",
+    border: "1px solid var(--mantine-color-yellow-5)",
+    borderRadius: "var(--mantine-radius-sm)",
+  };
   const text = (
     <Text ff="text" fz={18} fw={500} lh={1.45} c={caption ? "brown.0" : "brown.1"}>
       {caption ?? (CAN_EDIT_SPOTS ? "Write here.." : "No note for this photo yet.")}
@@ -39,6 +45,7 @@ export function PhotoCaption({ spotId, photoId, photoIndex, caption }: PhotoCapt
         onClick={() => setDraft(caption ?? "")}
         w="100%"
         ta="left"
+        style={fieldBox}
       >
         {text}
       </UnstyledButton>
@@ -63,8 +70,9 @@ export function PhotoCaption({ spotId, photoId, photoIndex, caption }: PhotoCapt
       aria-label={label}
       styles={{
         input: {
-          padding: 0,
-          border: 0,
+          ...fieldBox,
+          // The yellow border plus Mantine's own focus ring would double up.
+          outline: "none",
           display: "block",
           minHeight: 0,
           height: "auto",
