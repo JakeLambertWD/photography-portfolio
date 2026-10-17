@@ -351,6 +351,35 @@ export const spotsRouter = router({
       }
     }),
 
+  // Moves the pin. The postcode is replaced when a new one is found, otherwise kept.
+  move: publicProcedure
+    .input(
+      z.object({
+        id: z.uuid(),
+        latitude: z.number().min(-90).max(90),
+        longitude: z.number().min(-180).max(180),
+        postcode: z.string().trim().max(10).nullable(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      assertCanEdit();
+      const db = getSql();
+
+      const rows = await db`
+        update photo_spot
+        set
+          latitude = ${input.latitude},
+          longitude = ${input.longitude},
+          postcode = coalesce(${input.postcode?.toUpperCase() || null}, postcode)
+        where id = ${input.id}
+        returning id
+      `;
+
+      if (!rows[0]) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Spot not found." });
+      }
+    }),
+
   addPhotos: publicProcedure
     .input(
       z.object({

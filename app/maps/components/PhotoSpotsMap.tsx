@@ -20,14 +20,17 @@ import { CAN_EDIT_SPOTS } from "@/lib/photo-spots";
 import type { PlaceResult } from "@/server/routers/places";
 import {
   IconAdjustmentsHorizontal,
+  IconArrowsMove,
   IconCalendar,
+  IconCheck,
   IconCurrentLocation,
   IconPlus,
 } from "@tabler/icons-react";
+import { findNearestPostcode } from "@/lib/postcodes";
 import Link from "next/link";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import MapGL, { AttributionControl, Marker, type MapRef } from "react-map-gl/maplibre";
 import Supercluster from "supercluster";
@@ -83,7 +86,9 @@ export function PhotoSpotsMap() {
   const mapRef = useRef<MapRef>(null);
   const hasAutoLocated = useRef(false);
 
+  const utils = api.useUtils();
   const spotsQuery = api.spots.list.useQuery();
+  const moveSpot = api.spots.move.useMutation();
   const mapStyle = useMapStyle();
   const shoot = useTodayShoot();
 
@@ -98,14 +103,26 @@ export function PhotoSpotsMap() {
   // The place the user searched for, used to pre-fill the new spot's name.
   const [draftPlaceName, setDraftPlaceName] = useState<string | null>(null);
 
+  // Set when opened from a spot's "Move pin": the map then repositions that spot instead.
+  // Read from the URL on every render: Next.js can keep this page mounted between visits.
+  const movingSpotId = useSearchParams().get("move");
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [isSavingMove, setIsSavingMove] = useState(false);
+  // The spot the map last centred on for a move, so each new move starts on its spot.
+  const centredMoveSpotId = useRef<string | null>(null);
+
   const [filters, setFilters] = useSpotFilters();
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
 
   const spots = useMemo(() => spotsQuery.data ?? [], [spotsQuery.data]);
-  const activeFilterCount = countActiveFilters(filters);
+  const movingSpot = movingSpotId ? spots.find((spot) => spot.id === movingSpotId) : undefined;
+  const isMoving = Boolean(movingSpotId);
+  // Filters are paused while moving a pin so every spot stays visible for reference.
+  const activeFilterCount = isMoving ? 0 : countActiveFilters(filters);
 
   // Spots that match the filters get full pins; the rest shrink to small dots.
   const [matchingSpots, filteredOutSpots] = useMemo(() => {
+    if (movingSpotId) return [spots.filter((spot) => spot.id !== movingSpotId), []];
     if (activeFilterCount === 0) return [spots, []];
     const matching: SpotSummary[] = [];
     const filteredOut: SpotSummary[] = [];
@@ -113,7 +130,22 @@ export function PhotoSpotsMap() {
       (matchesSpotFilters(spot, filters) ? matching : filteredOut).push(spot);
     }
     return [matching, filteredOut];
-  }, [spots, filters, activeFilterCount]);
+  }, [spots, filters, activeFilterCount, movingSpotId]);
+
+  // Leaving move mode clears it, so moving the same spot again re-centres on it.
+  useEffect(() => {
+    if (!movingSpotId) centredMoveSpotId.current = null;
+  }, [movingSpotId]);
+
+  // Start the move with the spot's current position under the crosshair.
+  useEffect(() => {
+    if (!movingSpot || !isMapLoaded || centredMoveSpotId.current === movingSpot.id) return;
+    centredMoveSpotId.current = movingSpot.id;
+    mapRef.current?.jumpTo({
+      center: [movingSpot.longitude, movingSpot.latitude],
+      zoom: PLACE_ZOOM,
+    });
+  }, [movingSpot, isMapLoaded]);
 
   const visibleFilteredOutSpots = useMemo(() => {
     if (!viewport) return [];
@@ -152,6 +184,7 @@ export function PhotoSpotsMap() {
 
   function handleLoad(event: { target: MapLibreMap }) {
     updateViewport(event);
+    setIsMapLoaded(true);
 
     // MapLibre opens the compact credits on wide screens; start them collapsed to the "i" button.
     event.target
@@ -159,7 +192,7 @@ export function PhotoSpotsMap() {
       .querySelector(".maplibregl-ctrl-attrib")
       ?.classList.remove("maplibregl-compact-show");
 
-    if (!hasAutoLocated.current) {
+    if (!hasAutoLocated.current && !movingSpotId) {
       hasAutoLocated.current = true;
 
       const lastSpot = sessionStorage.getItem(LAST_SPOT_STORAGE_KEY);
@@ -255,6 +288,30 @@ export function PhotoSpotsMap() {
     mapRef.current?.flyTo({ center: [spot.longitude, spot.latitude], zoom: PLACE_ZOOM });
   }
 
+  function leaveMoveMode() {
+    if (movingSpotId) router.replace(`/maps/${movingSpotId}`);
+  }
+
+  async function saveMove() {
+    const map = mapRef.current;
+    if (!movingSpotId || !map) return;
+    const { lat, lng } = map.getCenter();
+
+    setIsSavingMove(true);
+    try {
+      const postcode = await findNearestPostcode(lat, lng).catch(() => null);
+      await moveSpot.mutateAsync({ id: movingSpotId, latitude: lat, longitude: lng, postcode });
+      await utils.spots.invalidate();
+      // Coming back to the map from the spot page centres on its new position.
+      sessionStorage.setItem(LAST_SPOT_STORAGE_KEY, JSON.stringify([lng, lat, map.getZoom()]));
+      leaveMoveMode();
+    } catch {
+      // The error message shows above the buttons.
+    } finally {
+      setIsSavingMove(false);
+    }
+  }
+
   function closeAddSpot() {
     setAddSpotStep("closed");
     setDraftLocation(null);
@@ -290,6 +347,14 @@ export function PhotoSpotsMap() {
             // Centres the 24px credits button on the 56px buttons row, 1.5rem in from the edge.
             style={{ margin: `0 0 calc(${MAP_OVERLAY_BOTTOM_OFFSET} + 16px) 1.5rem` }}
           />
+
+          {movingSpot && (
+            <Marker longitude={movingSpot.longitude} latitude={movingSpot.latitude}>
+              <Box aria-hidden style={{ opacity: 0.45, pointerEvents: "none" }}>
+                <SpotMarker spot={movingSpot} onSelect={() => {}} />
+              </Box>
+            </Marker>
+          )}
 
           {visibleFilteredOutSpots.map((spot) => (
             <Marker key={`filtered-${spot.id}`} longitude={spot.longitude} latitude={spot.latitude}>
@@ -369,7 +434,7 @@ export function PhotoSpotsMap() {
         </MapGL>
       )}
 
-      {CAN_EDIT_SPOTS && addSpotStep !== "details" && <PlacementCrosshair />}
+      {CAN_EDIT_SPOTS && (addSpotStep !== "details" || isMoving) && <PlacementCrosshair />}
 
       <Box pos="absolute" top={MAP_OVERLAY_TOP_OFFSET} left={0} right={0} px="md">
         <Stack gap="sm" maw="30rem" mx="auto">
@@ -383,52 +448,77 @@ export function PhotoSpotsMap() {
                 onClear={() => setSearchedPlace(null)}
               />
             </Box>
-            <ActionIcon
-              aria-label={
-                activeFilterCount > 0 ? `Filters, ${activeFilterCount} on` : "Filters"
-              }
-              aria-haspopup="dialog"
-              aria-expanded={isFilterSheetOpen}
-              onClick={() => setIsFilterSheetOpen(true)}
-              size={42}
-              radius="xl"
-              pos="relative"
-              variant="default"
-              style={{ flex: "none", overflow: "visible" }}
-              styles={{
-                root: {
-                  backgroundColor: theme.colors.brown[7],
-                  border: `${activeFilterCount > 0 ? 1.5 : 1}px solid ${
-                    activeFilterCount > 0 ? theme.colors.yellow[5] : theme.colors.brown[4]
-                  }`,
-                  boxShadow: "0 6px 16px rgba(0, 0, 0, 0.45)",
-                },
+            {!isMoving && (
+              <ActionIcon
+                aria-label={activeFilterCount > 0 ? `Filters, ${activeFilterCount} on` : "Filters"}
+                aria-haspopup="dialog"
+                aria-expanded={isFilterSheetOpen}
+                onClick={() => setIsFilterSheetOpen(true)}
+                size={42}
+                radius="xl"
+                pos="relative"
+                variant="default"
+                style={{ flex: "none", overflow: "visible" }}
+                styles={{
+                  root: {
+                    backgroundColor: theme.colors.brown[7],
+                    border: `${activeFilterCount > 0 ? 1.5 : 1}px solid ${
+                      activeFilterCount > 0 ? theme.colors.yellow[5] : theme.colors.brown[4]
+                    }`,
+                    boxShadow: "0 6px 16px rgba(0, 0, 0, 0.45)",
+                  },
+                }}
+              >
+                <IconAdjustmentsHorizontal
+                  size={20}
+                  color={activeFilterCount > 0 ? theme.colors.yellow[5] : theme.colors.brown[0]}
+                />
+                {activeFilterCount > 0 && (
+                  <Center
+                    aria-hidden
+                    pos="absolute"
+                    top={-4}
+                    right={-4}
+                    w={20}
+                    h={20}
+                    bg="yellow.5"
+                    c="brown.9"
+                    fz={11}
+                    fw={900}
+                    style={{ borderRadius: "50%" }}
+                  >
+                    {activeFilterCount}
+                  </Center>
+                )}
+              </ActionIcon>
+            )}
+          </Group>
+          {isMoving ? (
+            <Paper
+              px="md"
+              py="sm"
+              radius="md"
+              bg="brown.7"
+              style={{
+                border: `1px solid ${theme.colors.yellow[5]}`,
+                boxShadow: "0 6px 16px rgba(0, 0, 0, 0.45)",
               }}
             >
-              <IconAdjustmentsHorizontal
-                size={20}
-                color={activeFilterCount > 0 ? theme.colors.yellow[5] : theme.colors.brown[0]}
-              />
-              {activeFilterCount > 0 && (
-                <Center
-                  aria-hidden
-                  pos="absolute"
-                  top={-4}
-                  right={-4}
-                  w={20}
-                  h={20}
-                  bg="yellow.5"
-                  c="brown.9"
-                  fz={11}
-                  fw={900}
-                  style={{ borderRadius: "50%" }}
-                >
-                  {activeFilterCount}
-                </Center>
-              )}
-            </ActionIcon>
-          </Group>
-          <ActiveFilterChips filters={filters} onChange={setFilters} />
+              <Group gap="sm" wrap="nowrap">
+                <IconArrowsMove size={20} color={theme.colors.yellow[5]} style={{ flex: "none" }} />
+                <Box miw={0}>
+                  <Text fz="sm" fw={700} c="brown.0" truncate>
+                    Moving {movingSpot?.title ?? "spot"}
+                  </Text>
+                  <Text fz="xs" c="brown.1">
+                    Drag the map so the crosshair sits on the new position.
+                  </Text>
+                </Box>
+              </Group>
+            </Paper>
+          ) : (
+            <ActiveFilterChips filters={filters} onChange={setFilters} />
+          )}
         </Stack>
       </Box>
 
@@ -459,73 +549,109 @@ export function PhotoSpotsMap() {
             />
           </Box>
         )}
-        <Group gap="sm" align="stretch" justify="flex-end" wrap="nowrap">
-          {/* Today's shoot, with how many spots are on it. */}
-          <Button
-            component={Link}
-            href="/maps/today"
-            h="auto"
-            radius="sm"
-            variant="default"
-            leftSection={<IconCalendar size={18} color={theme.colors.yellow[5]} />}
-            rightSection={
-              shoot.spots.length > 0 ? (
-                <Text
-                  component="span"
-                  fz="xs"
-                  fw={900}
-                  c="brown.9"
-                  bg="yellow.5"
-                  px={6}
-                  miw={22}
-                  ta="center"
-                  style={{ borderRadius: 11, lineHeight: "22px" }}
-                >
-                  {shoot.spots.length}
-                </Text>
-              ) : null
-            }
-            styles={{
-              root: {
-                backgroundColor: theme.colors.brown[7],
-                borderColor:
-                  shoot.spots.length > 0 ? theme.colors.yellow[5] : theme.colors.brown[4],
-                color: theme.colors.brown[0],
-              },
-            }}
-          >
-            Today
-          </Button>
-          <Tooltip label={locationError ?? "Centre on my location"}>
-            <ActionIcon
-              aria-label={locationError ?? "Centre on my location"}
-              onClick={() => locateUser()}
-              loading={isLocating}
-              variant="default"
-              size={56}
+        {isMoving ? (
+          <Stack gap="xs" maw="30rem" mx="auto">
+            {moveSpot.isError && (
+              <Text fz="sm" c="red.4" ta="center">
+                Couldn&apos;t move the pin. Try again.
+              </Text>
+            )}
+            <Group gap="sm" align="stretch" wrap="nowrap">
+              <Button
+                size="lg"
+                radius="sm"
+                variant="outline"
+                color={theme.colors.brown[3]}
+                c="brown.0"
+                bg="brown.7"
+                onClick={leaveMoveMode}
+                disabled={isSavingMove}
+              >
+                Cancel
+              </Button>
+              <Button
+                flex={1}
+                size="lg"
+                radius="sm"
+                autoContrast
+                leftSection={<IconCheck size={18} />}
+                loading={isSavingMove}
+                disabled={!movingSpot}
+                onClick={saveMove}
+              >
+                Save position
+              </Button>
+            </Group>
+          </Stack>
+        ) : (
+          <Group gap="sm" align="stretch" justify="flex-end" wrap="nowrap">
+            {/* Today's shoot, with how many spots are on it. */}
+            <Button
+              component={Link}
+              href="/maps/today"
+              h="auto"
               radius="sm"
+              variant="default"
+              leftSection={<IconCalendar size={18} color={theme.colors.yellow[5]} />}
+              rightSection={
+                shoot.spots.length > 0 ? (
+                  <Text
+                    component="span"
+                    fz="xs"
+                    fw={900}
+                    c="brown.9"
+                    bg="yellow.5"
+                    px={6}
+                    miw={22}
+                    ta="center"
+                    style={{ borderRadius: 11, lineHeight: "22px" }}
+                  >
+                    {shoot.spots.length}
+                  </Text>
+                ) : null
+              }
               styles={{
                 root: {
                   backgroundColor: theme.colors.brown[7],
-                  borderColor: theme.colors.brown[4],
+                  borderColor:
+                    shoot.spots.length > 0 ? theme.colors.yellow[5] : theme.colors.brown[4],
+                  color: theme.colors.brown[0],
                 },
               }}
             >
-              <IconCurrentLocation size={22} color={theme.colors.brown[0]} />
-            </ActionIcon>
-          </Tooltip>
-          {CAN_EDIT_SPOTS && (
-            <Button
-              h="auto"
-              radius="sm"
-              autoContrast
-              leftSection={<IconPlus size={18} />}
-              onClick={confirmPlacement}
-            >
-              Add spot
+              Today
             </Button>
-          )}
-        </Group>
+            <Tooltip label={locationError ?? "Centre on my location"}>
+              <ActionIcon
+                aria-label={locationError ?? "Centre on my location"}
+                onClick={() => locateUser()}
+                loading={isLocating}
+                variant="default"
+                size={56}
+                radius="sm"
+                styles={{
+                  root: {
+                    backgroundColor: theme.colors.brown[7],
+                    borderColor: theme.colors.brown[4],
+                  },
+                }}
+              >
+                <IconCurrentLocation size={22} color={theme.colors.brown[0]} />
+              </ActionIcon>
+            </Tooltip>
+            {CAN_EDIT_SPOTS && (
+              <Button
+                h="auto"
+                radius="sm"
+                autoContrast
+                leftSection={<IconPlus size={18} />}
+                onClick={confirmPlacement}
+              >
+                Add spot
+              </Button>
+            )}
+          </Group>
+        )}
       </Box>
 
       <SpotFilterSheet

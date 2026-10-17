@@ -6,6 +6,7 @@ import { ActionIcon, Button, Group, Menu, Paper, Text } from "@mantine/core";
 import {
   IconCalendarMinus,
   IconCalendarPlus,
+  IconArrowsMove,
   IconMenu2,
   IconNavigation,
   IconPencil,
@@ -96,6 +97,13 @@ export function SpotActions({ spot, activeTab, onTabChange }: SpotActionsProps) 
             <>
               <Menu.Item leftSection={<IconPencil size={16} />} onClick={() => setIsEditing(true)}>
                 Edit spot
+              </Menu.Item>
+              <Menu.Item
+                component={Link}
+                href={`/maps?move=${spot.id}`}
+                leftSection={<IconArrowsMove size={16} />}
+              >
+                Move pin
               </Menu.Item>
               <Menu.Divider />
               <Menu.Item
