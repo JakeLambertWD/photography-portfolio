@@ -1,19 +1,11 @@
 "use client";
 
 import type { SpotDetail } from "@/server/routers/spots";
-import {
-  ActionIcon,
-  AspectRatio,
-  Box,
-  Group,
-  Image,
-  Modal,
-  UnstyledButton,
-  useMantineTheme,
-} from "@mantine/core";
+import { ActionIcon, AspectRatio, Box, Group, Image, Modal, UnstyledButton } from "@mantine/core";
 import { IconX } from "@tabler/icons-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode, type UIEvent } from "react";
 import { formatSpotTag, SPOT_TAG_EMOJIS } from "@/app/maps/components/add-spot/AddSpot.constants";
+import { PhotoThumbnails } from "./PhotoThumbnails";
 import styles from "./SpotPhotoCarousel.module.css";
 
 type SpotPhotoCarouselProps = {
@@ -25,6 +17,8 @@ type SpotPhotoCarouselProps = {
   onActiveIndexChange: (index: number) => void;
   // Shown at the end of the thumbnail strip, e.g. an "add photos" button.
   extraThumbnail?: ReactNode;
+  // Given, the thumbnails can be dragged into a new order.
+  onReorder?: (photoIds: string[], movedPhotoId: string) => void;
 };
 
 export function SpotPhotoCarousel({
@@ -34,8 +28,8 @@ export function SpotPhotoCarousel({
   activeIndex,
   onActiveIndexChange,
   extraThumbnail,
+  onReorder,
 }: SpotPhotoCarouselProps) {
-  const theme = useMantineTheme();
   const trackRef = useRef<HTMLDivElement>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
 
@@ -151,33 +145,13 @@ export function SpotPhotoCarousel({
       </Modal>
 
       {(photos.length > 1 || extraThumbnail) && (
-        <Group gap="xs" wrap="nowrap" px="md" pb="sm" pt="lg">
-          {photos.map((photo, index) => {
-            const isActive = index === activeIndex;
-
-            return (
-              <UnstyledButton
-                key={photo.id}
-                aria-label={`Show photo ${index + 1}`}
-                aria-pressed={isActive}
-                onClick={() => goToPhoto(index)}
-                bdrs="sm"
-                opacity={isActive ? 1 : 0.6}
-                style={{
-                  flex: "0 1 64px",
-                  minWidth: 0,
-                  aspectRatio: "1",
-                  overflow: "hidden",
-                  outline: isActive ? `2px solid ${theme.colors.yellow[5]}` : "none",
-                  outlineOffset: 2,
-                }}
-              >
-                <Image src={photo.imageUrl} alt="" w="100%" h="100%" fit="cover" />
-              </UnstyledButton>
-            );
-          })}
-          {extraThumbnail}
-        </Group>
+        <PhotoThumbnails
+          photos={photos}
+          activeIndex={activeIndex}
+          onSelect={goToPhoto}
+          onReorder={onReorder}
+          extraThumbnail={extraThumbnail}
+        />
       )}
       {(tags.length > 0 || tagsLeading) && (
         <Group gap="sm" wrap="nowrap" px="md" pt="sm" pb={0} fz="xl">

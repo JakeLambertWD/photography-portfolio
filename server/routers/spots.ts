@@ -489,6 +489,31 @@ export const spotsRouter = router({
       if (!stillUsed) await deleteSpotPhotoFiles([imageUrl]);
     }),
 
+  // Saves a new photo order for one tab or carousel: each photo's position becomes its index.
+  reorderPhotos: publicProcedure
+    .input(
+      z.object({
+        spotId: z.uuid(),
+        photoIds: z.array(z.uuid()).min(1).max(200),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      assertCanEdit();
+      const db = getSql();
+
+      const rows = await db`
+        update photo_spot_image photo
+        set position = ordered.position
+        from unnest(${input.photoIds}::uuid[]) with ordinality as ordered(id, position)
+        where photo.id = ordered.id and photo.spot_id = ${input.spotId}
+        returning photo.id
+      `;
+
+      if (rows.length !== input.photoIds.length) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Some photos weren't found." });
+      }
+    }),
+
   // The first photo is the map pin, so moving a photo to the front makes it the cover.
   setCoverPhoto: publicProcedure
     .input(z.object({ photoId: z.uuid() }))

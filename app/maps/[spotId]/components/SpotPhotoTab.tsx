@@ -3,7 +3,8 @@
 import { CAN_EDIT_SPOTS, type PhotoKind } from "@/lib/photo-spots";
 import type { SpotDetail } from "@/server/routers/spots";
 import { Box, Center, Group, Stack, Text } from "@mantine/core";
-import { useState, type ReactNode } from "react";
+import { api } from "@/app/providers";
+import { useMemo, useState, type ReactNode } from "react";
 import { AddFromShowcaseSelect } from "./AddFromShowcaseSelect";
 import { AddPhotosTile } from "./AddPhotosTile";
 import { PhotoCaption } from "./PhotoCaption";
@@ -24,7 +25,7 @@ type SpotPhotoTabProps = {
 // A photo carousel with a note per photo. Used by the Showcase, Creator Shots and Editing tabs.
 export function SpotPhotoTab({
   spot,
-  photos,
+  photos: savedPhotos,
   kind,
   carouselId,
   labels,
@@ -33,6 +34,39 @@ export function SpotPhotoTab({
   const [activeIndex, setActiveIndex] = useState(0);
   const [progress, setProgress] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // The order just dragged into, shown straight away while it saves.
+  const [pendingOrder, setPendingOrder] = useState<string[] | null>(null);
+  const utils = api.useUtils();
+  const reorderPhotos = api.spots.reorderPhotos.useMutation();
+
+  const photos = useMemo(() => {
+    if (!pendingOrder) return savedPhotos;
+    const byId = new Map(savedPhotos.map((photo) => [photo.id, photo]));
+    const ordered = pendingOrder.flatMap((id) => byId.get(id) ?? []);
+    // Photos added since the drag stay at the end.
+    return ordered.concat(savedPhotos.filter((photo) => !pendingOrder.includes(photo.id)));
+  }, [savedPhotos, pendingOrder]);
+
+  async function handleReorder(photoIds: string[], movedPhotoId: string) {
+    // Keep showing the photo that was on screen, wherever it moved to.
+    const shownId = photos[photoIndex]?.id;
+    setPendingOrder(photoIds);
+    setActiveIndex(Math.max(0, photoIds.indexOf(shownId ?? movedPhotoId)));
+    setUploadError(null);
+    try {
+      await reorderPhotos.mutateAsync({ spotId: spot.id, photoIds });
+      // The first Showcase photo is the map pin, so refresh the map's list too.
+      await Promise.all([
+        utils.spots.byId.invalidate({ id: spot.id }),
+        utils.spots.list.invalidate(),
+      ]);
+    } catch {
+      setUploadError("Couldn't save the new photo order. Try again.");
+    } finally {
+      setPendingOrder(null);
+    }
+  }
 
   // A photo may have just been removed, so never point past the end of the list.
   const photoIndex = Math.max(0, Math.min(activeIndex, photos.length - 1));
@@ -61,6 +95,7 @@ export function SpotPhotoTab({
           activeIndex={photoIndex}
           onActiveIndexChange={setActiveIndex}
           extraThumbnail={addPhotosTile}
+          onReorder={CAN_EDIT_SPOTS ? handleReorder : undefined}
         />
       ) : (
         <>
