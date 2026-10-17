@@ -93,8 +93,10 @@ export function SpotPhotoCarousel({
                 aria-label={`View photo ${index + 1} full screen`}
                 onClick={() => setIsFullScreen(true)}
               >
+                {/* A fixed 4:5 frame, so the page doesn't jump between photos. The whole photo
+                    fits inside it: landscape shots get space above and below, not cropped sides. */}
                 <AspectRatio ratio={4 / 5}>
-                  <Image src={photo.imageUrl} alt={photo.caption ?? ""} fit="cover" />
+                  <Image src={photo.imageUrl} alt={photo.caption ?? ""} fit="contain" />
                 </AspectRatio>
               </UnstyledButton>
             </div>
