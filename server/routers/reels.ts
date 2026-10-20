@@ -2,7 +2,7 @@ import { cleanInstagramUrl, isInstagramUrl, REEL_KINDS } from "@/lib/photo-spots
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "../trpc";
-import { assertCanEdit, getSql } from "./spots";
+import { assertCanEdit, getDb } from "./spots";
 
 const reelClipSchema = z.object({
   id: z.string(),
@@ -42,23 +42,31 @@ export const reelsRouter = router({
   list: publicProcedure
     .input(z.object({ spotId: z.uuid(), kind: z.enum(REEL_KINDS).default("bts") }))
     .query(async ({ input }) => {
-      const db = getSql();
+      const db = getDb();
 
       const [reelRows, clipRows] = await Promise.all([
-        db`
-          select id, title, instagram_url as "instagramUrl", position
-          from photo_spot_reel
-          where spot_id = ${input.spotId} and kind = ${input.kind}
-          order by position, created_at
-        `,
-        db`
-          select c.id, c.reel_id as "reelId", c.description,
-            c.duration_seconds as "durationSeconds", c.position
-          from photo_spot_reel_clip c
-          join photo_spot_reel r on r.id = c.reel_id
-          where r.spot_id = ${input.spotId} and r.kind = ${input.kind}
-          order by c.position
-        `,
+        db
+          .selectFrom("photo_spot_reel")
+          .select(["id", "title", "instagram_url as instagramUrl", "position"])
+          .where("spot_id", "=", input.spotId)
+          .where("kind", "=", input.kind)
+          .orderBy("position")
+          .orderBy("created_at")
+          .execute(),
+        db
+          .selectFrom("photo_spot_reel_clip as c")
+          .innerJoin("photo_spot_reel as r", "r.id", "c.reel_id")
+          .select([
+            "c.id",
+            "c.reel_id as reelId",
+            "c.description",
+            "c.duration_seconds as durationSeconds",
+            "c.position",
+          ])
+          .where("r.spot_id", "=", input.spotId)
+          .where("r.kind", "=", input.kind)
+          .orderBy("c.position")
+          .execute(),
       ]);
 
       const reels = reelRows.map((reel) => ({
@@ -75,36 +83,50 @@ export const reelsRouter = router({
     )
     .mutation(async ({ input }) => {
       assertCanEdit();
-      const db = getSql();
 
       // New reels go to the end of the list.
-      const rows = await db`
-        insert into photo_spot_reel (spot_id, kind, title, position)
-        select spot.id, ${input.kind}, ${input.title},
-          coalesce(
-            (select max(position) + 1 from photo_spot_reel
-             where spot_id = spot.id and kind = ${input.kind}),
-            0
-          )
-        from photo_spot spot
-        where spot.id = ${input.spotId}
-        returning id
-      `;
+      const created = await getDb()
+        .insertInto("photo_spot_reel")
+        .columns(["spot_id", "kind", "title", "position"])
+        .expression((eb) =>
+          eb
+            .selectFrom("photo_spot as spot")
+            .select((eb) => [
+              "spot.id",
+              eb.val(input.kind).as("kind"),
+              eb.val(input.title).as("title"),
+              eb.fn
+                .coalesce(
+                  eb
+                    .selectFrom("photo_spot_reel")
+                    .select((eb) => eb(eb.fn.max("position"), "+", 1).as("next"))
+                    .whereRef("spot_id", "=", "spot.id")
+                    .where("kind", "=", input.kind),
+                  eb.lit(0),
+                )
+                .as("position"),
+            ])
+            .where("spot.id", "=", input.spotId),
+        )
+        .returning("id")
+        .executeTakeFirst();
 
-      if (!rows[0]) notFound("Spot");
-      return { id: String(rows[0].id) };
+      if (!created) notFound("Spot");
+      return { id: created.id };
     }),
 
   rename: publicProcedure
     .input(z.object({ id: z.uuid(), title: titleSchema }))
     .mutation(async ({ input }) => {
       assertCanEdit();
-      const db = getSql();
 
-      const rows = await db`
-        update photo_spot_reel set title = ${input.title} where id = ${input.id} returning id
-      `;
-      if (!rows[0]) notFound("Reel");
+      const updated = await getDb()
+        .updateTable("photo_spot_reel")
+        .set({ title: input.title })
+        .where("id", "=", input.id)
+        .returning("id")
+        .executeTakeFirst();
+      if (!updated) notFound("Reel");
     }),
 
   // Pass null to remove the link.
@@ -112,63 +134,82 @@ export const reelsRouter = router({
     .input(z.object({ id: z.uuid(), instagramUrl: instagramUrlSchema.nullable() }))
     .mutation(async ({ input }) => {
       assertCanEdit();
-      const db = getSql();
 
-      const rows = await db`
-        update photo_spot_reel
-        set instagram_url = ${input.instagramUrl}
-        where id = ${input.id}
-        returning id
-      `;
-      if (!rows[0]) notFound("Reel");
+      const updated = await getDb()
+        .updateTable("photo_spot_reel")
+        .set({ instagram_url: input.instagramUrl })
+        .where("id", "=", input.id)
+        .returning("id")
+        .executeTakeFirst();
+      if (!updated) notFound("Reel");
     }),
 
   delete: publicProcedure.input(z.object({ id: z.uuid() })).mutation(async ({ input }) => {
     assertCanEdit();
-    const db = getSql();
 
     // Clips are removed by "on delete cascade".
-    const rows = await db`delete from photo_spot_reel where id = ${input.id} returning id`;
-    if (!rows[0]) notFound("Reel");
+    const deleted = await getDb()
+      .deleteFrom("photo_spot_reel")
+      .where("id", "=", input.id)
+      .returning("id")
+      .executeTakeFirst();
+    if (!deleted) notFound("Reel");
   }),
 
   addClip: publicProcedure
     .input(clipDetailsSchema.extend({ reelId: z.uuid() }))
     .mutation(async ({ input }) => {
       assertCanEdit();
-      const db = getSql();
 
-      const rows = await db`
-        insert into photo_spot_reel_clip (reel_id, description, duration_seconds, position)
-        select reel.id, ${input.description}, ${input.durationSeconds},
-          coalesce((select max(position) + 1 from photo_spot_reel_clip where reel_id = reel.id), 0)
-        from photo_spot_reel reel
-        where reel.id = ${input.reelId}
-        returning id
-      `;
-      if (!rows[0]) notFound("Reel");
+      const created = await getDb()
+        .insertInto("photo_spot_reel_clip")
+        .columns(["reel_id", "description", "duration_seconds", "position"])
+        .expression((eb) =>
+          eb
+            .selectFrom("photo_spot_reel as reel")
+            .select((eb) => [
+              "reel.id",
+              eb.val(input.description).as("description"),
+              eb.val(input.durationSeconds).as("duration_seconds"),
+              eb.fn
+                .coalesce(
+                  eb
+                    .selectFrom("photo_spot_reel_clip")
+                    .select((eb) => eb(eb.fn.max("position"), "+", 1).as("next"))
+                    .whereRef("reel_id", "=", "reel.id"),
+                  eb.lit(0),
+                )
+                .as("position"),
+            ])
+            .where("reel.id", "=", input.reelId),
+        )
+        .returning("id")
+        .executeTakeFirst();
+      if (!created) notFound("Reel");
     }),
 
   updateClip: publicProcedure
     .input(clipDetailsSchema.extend({ id: z.uuid() }))
     .mutation(async ({ input }) => {
       assertCanEdit();
-      const db = getSql();
 
-      const rows = await db`
-        update photo_spot_reel_clip
-        set description = ${input.description}, duration_seconds = ${input.durationSeconds}
-        where id = ${input.id}
-        returning id
-      `;
-      if (!rows[0]) notFound("Clip");
+      const updated = await getDb()
+        .updateTable("photo_spot_reel_clip")
+        .set({ description: input.description, duration_seconds: input.durationSeconds })
+        .where("id", "=", input.id)
+        .returning("id")
+        .executeTakeFirst();
+      if (!updated) notFound("Clip");
     }),
 
   deleteClip: publicProcedure.input(z.object({ id: z.uuid() })).mutation(async ({ input }) => {
     assertCanEdit();
-    const db = getSql();
 
-    const rows = await db`delete from photo_spot_reel_clip where id = ${input.id} returning id`;
-    if (!rows[0]) notFound("Clip");
+    const deleted = await getDb()
+      .deleteFrom("photo_spot_reel_clip")
+      .where("id", "=", input.id)
+      .returning("id")
+      .executeTakeFirst();
+    if (!deleted) notFound("Clip");
   }),
 });

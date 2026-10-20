@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "db:types": "kysely-codegen --dialect postgres --env-file .env.local --out-file server/db.types.ts --include-pattern 'public.*'"
   },
   "dependencies": {
     "@mantine/core": "^9.5.2",
@@ -21,6 +22,7 @@
     "@trpc/react-query": "^11.18.0",
     "@trpc/server": "^11.18.0",
     "@vercel/blob": "^2.8.1",
+    "kysely": "^0.29.7",
     "maplibre-gl": "^5.24.0",
     "motion": "^13.4.0",
     "next": "16.3.2",
@@ -37,6 +39,8 @@
     "@types/supercluster": "^7.1.3",
     "eslint": "^9",
     "eslint-config-next": "16.3.2",
+    "kysely-codegen": "^0.20.0",
+    "pg": "^8.23.1",
     "prettier": "^3.9.8",
     "typescript": "^5"
   }
