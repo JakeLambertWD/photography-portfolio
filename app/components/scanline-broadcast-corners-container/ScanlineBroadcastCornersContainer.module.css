@@ -1,0 +1,62 @@
+.root {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100dvh;
+  background: #030302;
+  color: var(--foreground);
+}
+
+/* Broadcast scanline texture, purely decorative - same texture as
+   ScanlineBroadcastContainer, kept consistent with the rest of the site. */
+.scan {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.05) 0,
+    rgba(255, 255, 255, 0.05) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* Teal/amber glow in opposite corners, rather than meeting in the middle
+   like the hero's - amber top-left, teal bottom-right, as large blurred
+   circles instead of a soft radial falloff. */
+.glow {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.glow::before,
+.glow::after {
+  content: "";
+  position: absolute;
+  width: 50vw;
+  height: 50vw;
+  border-radius: 50%;
+  filter: blur(80px);
+  mix-blend-mode: screen;
+  opacity: 0.55;
+}
+
+.glow::before {
+  top: -10vw;
+  left: -8vw;
+  background: radial-gradient(circle, var(--amber) 0%, transparent 70%);
+}
+
+.glow::after {
+  bottom: -14vw;
+  right: -10vw;
+  background: radial-gradient(circle, var(--teal) 0%, transparent 70%);
+}
