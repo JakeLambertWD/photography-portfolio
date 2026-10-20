@@ -1,14 +1,11 @@
-import { neon, Pool } from "@neondatabase/serverless";
+import { Pool } from "@neondatabase/serverless";
 import { Kysely, PostgresDialect, type PostgresPool } from "kysely";
 import type { DB } from "./db.types";
 
 const databaseUrl = process.env.DATABASE_URL;
 
-// Raw SQL client - still used by the routers until they're moved to `db`.
-export const sql = databaseUrl ? neon(databaseUrl) : null;
-
-// Type-safe query builder. Uses Neon's WebSocket Pool rather than the HTTP
-// client above so it supports transactions. Regenerate the table types with
+// Type-safe query builder over Neon's WebSocket Pool, which (unlike Neon's
+// HTTP client) supports transactions. Regenerate the table types with
 // `pnpm db:types` after running a migration.
 export const db = databaseUrl
   ? new Kysely<DB>({
