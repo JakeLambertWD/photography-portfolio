@@ -16,6 +16,8 @@ const lato = Lato({
 
 export const theme = createTheme({
   fontFamily: lato.style.fontFamily,
+  // Falls back to the Geist Mono loaded in app/layout.tsx (--font-geist-mono).
+  fontFamilyMonospace: "var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace",
   cursorType: "pointer",
   defaultRadius: "xs",
   radius: {
@@ -113,5 +115,11 @@ export const theme = createTheme({
       "#1a1210",
       "#141110",
     ],
+  },
+  other: {
+    colors: {
+      teal: "#5eb8b0",
+      amber: "#d97706",
+    },
   },
 });
