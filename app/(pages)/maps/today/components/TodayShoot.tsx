@@ -1,6 +1,6 @@
 "use client";
 
-import { getDirectionsUrl } from "@/app/maps/[spotId]/components/SpotDetail.constants";
+import { getDirectionsUrl } from "@/app/(pages)/maps/[spotId]/components/SpotDetail.constants";
 import { api } from "@/app/providers";
 import { getSpotGearOption, getYesterdayShootDate } from "@/lib/photo-spots";
 import type { ShootSpot } from "@/server/routers/shoot";

@@ -30,11 +30,11 @@ tRPC spots router (server/routers/spots.ts)
    - `spots.create` / `spots.updatePhotoCaption` / `spots.delete`: edits. Editing is
      currently open to everyone, including production, because the site has no sign-in.
      Set `CAN_EDIT_SPOTS` in `lib/photo-spots.ts` to `false` to lock it again.
-4. **app/maps/components/PhotoSpotsMap.tsx** renders the map with
+4. **app/(pages)/maps/components/PhotoSpotsMap.tsx** renders the map with
    `react-map-gl/maplibre`. Pins are grouped with `supercluster`; tapping a
    group zooms in until it splits. It's loaded with `next/dynamic` and
    `ssr: false` because MapLibre needs `window`.
-5. **app/maps/[spotId]/components/** holds the spot view: a tab system covering the
+5. **app/(pages)/maps/[spotId]/components/** holds the spot view: a tab system covering the
    content pieces shot at this location (Showcase carousels, Creator shots, Editing carousel,
    BTS reel, Educational reel, 1 Clip reel, Trial Reels, and
    Shoot Day checklist & posting schedule), with a scroll-snap photo carousel, inline

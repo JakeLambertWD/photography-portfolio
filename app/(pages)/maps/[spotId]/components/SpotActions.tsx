@@ -14,7 +14,7 @@ import {
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useTodayShoot } from "@/app/maps/today/useTodayShoot";
+import { useTodayShoot } from "@/app/(pages)/maps/today/useTodayShoot";
 import { ContentTabMenuItems } from "./ContentTabMenu";
 import { DeleteSpotModal } from "./DeleteSpotButton";
 import { EditSpotModal } from "./EditSpotButton";

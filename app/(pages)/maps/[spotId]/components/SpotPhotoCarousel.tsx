@@ -4,7 +4,7 @@ import type { SpotDetail } from "@/server/routers/spots";
 import { ActionIcon, AspectRatio, Box, Group, Image, Modal, UnstyledButton } from "@mantine/core";
 import { IconX } from "@tabler/icons-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode, type UIEvent } from "react";
-import { formatSpotTag, SPOT_TAG_EMOJIS } from "@/app/maps/components/add-spot/AddSpot.constants";
+import { formatSpotTag, SPOT_TAG_EMOJIS } from "@/app/(pages)/maps/components/add-spot/AddSpot.constants";
 import { PhotoThumbnails } from "./PhotoThumbnails";
 import styles from "./SpotPhotoCarousel.module.css";
 

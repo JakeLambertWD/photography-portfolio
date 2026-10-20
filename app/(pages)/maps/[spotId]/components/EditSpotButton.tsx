@@ -1,8 +1,8 @@
 "use client";
 
-import { SpotToggle } from "@/app/maps/components/add-spot/SpotToggle";
-import { WeatherPill } from "@/app/maps/components/add-spot/WeatherPill";
-import { useSortedSpotTags } from "@/app/maps/components/add-spot/useSortedSpotTags";
+import { SpotToggle } from "@/app/(pages)/maps/components/add-spot/SpotToggle";
+import { WeatherPill } from "@/app/(pages)/maps/components/add-spot/WeatherPill";
+import { useSortedSpotTags } from "@/app/(pages)/maps/components/add-spot/useSortedSpotTags";
 import { api } from "@/app/providers";
 import {
   applySpotTitleCase,
@@ -30,7 +30,7 @@ import {
   SPOT_FORM_MODAL_TITLE_STYLES,
   SpotFormModalTitle,
   SpotFormStatus,
-} from "@/app/maps/components/add-spot/SpotFormModalTitle";
+} from "@/app/(pages)/maps/components/add-spot/SpotFormModalTitle";
 
 type EditSpotButtonProps = {
   spot: SpotDetail;
