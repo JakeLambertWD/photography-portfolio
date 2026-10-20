@@ -1,25 +1,23 @@
 import { TRPCError } from "@trpc/server";
-import { z } from "zod";
-import { sql } from "../db";
+import { db } from "../db";
 import { publicProcedure, router } from "../trpc";
 
 export const followerRouter = router({
-  getCount: publicProcedure.output(z.number().nullable()).query(async () => {
-    // Check if the SQL client is available before querying the database.
-    if (!sql) {
+  getCount: publicProcedure.query(async () => {
+    // Check if the database client is available before querying the database.
+    if (!db) {
       throw new TRPCError({
         code: "PRECONDITION_FAILED",
         message: "DATABASE_URL is not configured.",
       });
     }
 
-    const rows = await sql`
-      select follower_count
-      from follower_snapshot
-      order by fetched_at desc
-      limit 1
-    `;
+    const latest = await db
+      .selectFrom("follower_snapshot")
+      .select("follower_count")
+      .orderBy("fetched_at", "desc")
+      .executeTakeFirst();
 
-    return rows[0]?.follower_count ?? null;
+    return latest?.follower_count ?? null;
   }),
 });

@@ -1,5 +1,5 @@
 import { getInstagramStats } from "@/lib/instagram";
-import { sql } from "@/server/db";
+import { db } from "@/server/db";
 
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET;
@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     return Response.json({ ok: false, error: "Unauthorized." }, { status: 401 });
   }
 
-  if (!sql) {
+  if (!db) {
     return Response.json(
       { ok: false, error: "Database connection is not configured." },
       { status: 503 },
@@ -31,17 +31,17 @@ export async function GET(request: Request) {
 
   try {
     // Insert the follower count into the database.
-    const inserted = await sql`
-      insert into follower_snapshot (follower_count)
-      values (${stats.followers_count})
-      returning fetched_at
-    `;
+    const inserted = await db
+      .insertInto("follower_snapshot")
+      .values({ follower_count: stats.followers_count })
+      .returning("fetched_at")
+      .executeTakeFirstOrThrow();
 
     // Return the inserted follower count and the timestamp it was fetched at.
     return Response.json({
       ok: true,
       count: stats.followers_count,
-      fetchedAt: inserted[0]?.fetched_at,
+      fetchedAt: inserted.fetched_at,
     });
   } catch (error) {
     console.error("Failed to store Instagram follower count:", error);
