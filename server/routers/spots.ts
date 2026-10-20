@@ -10,7 +10,7 @@ import {
 import { del } from "@vercel/blob";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { sql } from "../db";
+import { db as kysely, sql } from "../db";
 import { publicProcedure, router } from "../trpc";
 
 const spotSummarySchema = z.object({
@@ -88,6 +88,18 @@ export function getSql() {
   }
 
   return sql;
+}
+
+export function getDb() {
+  // Check if the database client is available before querying the database.
+  if (!kysely) {
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message: "DATABASE_URL is not configured.",
+    });
+  }
+
+  return kysely;
 }
 
 export function assertCanEdit() {
