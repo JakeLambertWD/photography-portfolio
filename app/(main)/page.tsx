@@ -1,11 +1,9 @@
-import { Container, Stack } from "@mantine/core";
+import { Hero } from "../components/hero/Hero";
 
 export default function Home() {
   return (
-    <main>
-      <Container size="sm">
-        <Stack align="center" gap="md"></Stack>
-      </Container>
+    <main style={{ display: "block", padding: 0 }}>
+      <Hero />
     </main>
   );
 }

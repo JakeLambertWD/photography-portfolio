@@ -1,0 +1,112 @@
+.hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  /* Matches the approved design exactly rather than the site's standard
+     --background token - this section commits to its own fixed, near-black
+     "broadcast" world regardless of page. */
+  background: #030302;
+  color: var(--foreground);
+  min-height: 100dvh;
+  padding-block: 90px 0;
+  padding-inline: 1.25rem;
+}
+
+/* Broadcast scanline texture, purely decorative. */
+.scan {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.05) 0,
+    rgba(255, 255, 255, 0.05) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* Teal / amber duotone glow, also purely decorative. */
+.glow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      55% 55% at 32% 42%,
+      color-mix(in srgb, var(--hero-teal) 16%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      55% 55% at 68% 58%,
+      color-mix(in srgb, var(--hero-amber) 16%, transparent),
+      transparent 70%
+    );
+}
+
+/* Vertically centers the headline within the hero's free space, while
+   `.stats` (no auto margin, see below) gets pushed flush to the bottom. */
+.copy {
+  position: relative;
+  z-index: 1;
+  margin-block: auto;
+  max-width: 44rem;
+}
+
+.tally {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--hero-amber);
+  box-shadow: 0 0 6px var(--hero-amber);
+  animation: tally-pulse 2s ease-in-out infinite;
+  flex: none;
+}
+
+@keyframes tally-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tally {
+    animation: none;
+  }
+}
+
+/* Chromatic-aberration text effect: teal/amber duplicate layers offset
+   either side of the real text, blended with `screen`. */
+.ca {
+  position: relative;
+  display: inline-block;
+}
+
+.ca::before,
+.ca::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.ca::before {
+  color: var(--hero-teal);
+  transform: translateX(-2px);
+}
+
+.ca::after {
+  color: var(--hero-amber);
+  transform: translateX(2px);
+}

@@ -34,3 +34,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 - Preserve strong typing. Avoid broad fallback objects such as `?? {}` when the value is guaranteed by the application's theme configuration.
 - Keep changes focused and follow the existing project patterns before introducing new abstractions.
+
+## tRPC / React Query
+
+- Destructure query results instead of accessing properties on the query object. Rename `data` to a descriptive name, and destructure any other fields you need (such as `isLoading` or `error`) on the same line, e.g. `const { data: followerCount, isLoading } = api.followers.getCount.useQuery();`.

@@ -1,9 +1,10 @@
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 import { sql } from "../db";
 import { publicProcedure, router } from "../trpc";
 
 export const followerRouter = router({
-  getCount: publicProcedure.query(async () => {
+  getCount: publicProcedure.output(z.number().nullable()).query(async () => {
     // Check if the SQL client is available before querying the database.
     if (!sql) {
       throw new TRPCError({

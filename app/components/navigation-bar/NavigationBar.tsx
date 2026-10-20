@@ -13,8 +13,7 @@ export function NavigationBar() {
   const [hoveredHref, setHoveredHref] = useState<string | null>(null);
 
   return (
-    // Positioned above full-screen pages such as the /maps map.
-    <Center pt="lg" pos="relative" style={{ zIndex: 1 }}>
+    <Center pos="absolute" w="100%" pt="lg" style={{ zIndex: 1 }}>
       <Paper
         withBorder
         p="sm"

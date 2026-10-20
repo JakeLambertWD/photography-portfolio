@@ -1,5 +1,5 @@
 import { createTheme } from "@mantine/core";
-import { Lato, Poppins } from "next/font/google";
+import { Bodoni_Moda, Lato, Poppins } from "next/font/google";
 
 export const DEFAULT_BLACK = "#181818";
 export const PRIMARY_COLOR = "#e7ba3d";
@@ -14,8 +14,18 @@ const lato = Lato({
   weight: ["100", "300", "400", "700", "900"],
 });
 
+// Display serif for the hero. 400 is the lightest static weight
+// next/font/google ships for Bodoni Moda.
+const bodoniModa = Bodoni_Moda({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+});
+
 export const theme = createTheme({
   fontFamily: lato.style.fontFamily,
+  // Falls back to the Geist Mono loaded in app/layout.tsx (--font-geist-mono).
+  fontFamilyMonospace: "var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace",
   cursorType: "pointer",
   defaultRadius: "xs",
   radius: {
@@ -113,5 +123,14 @@ export const theme = createTheme({
       "#1a1210",
       "#141110",
     ],
+  },
+  other: {
+    colors: {
+      teal: "#5eb8b0",
+      amber: "#d97706",
+    },
+    fonts: {
+      display: bodoniModa.style.fontFamily,
+    },
   },
 });
