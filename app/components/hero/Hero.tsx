@@ -4,7 +4,7 @@ import { Stack, Text, Title, useMantineTheme } from "@mantine/core";
 import { ScanlineBroadcastContainer } from "../scanline-broadcast-container/ScanlineBroadcastContainer";
 import {
   HERO_COOL_WORD,
-  HERO_HEADLINE_CONNECTOR,
+  HERO_HEADLINE_ENDING,
   HERO_HEADLINE_LEAD,
   HERO_SUBCOPY,
   HERO_WARM_WORD,
@@ -35,11 +35,12 @@ export function Hero() {
           <Text span inherit c={theme.other.colors.teal} fs="italic">
             {HERO_COOL_WORD}
           </Text>
+          ,
           <br />
-          {HERO_HEADLINE_CONNECTOR}{" "}
           <Text span inherit c={theme.other.colors.amber} fs="italic">
             {HERO_WARM_WORD}
-          </Text>
+          </Text>{" "}
+          {HERO_HEADLINE_ENDING}
         </Title>
 
         <Text ta="center" c="dimmed" maw={480} fz="sm">

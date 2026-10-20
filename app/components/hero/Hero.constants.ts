@@ -1,8 +1,8 @@
-// Reads "Every place / holds beauty".
-export const HERO_HEADLINE_LEAD = "Every";
-export const HERO_COOL_WORD = "place";
-export const HERO_HEADLINE_CONNECTOR = "holds";
+// Reads "Around every corner, / beauty unfolds".
+export const HERO_HEADLINE_LEAD = "Around every";
+export const HERO_COOL_WORD = "corner";
 export const HERO_WARM_WORD = "beauty";
+export const HERO_HEADLINE_ENDING = "unfolds";
 
 export const HERO_SUBCOPY = "Exploring cities one street at a time";
 
