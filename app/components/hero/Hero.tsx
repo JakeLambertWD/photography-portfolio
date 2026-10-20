@@ -1,7 +1,7 @@
 "use client";
 
-import { Box, Stack, Text, Title, useMantineTheme } from "@mantine/core";
-import type { CSSProperties } from "react";
+import { Stack, Text, Title, useMantineTheme } from "@mantine/core";
+import { ScanlineBroadcastContainer } from "../scanline-broadcast-container/ScanlineBroadcastContainer";
 import {
   HERO_COOL_WORD,
   HERO_HEADLINE_CONNECTOR,
@@ -15,31 +15,19 @@ import { HeroStats } from "./HeroStats";
 export function Hero() {
   const theme = useMantineTheme();
 
-  const heroVars = {
-    "--hero-teal": theme.other.colors.teal,
-    "--hero-amber": theme.other.colors.amber,
-    "--hero-line": `color-mix(in srgb, ${theme.white} 10%, transparent)`,
-  } as CSSProperties;
-
   return (
-    <Box component="section" className={styles.hero} style={heroVars}>
-      <Box className={styles.scan} aria-hidden="true" />
-      <Box className={styles.glow} aria-hidden="true" />
-
-      <Stack align="center" gap="md" className={styles.copy}>
+    <ScanlineBroadcastContainer>
+      {/* my="auto" vertically centres the copy, pushing the stats to the bottom. */}
+      <Stack align="center" gap="md" my="auto" maw="44rem">
         <Title
           order={1}
           ta="center"
-          styles={{
-            root: {
-              fontFamily: theme.other.fonts.display,
-              fontWeight: 400,
-              textTransform: "uppercase",
-              letterSpacing: "0.01em",
-              fontSize: "clamp(2.2rem, 6.6vw, 5rem)",
-              lineHeight: 1.06,
-            },
-          }}
+          ff={theme.other.fonts.display}
+          fw={400}
+          tt="uppercase"
+          lts="0.01em"
+          fz="clamp(2.2rem, 6.6vw, 5rem)"
+          lh={1.06}
         >
           <Text span inherit className={styles.ca} data-text={HERO_HEADLINE_LEAD}>
             {HERO_HEADLINE_LEAD}
@@ -60,6 +48,6 @@ export function Hero() {
       </Stack>
 
       <HeroStats />
-    </Box>
+    </ScanlineBroadcastContainer>
   );
 }

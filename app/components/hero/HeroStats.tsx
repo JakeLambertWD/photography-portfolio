@@ -11,14 +11,14 @@ export function HeroStats() {
   const STATS = [{ label: FOLLOWERS_STAT_LABEL, value: followerCount ?? 0 }, ...HERO_STATIC_STATS];
 
   return (
-    <Flex justify="center" gap={0} w="100%" pt="xxl" pb="xxl">
+    <Flex justify="center" gap={0} w="100%" py="xxl">
       {STATS.map((stat, index) => (
         <Stack
           key={stat.label}
           align="center"
           gap="xxs"
           px="md"
-          style={{ borderRight: index < STATS.length - 1 ? "1px solid var(--hero-line)" : "none" }}
+          style={{ borderRight: index < STATS.length - 1 ? "1px solid var(--line)" : "none" }}
         >
           <AnimateHeroValue value={stat.value} />
           <Text span fz="xs" tt="uppercase" c="dimmed" ff="monospace" lts="0.06em">

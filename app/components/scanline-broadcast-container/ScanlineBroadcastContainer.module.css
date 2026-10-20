@@ -1,0 +1,48 @@
+.root {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100dvh;
+  background: #030302;
+  color: var(--foreground);
+}
+
+/* Broadcast scanline texture, purely decorative. z-index:-1 (rather than
+   requiring every consumer's content to opt into its own z-index) keeps
+   this behind anything rendered inside the component, regardless of
+   whether that content is itself positioned. */
+.scan {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.05) 0,
+    rgba(255, 255, 255, 0.05) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* Teal / amber duotone glow, also purely decorative. */
+.glow {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      55% 55% at 32% 42%,
+      color-mix(in srgb, var(--teal) 16%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      55% 55% at 68% 58%,
+      color-mix(in srgb, var(--amber) 16%, transparent),
+      transparent 70%
+    );
+}

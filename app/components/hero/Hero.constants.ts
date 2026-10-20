@@ -4,7 +4,7 @@ export const HERO_COOL_WORD = "place";
 export const HERO_HEADLINE_CONNECTOR = "holds";
 export const HERO_WARM_WORD = "beauty";
 
-export const HERO_SUBCOPY = "One archive, eight genres — select one below to filter the archive.";
+export const HERO_SUBCOPY = "Exploring cities one street at a time";
 
 export const FOLLOWERS_STAT_LABEL = "Instagram followers";
 
