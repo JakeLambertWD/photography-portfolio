@@ -1,10 +1,15 @@
 "use client";
 
-import { Center, Paper, useMantineTheme } from "@mantine/core";
+import { Box, Center, Group, Paper, useMantineTheme } from "@mantine/core";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { AnimatedNavigationItem } from "./AnimatedNavigationItem";
-import { NAVIGATION_LINKS } from "./NavigationBar.constants";
+import { MobileNavigationMenu } from "./MobileNavigationMenu";
+import {
+  FROSTED_GLASS_STYLE,
+  isNavigationLinkActive,
+  NAVIGATION_LINKS,
+} from "./NavigationBar.constants";
 
 export function NavigationBar() {
   const pathname = usePathname();
@@ -13,41 +18,41 @@ export function NavigationBar() {
   const [hoveredHref, setHoveredHref] = useState<string | null>(null);
 
   return (
-    <Center pos="absolute" w="100%" pt="lg" style={{ zIndex: 1 }}>
-      <Paper
-        withBorder
-        p="sm"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          // Frosted glass effect - https://css.glass
-          background: "rgba(20, 20, 20, 0.19)",
-          borderRadius: theme.radius.xxxl,
-          boxShadow: "0 4px 30px rgba(0, 0, 0, 0.1)",
-          backdropFilter: "blur(5.6px)",
-          WebkitBackdropFilter: "blur(5.6px)",
-          borderColor: "rgba(20, 20, 20, 0.3)",
-          transition: "box-shadow 300ms ease",
-        }}
-      >
-        {NAVIGATION_LINKS.map((item) => {
-          const isActive =
-            item.href === "/" ? pathname === item.href : pathname.startsWith(item.href);
-          const isHighlighted = hoveredHref === item.href || (hoveredHref === null && isActive);
+    <Box pos="absolute" w="100%" pt="lg" px="lg" style={{ zIndex: 1 }}>
+      <Center visibleFrom="md">
+        <Paper
+          withBorder
+          p="sm"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            ...FROSTED_GLASS_STYLE,
+            borderRadius: theme.radius.xxxl,
+            transition: "box-shadow 300ms ease",
+          }}
+        >
+          {NAVIGATION_LINKS.map((item) => {
+            const isActive = isNavigationLinkActive(pathname, item.href);
+            const isHighlighted = hoveredHref === item.href || (hoveredHref === null && isActive);
 
-          return (
-            <AnimatedNavigationItem
-              key={item.label}
-              item={item}
-              isActive={isActive}
-              isHighlighted={isHighlighted}
-              onMouseEnter={() => setHoveredHref(item.href)}
-              onMouseLeave={() => setHoveredHref(null)}
-            />
-          );
-        })}
-      </Paper>
-    </Center>
+            return (
+              <AnimatedNavigationItem
+                key={item.label}
+                item={item}
+                isActive={isActive}
+                isHighlighted={isHighlighted}
+                onMouseEnter={() => setHoveredHref(item.href)}
+                onMouseLeave={() => setHoveredHref(null)}
+              />
+            );
+          })}
+        </Paper>
+      </Center>
+
+      <Group justify="flex-end" hiddenFrom="md">
+        <MobileNavigationMenu />
+      </Group>
+    </Box>
   );
 }

@@ -50,7 +50,7 @@ export function AnimatedNavigationItem({
         label={item.label}
         active={isActive}
         variant="light"
-        px="lg"
+        px="md"
         py="sm"
         fz="sm"
         color={theme.colors.yellow[6]}
