@@ -1,5 +1,5 @@
 import { createTheme } from "@mantine/core";
-import { Lato, Poppins } from "next/font/google";
+import { Bodoni_Moda, Lato, Poppins } from "next/font/google";
 
 export const DEFAULT_BLACK = "#181818";
 export const PRIMARY_COLOR = "#e7ba3d";
@@ -12,6 +12,14 @@ const poppins = Poppins({
 const lato = Lato({
   subsets: ["latin"],
   weight: ["100", "300", "400", "700", "900"],
+});
+
+// Display serif for the hero. 400 is the lightest static weight
+// next/font/google ships for Bodoni Moda.
+const bodoniModa = Bodoni_Moda({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
 });
 
 export const theme = createTheme({
@@ -120,6 +128,9 @@ export const theme = createTheme({
     colors: {
       teal: "#5eb8b0",
       amber: "#d97706",
+    },
+    fonts: {
+      display: bodoniModa.style.fontFamily,
     },
   },
 });
