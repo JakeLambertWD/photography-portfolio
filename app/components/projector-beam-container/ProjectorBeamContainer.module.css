@@ -1,0 +1,97 @@
+.root {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100dvh;
+  background: #030302;
+  color: var(--foreground);
+}
+
+/* Conic cone of light fanning down from the top edge, warm on one side and
+   cool on the other where the beams cross. Purely decorative: z-index:-1
+   keeps it behind any content regardless of that content's own stacking. */
+.beam {
+  position: absolute;
+  top: -10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 140%;
+  height: 130%;
+  z-index: -1;
+  pointer-events: none;
+  background: conic-gradient(
+    from 180deg at 50% 0%,
+    transparent 0deg,
+    transparent 77deg,
+    color-mix(in srgb, var(--amber) 18%, transparent) 90deg,
+    rgba(245, 243, 240, 0.1) 90.3deg,
+    color-mix(in srgb, var(--teal) 16%, transparent) 90.6deg,
+    transparent 103deg,
+    transparent 360deg
+  );
+  filter: blur(6px);
+}
+
+.motes {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.motes span {
+  position: absolute;
+  bottom: 0;
+  width: 2.5px;
+  height: 2.5px;
+  border-radius: 50%;
+  background: rgba(245, 243, 240, 0.5);
+  animation-name: drift;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes drift {
+  from {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.7;
+  }
+  90% {
+    opacity: 0.5;
+  }
+  to {
+    transform: translateY(-60vh);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motes span {
+    animation: none;
+    opacity: 0.3;
+  }
+}
+
+/* Soft pool of light where the beam lands at the foot of the page. */
+.pool {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 60vw;
+  height: 50%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 50% 100%,
+    color-mix(in srgb, var(--amber) 18%, transparent) 0%,
+    color-mix(in srgb, var(--teal) 9%, transparent) 46%,
+    transparent 72%
+  );
+}

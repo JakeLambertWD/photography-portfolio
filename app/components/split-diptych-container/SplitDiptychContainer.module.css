@@ -1,0 +1,58 @@
+.root {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100dvh;
+  background: #030302;
+  color: var(--foreground);
+}
+
+/* Two radial-gradient halves, teal on the left and amber on the right,
+   each glowing from the seam outward. Purely decorative: z-index:-1 keeps
+   them behind any content regardless of that content's own stacking. */
+.half {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.halfL {
+  left: 0;
+  background: radial-gradient(
+    120% 100% at 100% 50%,
+    color-mix(in srgb, var(--teal) 22%, transparent),
+    transparent 65%
+  );
+}
+
+.halfR {
+  right: 0;
+  background: radial-gradient(
+    120% 100% at 0% 50%,
+    color-mix(in srgb, var(--amber) 22%, transparent),
+    transparent 65%
+  );
+}
+
+.seam {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(255, 255, 255, 0.3) 20%,
+    rgba(255, 255, 255, 0.3) 80%,
+    transparent
+  );
+}

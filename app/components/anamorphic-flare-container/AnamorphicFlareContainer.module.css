@@ -1,0 +1,96 @@
+.root {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100dvh;
+  background: #030302;
+  color: var(--foreground);
+}
+
+/* Horizontal lens-flare streak crossing from teal to amber through white.
+   Purely decorative: z-index:-1 keeps it behind any content regardless of
+   that content's own stacking. */
+.streak {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 44%;
+  height: 2px;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--teal) 30%,
+    #fff 50%,
+    var(--amber) 70%,
+    transparent 100%
+  );
+  filter: blur(1px);
+  opacity: 0.8;
+}
+
+.flareCore {
+  position: absolute;
+  top: 44%;
+  left: 38%;
+  transform: translate(-50%, -50%);
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    #fff 0%,
+    color-mix(in srgb, var(--teal) 50%, transparent) 35%,
+    transparent 70%
+  );
+  filter: blur(4px);
+}
+
+.ghost {
+  position: absolute;
+  top: 44%;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  z-index: -1;
+  pointer-events: none;
+  filter: blur(2px);
+}
+
+.g1 {
+  left: 55%;
+  width: 32px;
+  height: 32px;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--amber) 50%, transparent),
+    transparent 70%
+  );
+}
+
+.g2 {
+  left: 68%;
+  width: 17px;
+  height: 17px;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--teal) 40%, transparent),
+    transparent 70%
+  );
+}
+
+.g3 {
+  left: 78%;
+  width: 48px;
+  height: 48px;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--amber) 30%, transparent),
+    transparent 70%
+  );
+}
