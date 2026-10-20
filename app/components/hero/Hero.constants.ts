@@ -1,6 +1,8 @@
-export const HERO_HEADLINE_LEAD = "Discover the city,";
-export const HERO_COOL_WORD = "cool";
-export const HERO_WARM_WORD = "warm";
+// Reads "Every place / holds beauty".
+export const HERO_HEADLINE_LEAD = "Every";
+export const HERO_COOL_WORD = "place";
+export const HERO_HEADLINE_CONNECTOR = "holds";
+export const HERO_WARM_WORD = "beauty";
 
 export const HERO_SUBCOPY = "One archive, eight genres — select one below to filter the archive.";
 

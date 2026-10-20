@@ -2,7 +2,13 @@
 
 import { Box, Stack, Text, Title, useMantineTheme } from "@mantine/core";
 import type { CSSProperties } from "react";
-import { HERO_COOL_WORD, HERO_HEADLINE_LEAD, HERO_SUBCOPY, HERO_WARM_WORD } from "./Hero.constants";
+import {
+  HERO_COOL_WORD,
+  HERO_HEADLINE_CONNECTOR,
+  HERO_HEADLINE_LEAD,
+  HERO_SUBCOPY,
+  HERO_WARM_WORD,
+} from "./Hero.constants";
 import styles from "./Hero.module.css";
 import { HeroStats } from "./HeroStats";
 
@@ -37,12 +43,12 @@ export function Hero() {
         >
           <Text span inherit className={styles.ca} data-text={HERO_HEADLINE_LEAD}>
             {HERO_HEADLINE_LEAD}
-          </Text>
-          <br />
+          </Text>{" "}
           <Text span inherit c={theme.other.colors.teal} fs="italic">
             {HERO_COOL_WORD}
-          </Text>{" "}
-          and{" "}
+          </Text>
+          <br />
+          {HERO_HEADLINE_CONNECTOR}{" "}
           <Text span inherit c={theme.other.colors.amber} fs="italic">
             {HERO_WARM_WORD}
           </Text>
