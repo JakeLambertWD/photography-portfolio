@@ -1,10 +1,10 @@
 import { ProjectorBeamContainer } from "@/app/components/projector-beam-container/ProjectorBeamContainer";
-import SignIn from "@/app/components/signin/SignIn";
+import SignInContainer from "@/app/components/signin/SignInContainer";
 
 export default function CollaboratePage() {
   return (
     <ProjectorBeamContainer>
-      <SignIn />
+      <SignInContainer />
     </ProjectorBeamContainer>
   );
 }
