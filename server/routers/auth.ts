@@ -1,13 +1,8 @@
 import { signInSchema } from "@/utils/validations-schemas/auth";
 import { TRPCError } from "@trpc/server";
 import argon2 from "argon2";
-import { randomUUID } from "node:crypto";
 import { db } from "../db";
 import { publicProcedure, router } from "../trpc";
-
-// Verified against when no admin matches the email, so an unknown email takes as long
-// to reject as a wrong password and response time doesn't reveal the admin's email.
-const dummyPasswordHash = argon2.hash(randomUUID());
 
 export const authRouter = router({
   signIn: publicProcedure.input(signInSchema).mutation(async ({ input }) => {
@@ -26,14 +21,13 @@ export const authRouter = router({
       .where("email", "=", input.email)
       .executeTakeFirst();
 
-    // If no admin is found, use the dummy password hash to prevent timing attacks.
-    const passwordMatches = await argon2.verify(
-      admin?.password_hash ?? (await dummyPasswordHash),
-      input.password,
-    );
+    // If no admin is found, there is no password hash to verify against
+    const passwordMatches = admin
+      ? await argon2.verify(admin.password_hash, input.password) // Verify the inputpassword against the password hash
+      : false;
 
     // Same error for an unknown email and a wrong password, so neither is revealed.
-    if (!admin || !passwordMatches) {
+    if (!passwordMatches) {
       throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid email or password" });
     }
 
