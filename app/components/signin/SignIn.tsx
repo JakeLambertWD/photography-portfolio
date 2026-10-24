@@ -2,6 +2,7 @@
 
 import {
   Anchor,
+  Box,
   Button,
   Center,
   Divider,
@@ -13,9 +14,18 @@ import {
   Title,
   useMantineTheme,
 } from "@mantine/core";
+import type { UseFormReturnType } from "@mantine/form";
 import { IconLock } from "@tabler/icons-react";
+import type { SignInFormValues } from "@/utils/validations-schemas/auth";
 
-export default function SignIn() {
+type SignInProps = {
+  form: UseFormReturnType<SignInFormValues>;
+  onSubmit: ReturnType<UseFormReturnType<SignInFormValues>["onSubmit"]>;
+  isPending: boolean;
+  errorMessage?: string;
+};
+
+export default function SignIn({ form, onSubmit, isPending, errorMessage }: SignInProps) {
   const theme = useMantineTheme();
 
   return (
@@ -42,57 +52,69 @@ export default function SignIn() {
           Sign in to your dashboard
         </Title>
 
-        <Stack gap="md" w="100%">
-          <TextInput
-            label="Email"
-            placeholder="example@example.com"
-            styles={{
-              label: {
-                fontSize: theme.fontSizes!.xxs,
-                letterSpacing: "0.08em",
-                marginBottom: theme.spacing!.sm,
-                color: theme.other!.colors!.taupe,
-              },
-              input: {
-                background: theme.other!.colors!.sepia,
-                border: `1px solid ${theme.other!.colors!.umber}`,
-                color: theme.other!.colors!.ivory,
-              },
-            }}
-          />
+        <Box component="form" onSubmit={onSubmit} w="100%">
+          <Stack gap="md" w="100%">
+            <TextInput
+              label="Email"
+              placeholder="example@example.com"
+              {...form.getInputProps("email")}
+              styles={{
+                label: {
+                  fontSize: theme.fontSizes!.xxs,
+                  letterSpacing: "0.08em",
+                  marginBottom: theme.spacing!.sm,
+                  color: theme.other!.colors!.taupe,
+                },
+                input: {
+                  background: theme.other!.colors!.sepia,
+                  border: `1px solid ${theme.other!.colors!.umber}`,
+                  color: theme.other!.colors!.ivory,
+                },
+              }}
+            />
 
-          <PasswordInput
-            label="Password"
-            placeholder="••••••••••••"
-            styles={{
-              label: {
-                fontSize: theme.fontSizes!.xxs,
-                marginBottom: theme.spacing!.sm,
-                color: theme.other!.colors!.taupe,
-              },
-              input: {
-                background: theme.other!.colors!.sepia,
-                border: `1px solid ${theme.other!.colors!.umber}`,
-              },
-            }}
-          />
-        </Stack>
+            <PasswordInput
+              label="Password"
+              placeholder="••••••••••••"
+              {...form.getInputProps("password")}
+              styles={{
+                label: {
+                  fontSize: theme.fontSizes!.xxs,
+                  marginBottom: theme.spacing!.sm,
+                  color: theme.other!.colors!.taupe,
+                },
+                input: {
+                  background: theme.other!.colors!.sepia,
+                  border: `1px solid ${theme.other!.colors!.umber}`,
+                },
+              }}
+            />
+          </Stack>
 
-        <Group w="100%" justify="flex-end" my={theme.spacing!.lg}>
-          <Anchor size={theme.fontSizes!.xs} c={theme.other!.colors!.taupe} underline="never">
-            Forgot password?
-          </Anchor>
-        </Group>
+          <Group w="100%" justify="flex-end" my={theme.spacing!.lg}>
+            <Anchor size={theme.fontSizes!.xs} c={theme.other!.colors!.taupe} underline="never">
+              Forgot password?
+            </Anchor>
+          </Group>
 
-        <Button
-          fullWidth
-          bg={theme.other!.colors!.amber}
-          c={theme.other!.colors!.brown}
-          fw={600}
-          fz={theme.fontSizes!.sm}
-        >
-          Sign In
-        </Button>
+          <Button
+            type="submit"
+            loading={isPending}
+            fullWidth
+            bg={theme.other!.colors!.amber}
+            c={theme.other!.colors!.brown}
+            fw={600}
+            fz={theme.fontSizes!.sm}
+          >
+            Sign In
+          </Button>
+
+          {errorMessage && (
+            <Text fz="xs" c="var(--mantine-color-error)" ta="center" mt="sm">
+              {errorMessage}
+            </Text>
+          )}
+        </Box>
 
         <Divider
           label="OR"
