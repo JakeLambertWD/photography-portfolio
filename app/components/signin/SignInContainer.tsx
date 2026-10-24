@@ -16,12 +16,15 @@ export default function SignInContainer() {
     onSuccess: () => form.reset(),
   });
 
+  // Determine the error message to display: field errors take precedence over server errors.
+  const errorMessage = form.errors.email || form.errors.password || error?.message;
+
   return (
     <SignIn
       form={form}
       onSubmit={form.onSubmit((values) => signIn(values))}
       isPending={isPending}
-      errorMessage={form.errors.email ?? form.errors.password ?? error?.message}
+      errorMessage={errorMessage}
     />
   );
 }
