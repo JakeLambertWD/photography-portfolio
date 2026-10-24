@@ -1,6 +1,6 @@
 -- The single owner's admin login. Safe to run more than once.
 -- singleton_key is the primary key and can only be true, so the table holds at most one row.
--- Create or replace the row with `pnpm create-admin <email>`; never insert a plain password.
+-- password_hash must be an argon2 hash (argon2.hash), never a plain password.
 
 create table if not exists admin_credentials (
   singleton_key boolean primary key default true check (singleton_key = true),
