@@ -21,7 +21,7 @@ export default function SignInContainer() {
       form={form}
       onSubmit={form.onSubmit((values) => signIn(values))}
       isPending={isPending}
-      errorMessage={error?.message}
+      errorMessage={form.errors.email ?? form.errors.password ?? error?.message}
     />
   );
 }

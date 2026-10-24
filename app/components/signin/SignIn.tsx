@@ -1,5 +1,6 @@
 "use client";
 
+import type { SignInFormValues } from "@/utils/validations-schemas/auth";
 import {
   Anchor,
   Box,
@@ -16,13 +17,13 @@ import {
 } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
 import { IconLock } from "@tabler/icons-react";
-import type { SignInFormValues } from "@/utils/validations-schemas/auth";
+import type { ReactNode } from "react";
 
 type SignInProps = {
   form: UseFormReturnType<SignInFormValues>;
   onSubmit: ReturnType<UseFormReturnType<SignInFormValues>["onSubmit"]>;
   isPending: boolean;
-  errorMessage?: string;
+  errorMessage?: ReactNode;
 };
 
 export default function SignIn({ form, onSubmit, isPending, errorMessage }: SignInProps) {
@@ -54,10 +55,12 @@ export default function SignIn({ form, onSubmit, isPending, errorMessage }: Sign
 
         <Box component="form" onSubmit={onSubmit} w="100%">
           <Stack gap="md" w="100%">
+            {/* Fields only show a red border; their message goes in the slot under the button. */}
             <TextInput
               label="Email"
               placeholder="example@example.com"
               {...form.getInputProps("email")}
+              error={!!form.errors.email}
               styles={{
                 label: {
                   fontSize: theme.fontSizes!.xxs,
@@ -77,6 +80,7 @@ export default function SignIn({ form, onSubmit, isPending, errorMessage }: Sign
               label="Password"
               placeholder="••••••••••••"
               {...form.getInputProps("password")}
+              error={!!form.errors.password}
               styles={{
                 label: {
                   fontSize: theme.fontSizes!.xxs,
@@ -109,11 +113,18 @@ export default function SignIn({ form, onSubmit, isPending, errorMessage }: Sign
             Sign In
           </Button>
 
-          {errorMessage && (
-            <Text fz="xs" c="var(--mantine-color-error)" ta="center" mt="sm">
-              {errorMessage}
-            </Text>
-          )}
+          {/* Always rendered with a one-line min height, so a message appearing doesn't shift the layout. */}
+          <Text
+            role="alert"
+            fz="xs"
+            lh={1.2}
+            mih={`calc(${theme.fontSizes!.xs} * 1.2)`}
+            c="var(--mantine-color-error)"
+            ta="center"
+            mt="sm"
+          >
+            {errorMessage}
+          </Text>
         </Box>
 
         <Divider
