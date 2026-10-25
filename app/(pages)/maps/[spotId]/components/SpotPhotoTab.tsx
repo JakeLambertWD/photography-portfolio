@@ -2,11 +2,14 @@
 
 import { CAN_EDIT_SPOTS, type PhotoKind } from "@/lib/photo-spots";
 import type { SpotDetail } from "@/server/routers/spots";
-import { Box, Center, Group, Stack, Text } from "@mantine/core";
+import { Box, Button, Center, Group, Stack, Text } from "@mantine/core";
+import { IconPlus } from "@tabler/icons-react";
 import { api } from "@/app/providers";
 import { useMemo, useState, type ReactNode } from "react";
 import { AddFromShowcaseSelect } from "./AddFromShowcaseSelect";
 import { AddPhotosTile } from "./AddPhotosTile";
+import { CreatorLibraryPicker } from "./CreatorLibraryPicker";
+import { RemoveCreatorShotSheet } from "./RemoveCreatorShotSheet";
 import { PhotoCaption } from "./PhotoCaption";
 import { SpotPhotoCarousel } from "./SpotPhotoCarousel";
 import { SpotStatusIcon } from "./SpotStatusIcon";
@@ -73,7 +76,12 @@ export function SpotPhotoTab({
   const photoIndex = Math.max(0, Math.min(activeIndex, photos.length - 1));
   const activePhoto = photos[photoIndex];
 
-  const addPhotosTile = CAN_EDIT_SPOTS && (
+  // Creator shots come from the shared library (where new ones are uploaded too).
+  const usesLibrary = kind === "creator" && CAN_EDIT_SPOTS;
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const [photoToRemove, setPhotoToRemove] = useState<SpotDetail["photos"][number] | null>(null);
+
+  const addPhotosTile = CAN_EDIT_SPOTS && !usesLibrary && (
     <AddPhotosTile
       spotId={spot.id}
       spotTitle={spot.title}
@@ -98,6 +106,8 @@ export function SpotPhotoTab({
           onActiveIndexChange={setActiveIndex}
           extraThumbnail={addPhotosTile}
           onReorder={CAN_EDIT_SPOTS ? handleReorder : undefined}
+          onAdd={usesLibrary ? () => setIsLibraryOpen(true) : undefined}
+          onRemove={usesLibrary ? setPhotoToRemove : undefined}
         />
       ) : (
         <>
@@ -109,7 +119,40 @@ export function SpotPhotoTab({
               {addPhotosTile}
             </Group>
           )}
+          {usesLibrary && (
+            <Group px="md" pb="sm" pt="lg">
+              <Button
+                h={44}
+                radius="sm"
+                autoContrast
+                fw={900}
+                leftSection={<IconPlus size={18} stroke={2.5} />}
+                onClick={() => setIsLibraryOpen(true)}
+              >
+                Add creator shots
+              </Button>
+            </Group>
+          )}
         </>
+      )}
+
+      {usesLibrary && (
+        <CreatorLibraryPicker
+          opened={isLibraryOpen}
+          onClose={() => setIsLibraryOpen(false)}
+          spotId={spot.id}
+          spotTitle={spot.title}
+          usedImageUrls={photos.map((photo) => photo.imageUrl)}
+          onAdded={setActiveIndex}
+        />
+      )}
+
+      {usesLibrary && (
+        <RemoveCreatorShotSheet
+          photo={photoToRemove}
+          spotTitle={spot.title}
+          onClose={() => setPhotoToRemove(null)}
+        />
       )}
 
       {CAN_EDIT_SPOTS && kind === "editing" && (

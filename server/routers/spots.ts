@@ -165,8 +165,18 @@ async function resolveCarouselId(spotId: string, carouselId?: string | null) {
 }
 
 export async function deleteSpotPhotoFiles(imageUrls: string[]) {
-  const blobUrls = imageUrls.filter((url) => isSpotPhotoUrl(url));
-  if (blobUrls.length === 0 || !process.env.BLOB_READ_WRITE_TOKEN) return;
+  const candidates = imageUrls.filter((url) => isSpotPhotoUrl(url));
+  if (candidates.length === 0 || !process.env.BLOB_READ_WRITE_TOKEN) return;
+
+  // Creator shots live on in the shared library after leaving a spot, so never delete their files.
+  const libraryRows = await getDb()
+    .selectFrom("creator_shot")
+    .select("image_url")
+    .where("image_url", "in", candidates)
+    .execute();
+  const inLibrary = new Set(libraryRows.map((row) => row.image_url));
+  const blobUrls = candidates.filter((url) => !inLibrary.has(url));
+  if (blobUrls.length === 0) return;
 
   try {
     await del(blobUrls);
@@ -488,6 +498,20 @@ export const spotsRouter = router({
           })),
         )
         .execute();
+
+      // Every creator shot also joins the shared library (already there if picked from it).
+      if (input.kind === "creator") {
+        await db
+          .insertInto("creator_shot")
+          .values(
+            input.photos.map((photo) => ({
+              image_url: photo.imageUrl,
+              origin_spot_id: input.spotId,
+            })),
+          )
+          .onConflict((oc) => oc.column("image_url").doNothing())
+          .execute();
+      }
     }),
 
   updateEditingNotes: publicProcedure

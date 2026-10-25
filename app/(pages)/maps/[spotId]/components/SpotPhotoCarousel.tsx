@@ -16,7 +16,7 @@ import {
   UnstyledButton,
   useMantineTheme,
 } from "@mantine/core";
-import { IconLayoutGrid, IconX } from "@tabler/icons-react";
+import { IconLayoutGrid, IconPlus, IconTrash, IconX } from "@tabler/icons-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode, type UIEvent } from "react";
 import {
   formatSpotTag,
@@ -40,6 +40,10 @@ type SpotPhotoCarouselProps = {
   onReorder?: (photoIds: string[], movedPhotoId: string) => void;
   // Given, the spot's status shows as an icon in the bottom-left corner of each photo.
   status?: SpotStatus;
+  // Given, an "Add" button sits next to the photo count (e.g. to pick from the creator library).
+  onAdd?: () => void;
+  // Given, each photo gets a remove button in its bottom-right corner.
+  onRemove?: (photo: SpotDetail["photos"][number]) => void;
 };
 
 export function SpotPhotoCarousel({
@@ -51,6 +55,8 @@ export function SpotPhotoCarousel({
   extraThumbnail,
   onReorder,
   status,
+  onAdd,
+  onRemove,
 }: SpotPhotoCarouselProps) {
   const theme = useMantineTheme();
   const trackRef = useRef<HTMLDivElement>(null);
@@ -99,7 +105,7 @@ export function SpotPhotoCarousel({
       ))}
     </>
   );
-  const hasPhotoControls = photos.length > 1 || Boolean(extraThumbnail);
+  const hasPhotoControls = photos.length > 1 || Boolean(extraThumbnail) || Boolean(onAdd);
 
   function goToPhoto(index: number) {
     const track = trackRef.current;
@@ -125,46 +131,65 @@ export function SpotPhotoCarousel({
               aria-roledescription="slide"
               aria-label={`Photo ${index + 1} of ${photos.length}`}
             >
-              <UnstyledButton
-                w="100%"
-                display="block"
-                pos="relative"
-                aria-label={`View photo ${index + 1} full screen`}
-                onClick={() => setIsFullScreen(true)}
-              >
-                {/* A fixed 4:5 frame, so the page doesn't jump between photos. The whole photo
+              <Box pos="relative">
+                <UnstyledButton
+                  w="100%"
+                  display="block"
+                  pos="relative"
+                  aria-label={`View photo ${index + 1} full screen`}
+                  onClick={() => setIsFullScreen(true)}
+                >
+                  {/* A fixed 4:5 frame, so the page doesn't jump between photos. The whole photo
                     fits inside it: landscape shots get space above and below, not cropped sides. */}
-                <AspectRatio ratio={4 / 5}>
-                  <Image src={photo.imageUrl} alt={photo.caption ?? ""} fit="contain" />
-                </AspectRatio>
-                {photos.length > 1 && (
-                  <Text
-                    aria-hidden
-                    component="span"
+                  <AspectRatio ratio={4 / 5}>
+                    <Image src={photo.imageUrl} alt={photo.caption ?? ""} fit="contain" />
+                  </AspectRatio>
+                  {photos.length > 1 && (
+                    <Text
+                      aria-hidden
+                      component="span"
+                      pos="absolute"
+                      top={10}
+                      right={10}
+                      h={26}
+                      px={10}
+                      fz={13}
+                      fw={700}
+                      c="brown.0"
+                      style={{
+                        borderRadius: 13,
+                        backgroundColor: "rgba(0, 0, 0, 0.6)",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      {index + 1} / {photos.length}
+                    </Text>
+                  )}
+                  {status && (
+                    <Box pos="absolute" bottom={10} left={10}>
+                      <SpotStatusIcon status={status} withTooltip={false} />
+                    </Box>
+                  )}
+                </UnstyledButton>
+                {/* A sibling of the photo button (not inside it), so it's a separate tap target. */}
+                {onRemove && (
+                  <ActionIcon
+                    aria-label={`Remove photo ${index + 1}`}
+                    onClick={() => onRemove(photo)}
                     pos="absolute"
-                    top={10}
+                    bottom={10}
                     right={10}
-                    h={26}
-                    px={10}
-                    fz={13}
-                    fw={700}
-                    c="brown.0"
-                    style={{
-                      borderRadius: 13,
-                      backgroundColor: "rgba(0, 0, 0, 0.6)",
-                      display: "flex",
-                      alignItems: "center",
-                    }}
+                    size={36}
+                    radius="xl"
+                    variant="filled"
+                    color="rgba(0, 0, 0, 0.6)"
+                    style={{ border: `1.5px solid ${theme.colors.brown[1]}` }}
                   >
-                    {index + 1} / {photos.length}
-                  </Text>
+                    <IconTrash size={17} color={theme.colors.brown[0]} />
+                  </ActionIcon>
                 )}
-                {status && (
-                  <Box pos="absolute" bottom={10} left={10}>
-                    <SpotStatusIcon status={status} withTooltip={false} />
-                  </Box>
-                )}
-              </UnstyledButton>
+              </Box>
             </div>
           ))}
         </div>
@@ -243,7 +268,21 @@ export function SpotPhotoCarousel({
           <Group justify="center" miw={0}>
             <PhotoDots count={photos.length} activeIndex={activeIndex} />
           </Group>
-          <Group justify="flex-end">
+          <Group justify="flex-end" gap={8} wrap="nowrap">
+            {onAdd && (
+              <Button
+                onClick={onAdd}
+                h={40}
+                px={10}
+                radius="sm"
+                autoContrast
+                fw={900}
+                leftSection={<IconPlus size={16} stroke={2.5} />}
+                styles={{ section: { marginInlineEnd: 4 } }}
+              >
+                Add
+              </Button>
+            )}
             <Button
               aria-label={`See all ${photos.length} ${photos.length === 1 ? "photo" : "photos"}`}
               aria-haspopup="dialog"

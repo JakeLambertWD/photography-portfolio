@@ -20,6 +20,13 @@ export interface AdminCredentials {
   updated_at: Generated<Timestamp>;
 }
 
+export interface CreatorShot {
+  created_at: Generated<Timestamp>;
+  id: Generated<string>;
+  image_url: string;
+  origin_spot_id: string | null;
+}
+
 export interface FollowerSnapshot {
   fetched_at: Generated<Timestamp>;
   follower_count: number;
@@ -88,6 +95,7 @@ export interface PhotoSpotReelClip {
 
 export interface DB {
   admin_credentials: AdminCredentials;
+  creator_shot: CreatorShot;
   follower_snapshot: FollowerSnapshot;
   photo_shoot_day_spot: PhotoShootDaySpot;
   photo_spot: PhotoSpot;
