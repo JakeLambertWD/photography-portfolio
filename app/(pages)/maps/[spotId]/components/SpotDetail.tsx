@@ -18,6 +18,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { REEL_TYPE_KINDS } from "./reels/Reels.constants";
 import { ReelsPanel } from "./reels/ReelsPanel";
+import { TrialReelsGrid } from "./reels/TrialReelsGrid";
 import type { SpotTabId } from "./SpotContentTabs.constants";
 import { ContentTabChips } from "./ContentTabChips";
 import { SpotActions } from "./SpotActions";
@@ -115,8 +116,9 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
           <ReelsPanel spotId={spot.id} kinds={REEL_TYPE_KINDS} />
         </Tabs.Panel>
 
+        {/* Instagram links picked from the shared trial reel library, as a reels-style grid. */}
         <Tabs.Panel value="pov">
-          <ReelsPanel spotId={spot.id} kinds={["pov"]} />
+          <TrialReelsGrid spotId={spot.id} spotTitle={spot.title} />
         </Tabs.Panel>
       </Tabs>
     </Container>

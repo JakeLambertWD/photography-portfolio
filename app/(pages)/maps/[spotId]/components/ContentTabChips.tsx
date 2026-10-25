@@ -19,9 +19,9 @@ export function ContentTabChips({ spot, value }: ContentTabChipsProps) {
   const theme = useMantineTheme();
   const listRef = useRef<HTMLDivElement>(null);
 
-  // How many reel ideas each reel tab has; the same queries the reel panels use, so they're shared.
+  // How many ideas each reel tab has; the same queries the tab panels use, so they're shared.
   const reelsQuery = api.reels.list.useQuery({ spotId: spot.id, kinds: [...REEL_TYPE_KINDS] });
-  const trialReelsQuery = api.reels.list.useQuery({ spotId: spot.id, kinds: ["pov"] });
+  const trialReelsQuery = api.trialReels.list.useQuery({ spotId: spot.id });
 
   // Showcase has its own photo counter, so it doesn't get a count here.
   const counts: Partial<Record<SpotTabId, number>> = {

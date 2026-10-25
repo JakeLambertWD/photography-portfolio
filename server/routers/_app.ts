@@ -7,6 +7,7 @@ import { creatorShotsRouter } from "./creatorShots";
 import { reelsRouter } from "./reels";
 import { shootRouter } from "./shoot";
 import { spotsRouter } from "./spots";
+import { trialReelsRouter } from "./trialReels";
 
 // Main application router for TRPC stored endpoints
 export const appRouter = router({
@@ -18,6 +19,7 @@ export const appRouter = router({
   creatorShots: creatorShotsRouter,
   shoot: shootRouter,
   spots: spotsRouter,
+  trialReels: trialReelsRouter,
 });
 
 export type AppRouter = typeof appRouter;
