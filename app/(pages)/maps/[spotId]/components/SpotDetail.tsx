@@ -1,10 +1,9 @@
 "use client";
 
 import { api } from "@/app/providers";
-import { getSpotGearOption, getSpotStatusLabel, REEL_KINDS } from "@/lib/photo-spots";
+import { getSpotGearOption, REEL_KINDS } from "@/lib/photo-spots";
 import {
   ActionIcon,
-  Badge,
   Button,
   Center,
   Container,
@@ -62,24 +61,10 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
 
   const spot = spotQuery.data;
 
-  const statusBadge = (
-    <Badge
-      size="lg"
-      radius="sm"
-      w="fit-content"
-      variant={spot.status === "ready_to_shoot" ? "filled" : "outline"}
-      autoContrast
-      style={{ flexShrink: 0 }}
-    >
-      {getSpotStatusLabel(spot.status)}
-    </Badge>
-  );
-
   const gear = getSpotGearOption(spot.gear);
-  // Status and gear lead the weather emoji row under the photos.
+  // Gear leads the weather emoji row under the photos; the status sits on the photo itself.
   const spotLabels = (
     <>
-      {statusBadge}
       <span role="img" aria-label={gear.label} title={gear.label}>
         {gear.emoji}
       </span>
@@ -111,16 +96,7 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
 
       <Tabs value={activeTab}>
         <Tabs.Panel value="showcase">
-          <ShowcaseCarousels spot={spot} labels={spotLabels}>
-            {spot.notes && (
-              <Stack gap="xs" component="section">
-                <Text component="h2" ff="monospace" fz="xs" c="brown.1" tt="uppercase" lts="0.08em">
-                  Spot notes
-                </Text>
-                <Text c="brown.0">{spot.notes}</Text>
-              </Stack>
-            )}
-          </ShowcaseCarousels>
+          <ShowcaseCarousels spot={spot} labels={spotLabels} />
         </Tabs.Panel>
 
         <Tabs.Panel value="creator">

@@ -1,11 +1,30 @@
 "use client";
 
+import type { SpotStatus } from "@/lib/photo-spots";
 import type { SpotDetail } from "@/server/routers/spots";
-import { ActionIcon, AspectRatio, Box, Group, Image, Modal, UnstyledButton } from "@mantine/core";
-import { IconX } from "@tabler/icons-react";
+import {
+  ActionIcon,
+  AspectRatio,
+  Box,
+  Button,
+  Drawer,
+  Group,
+  Image,
+  Modal,
+  Stack,
+  Text,
+  UnstyledButton,
+  useMantineTheme,
+} from "@mantine/core";
+import { IconLayoutGrid, IconX } from "@tabler/icons-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode, type UIEvent } from "react";
-import { formatSpotTag, SPOT_TAG_EMOJIS } from "@/app/(pages)/maps/components/add-spot/AddSpot.constants";
+import {
+  formatSpotTag,
+  SPOT_TAG_EMOJIS,
+} from "@/app/(pages)/maps/components/add-spot/AddSpot.constants";
+import { PhotoDots } from "./PhotoDots";
 import { PhotoThumbnails } from "./PhotoThumbnails";
+import { SpotStatusIcon } from "./SpotStatusIcon";
 import styles from "./SpotPhotoCarousel.module.css";
 
 type SpotPhotoCarouselProps = {
@@ -15,10 +34,12 @@ type SpotPhotoCarouselProps = {
   tagsLeading?: ReactNode;
   activeIndex: number;
   onActiveIndexChange: (index: number) => void;
-  // Shown at the end of the thumbnail strip, e.g. an "add photos" button.
+  // Shown at the end of the all-photos grid, e.g. an "add photos" button.
   extraThumbnail?: ReactNode;
   // Given, the thumbnails can be dragged into a new order.
   onReorder?: (photoIds: string[], movedPhotoId: string) => void;
+  // Given, the spot's status shows as an icon in the bottom-left corner of each photo.
+  status?: SpotStatus;
 };
 
 export function SpotPhotoCarousel({
@@ -29,9 +50,12 @@ export function SpotPhotoCarousel({
   onActiveIndexChange,
   extraThumbnail,
   onReorder,
+  status,
 }: SpotPhotoCarouselProps) {
+  const theme = useMantineTheme();
   const trackRef = useRef<HTMLDivElement>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isGridOpen, setIsGridOpen] = useState(false);
 
   // Start the full screen track on the photo that was tapped, without animating.
   const activeIndexRef = useRef(activeIndex);
@@ -63,6 +87,20 @@ export function SpotPhotoCarousel({
     if (index !== activeIndex) onActiveIndexChange(index);
   }
 
+  // Gear and weather emojis.
+  const hasLabels = tags.length > 0 || Boolean(tagsLeading);
+  const labels = hasLabels && (
+    <>
+      {tagsLeading}
+      {tags.map((tag) => (
+        <span key={tag} role="img" aria-label={formatSpotTag(tag)} title={formatSpotTag(tag)}>
+          {SPOT_TAG_EMOJIS[tag] ?? formatSpotTag(tag)}
+        </span>
+      ))}
+    </>
+  );
+  const hasPhotoControls = photos.length > 1 || Boolean(extraThumbnail);
+
   function goToPhoto(index: number) {
     const track = trackRef.current;
     track?.scrollTo({ left: index * track.clientWidth, behavior: "smooth" });
@@ -90,6 +128,7 @@ export function SpotPhotoCarousel({
               <UnstyledButton
                 w="100%"
                 display="block"
+                pos="relative"
                 aria-label={`View photo ${index + 1} full screen`}
                 onClick={() => setIsFullScreen(true)}
               >
@@ -98,6 +137,33 @@ export function SpotPhotoCarousel({
                 <AspectRatio ratio={4 / 5}>
                   <Image src={photo.imageUrl} alt={photo.caption ?? ""} fit="contain" />
                 </AspectRatio>
+                {photos.length > 1 && (
+                  <Text
+                    aria-hidden
+                    component="span"
+                    pos="absolute"
+                    top={10}
+                    right={10}
+                    h={26}
+                    px={10}
+                    fz={13}
+                    fw={700}
+                    c="brown.0"
+                    style={{
+                      borderRadius: 13,
+                      backgroundColor: "rgba(0, 0, 0, 0.6)",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    {index + 1} / {photos.length}
+                  </Text>
+                )}
+                {status && (
+                  <Box pos="absolute" bottom={10} left={10}>
+                    <SpotStatusIcon status={status} withTooltip={false} />
+                  </Box>
+                )}
               </UnstyledButton>
             </div>
           ))}
@@ -146,23 +212,113 @@ export function SpotPhotoCarousel({
         </div>
       </Modal>
 
-      {(photos.length > 1 || extraThumbnail) && (
+      {hasPhotoControls && (
+        // One row: status and weather on the left, dots in the gap, all-photos button on the right.
+        <Box
+          px="md"
+          pt="sm"
+          style={{
+            display: "grid",
+            // Equal side columns keep the dots dead centre; labels that don't fit scroll sideways.
+            gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
+            alignItems: "center",
+            columnGap: 12,
+          }}
+        >
+          <Group
+            gap={8}
+            wrap="nowrap"
+            fz="lg"
+            miw={0}
+            // Lots of weather emojis scroll sideways instead of pushing the button off screen.
+            style={{
+              overflowX: "auto",
+              scrollbarWidth: "none",
+              // Fades out an emoji cut off by the dots, hinting the row scrolls.
+              maskImage: "linear-gradient(to right, black calc(100% - 20px), transparent)",
+            }}
+          >
+            {labels}
+          </Group>
+          <Group justify="center" miw={0}>
+            <PhotoDots count={photos.length} activeIndex={activeIndex} />
+          </Group>
+          <Group justify="flex-end">
+            <Button
+              aria-label={`See all ${photos.length} ${photos.length === 1 ? "photo" : "photos"}`}
+              aria-haspopup="dialog"
+              onClick={() => setIsGridOpen(true)}
+              h={40}
+              px={12}
+              radius="sm"
+              variant="default"
+              leftSection={<IconLayoutGrid size={16} color={theme.colors.yellow[5]} />}
+              styles={{
+                root: {
+                  backgroundColor: theme.colors.brown[6],
+                  borderColor: theme.colors.brown[4],
+                  color: theme.colors.brown[0],
+                },
+                section: { marginInlineEnd: 6 },
+              }}
+            >
+              {photos.length}
+            </Button>
+          </Group>
+        </Box>
+      )}
+
+      <Drawer
+        opened={isGridOpen}
+        onClose={() => setIsGridOpen(false)}
+        position="bottom"
+        // Stays mounted while closed so a photo upload started here keeps going.
+        keepMounted
+        title={
+          <Stack gap={2}>
+            <Text component="span" ff="heading" fz={18} fw={600} c="brown.0">
+              {photos.length} {photos.length === 1 ? "photo" : "photos"}
+            </Text>
+            <Text component="span" fz="sm" c="brown.1">
+              {onReorder && photos.length > 1
+                ? "Tap to view · hold and drag to reorder"
+                : "Tap a photo to view it"}
+            </Text>
+          </Stack>
+        }
+        overlayProps={{ backgroundOpacity: 0.55 }}
+        closeButtonProps={{ "aria-label": "Close all photos", size: "lg" }}
+        styles={{
+          content: {
+            backgroundColor: theme.colors.brown[7],
+            borderTop: `1px solid ${theme.colors.brown[4]}`,
+            borderRadius: "20px 20px 0 0",
+            maxWidth: "36rem",
+            margin: "0 auto",
+            height: "auto",
+            maxHeight: "85dvh",
+            flex: "none",
+            width: "100%",
+          },
+          header: { backgroundColor: theme.colors.brown[7], alignItems: "flex-start" },
+          body: { paddingBottom: "var(--mantine-spacing-xl)" },
+        }}
+      >
         <PhotoThumbnails
           photos={photos}
           activeIndex={activeIndex}
-          onSelect={goToPhoto}
+          onSelect={(index) => {
+            goToPhoto(index);
+            setIsGridOpen(false);
+          }}
           onReorder={onReorder}
           extraThumbnail={extraThumbnail}
         />
-      )}
-      {(tags.length > 0 || tagsLeading) && (
+      </Drawer>
+      {/* With no dots or button to share a row with, the labels get their own. */}
+      {hasLabels && !hasPhotoControls && (
         <Group gap="sm" wrap="nowrap" px="md" pt="sm" pb={0} fz="xl">
-          {tagsLeading}
-          {tags.map((tag) => (
-            <span key={tag} role="img" aria-label={formatSpotTag(tag)} title={formatSpotTag(tag)}>
-              {SPOT_TAG_EMOJIS[tag] ?? formatSpotTag(tag)}
-            </span>
-          ))}
+          {labels}
         </Group>
       )}
     </Box>

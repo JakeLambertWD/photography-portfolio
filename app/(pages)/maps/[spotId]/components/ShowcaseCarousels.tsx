@@ -10,7 +10,7 @@ type ShowcaseCarouselsProps = {
   spot: SpotDetail;
   // Status badge and gear, shown with the weather under the first carousel.
   labels: ReactNode;
-  // Shown under the carousels, e.g. spot notes.
+  // Shown under the carousels.
   children?: ReactNode;
 };
 

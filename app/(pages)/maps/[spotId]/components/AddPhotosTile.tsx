@@ -76,7 +76,6 @@ export function AddPhotosTile({
           bdrs="sm"
           display="flex"
           style={{
-            flex: "0 1 64px",
             minWidth: 0,
             aspectRatio: "1",
             alignItems: "center",

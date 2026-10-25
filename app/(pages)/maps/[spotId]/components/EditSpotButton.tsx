@@ -91,7 +91,6 @@ function EditSpotForm({ spot, formId, onSavingChange, onDone }: EditSpotFormProp
         status,
         gear,
         tags,
-        notes: spot.notes ?? "",
       });
 
       const keptIds = new Set(

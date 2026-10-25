@@ -168,8 +168,6 @@ export function AddSpotForm({
 
       const { id } = await createSpot.mutateAsync({
         title,
-        // Notes are added from the spot page, so new spots start without any.
-        notes: "",
         postcode,
         latitude: location.latitude,
         longitude: location.longitude,

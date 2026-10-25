@@ -1,7 +1,7 @@
 "use client";
 
 import type { SpotDetail } from "@/server/routers/spots";
-import { Group, Image, UnstyledButton, useMantineTheme } from "@mantine/core";
+import { Box, Image, SimpleGrid, UnstyledButton, useMantineTheme } from "@mantine/core";
 import {
   useEffect,
   useRef,
@@ -23,6 +23,8 @@ type PhotoThumbnailsProps = {
   extraThumbnail?: ReactNode;
 };
 
+type Point = { x: number; y: number };
+
 // A mouse drag starts once the pointer has moved this far; a finger has to hold still first.
 const MOUSE_DRAG_DISTANCE = 6;
 const TOUCH_HOLD_MS = 300;
@@ -32,8 +34,8 @@ type Drag = {
   photoId: string;
   fromIndex: number;
   overIndex: number;
-  // Centre x of each thumbnail slot when the drag started, used to find the slot under the pointer.
-  slotCentres: number[];
+  // Centre of each grid cell when the drag started, used to find the cell under the pointer.
+  slotCentres: Point[];
 };
 
 function moveItem<T>(items: T[], from: number, to: number) {
@@ -72,10 +74,11 @@ export function PhotoThumbnails({
     };
   }, []);
 
-  function nearestSlot(x: number, slotCentres: number[]) {
+  function nearestSlot(point: Point, slotCentres: Point[]) {
+    const distance = (slot: Point) => Math.hypot(slot.x - point.x, slot.y - point.y);
     let nearest = 0;
     for (let index = 1; index < slotCentres.length; index++) {
-      if (Math.abs(slotCentres[index] - x) < Math.abs(slotCentres[nearest] - x)) nearest = index;
+      if (distance(slotCentres[index]) < distance(slotCentres[nearest])) nearest = index;
     }
     return nearest;
   }
@@ -93,7 +96,9 @@ export function PhotoThumbnails({
     function begin() {
       const slotCentres = thumbRefs.current.slice(0, photos.length).map((thumb) => {
         const rect = thumb?.getBoundingClientRect();
-        return rect ? rect.left + rect.width / 2 : 0;
+        return rect
+          ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
+          : { x: 0, y: 0 };
       });
       current = { photoId, fromIndex: index, overIndex: index, slotCentres };
       isDraggingRef.current = true;
@@ -111,7 +116,10 @@ export function PhotoThumbnails({
         else if (!isMouse && distance > TOUCH_SLOP) finish(false);
         if (!current) return;
       }
-      const overIndex = nearestSlot(moveEvent.clientX, current.slotCentres);
+      const overIndex = nearestSlot(
+        { x: moveEvent.clientX, y: moveEvent.clientY },
+        current.slotCentres,
+      );
       if (overIndex !== current.overIndex) {
         current = { ...current, overIndex };
         setDrag(current);
@@ -160,7 +168,14 @@ export function PhotoThumbnails({
 
   function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     if (!canReorder || !event.altKey) return;
-    const step = event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
+    // Left and right move one place; up and down move a whole row of the 3-column grid.
+    const steps: Record<string, number> = {
+      ArrowLeft: -1,
+      ArrowRight: 1,
+      ArrowUp: -3,
+      ArrowDown: 3,
+    };
+    const step = steps[event.key] ?? 0;
     const target = index + step;
     if (step === 0 || target < 0 || target >= photos.length) return;
     event.preventDefault();
@@ -178,7 +193,7 @@ export function PhotoThumbnails({
   const shownPhotos = drag ? moveItem(photos, drag.fromIndex, drag.overIndex) : photos;
 
   return (
-    <Group gap="xs" wrap="nowrap" px="md" pb="sm" pt="lg">
+    <SimpleGrid cols={3} spacing={8}>
       {shownPhotos.map((photo, index) => {
         const originalIndex = photos.indexOf(photo);
         const isActive = !drag && originalIndex === activeIndex;
@@ -191,11 +206,10 @@ export function PhotoThumbnails({
               thumbRefs.current[index] = element;
             }}
             aria-label={`Show photo ${index + 1}`}
-            aria-pressed={isActive}
+            aria-current={isActive ? "true" : undefined}
             aria-description={
               canReorder ? "Hold and drag, or press Alt and an arrow key, to reorder" : undefined
             }
-            title={canReorder ? "Hold and drag to reorder" : undefined}
             onClick={() => {
               if (!suppressClickRef.current) onSelect(originalIndex);
             }}
@@ -204,17 +218,15 @@ export function PhotoThumbnails({
             onContextMenu={(event) => {
               if (canReorder) event.preventDefault();
             }}
+            pos="relative"
             bdrs="sm"
-            opacity={isActive || isDragged ? 1 : 0.6}
             style={{
-              flex: "0 1 64px",
-              minWidth: 0,
               aspectRatio: "1",
               overflow: "hidden",
               outline: isActive || isDragged ? `2px solid ${theme.colors.yellow[5]}` : "none",
               outlineOffset: 2,
-              transform: isDragged ? "scale(1.12)" : undefined,
-              boxShadow: isDragged ? "0 8px 20px rgba(0, 0, 0, 0.55)" : undefined,
+              transform: isDragged ? "scale(1.06)" : undefined,
+              boxShadow: isDragged ? "0 10px 24px rgba(0, 0, 0, 0.6)" : undefined,
               zIndex: isDragged ? 1 : undefined,
               cursor: drag ? "grabbing" : canReorder ? "grab" : undefined,
               transition: "transform 120ms ease, box-shadow 120ms ease",
@@ -232,10 +244,33 @@ export function PhotoThumbnails({
               draggable={false}
               style={{ pointerEvents: "none" }}
             />
+            <Box
+              aria-hidden
+              component="span"
+              pos="absolute"
+              top={6}
+              left={6}
+              miw={20}
+              h={20}
+              px={5}
+              fz={11}
+              fw={900}
+              c="brown.0"
+              style={{
+                borderRadius: 10,
+                backgroundColor: "rgba(0, 0, 0, 0.6)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxSizing: "border-box",
+              }}
+            >
+              {index + 1}
+            </Box>
           </UnstyledButton>
         );
       })}
       {extraThumbnail}
-    </Group>
+    </SimpleGrid>
   );
 }

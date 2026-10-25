@@ -46,7 +46,6 @@ const spotCarouselSchema = z.object({
 export type SpotCarousel = z.infer<typeof spotCarouselSchema>;
 
 const spotDetailSchema = spotSummarySchema.omit({ coverImageUrl: true, photoCount: true }).extend({
-  notes: z.string().nullable(),
   editingNotes: z.string().nullable().optional(),
   // Every Showcase photo, carousel by carousel.
   photos: z.array(spotPhotoSchema),
@@ -62,7 +61,6 @@ const spotPhotoInputSchema = z.object({
 
 const spotDetailsInputSchema = z.object({
   title: z.string().trim().min(1).max(120),
-  notes: z.string().trim().max(2000),
   postcode: z.string().trim().max(10),
   status: z.enum(SPOT_STATUSES),
   gear: z.enum(SPOT_GEAR),
@@ -227,7 +225,6 @@ export const spotsRouter = router({
         .select([
           "id",
           "title",
-          "notes",
           "editing_notes as editingNotes",
           "postcode",
           "latitude",
@@ -313,7 +310,6 @@ export const spotsRouter = router({
           .values({
             id,
             title: input.title,
-            notes: input.notes || null,
             postcode: input.postcode.toUpperCase() || null,
             latitude: input.latitude,
             longitude: input.longitude,
@@ -381,7 +377,6 @@ export const spotsRouter = router({
         .updateTable("photo_spot")
         .set({
           title: input.title,
-          notes: input.notes || null,
           postcode: input.postcode.toUpperCase() || null,
           status: input.status,
           gear: input.gear,

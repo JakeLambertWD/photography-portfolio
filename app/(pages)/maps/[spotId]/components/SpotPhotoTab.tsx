@@ -9,6 +9,7 @@ import { AddFromShowcaseSelect } from "./AddFromShowcaseSelect";
 import { AddPhotosTile } from "./AddPhotosTile";
 import { PhotoCaption } from "./PhotoCaption";
 import { SpotPhotoCarousel } from "./SpotPhotoCarousel";
+import { SpotStatusIcon } from "./SpotStatusIcon";
 
 type SpotPhotoTabProps = {
   spot: SpotDetail;
@@ -18,7 +19,7 @@ type SpotPhotoTabProps = {
   carouselId?: string | null;
   // Status badge and gear, shown at the start of the weather row. Left out, the row is hidden.
   labels?: ReactNode;
-  // Shown under the photo note, e.g. spot notes.
+  // Shown under the photo note, e.g. editing notes.
   children?: ReactNode;
 };
 
@@ -92,6 +93,7 @@ export function SpotPhotoTab({
           photos={photos}
           tags={labels ? spot.tags : []}
           tagsLeading={labels}
+          status={labels ? spot.status : undefined}
           activeIndex={photoIndex}
           onActiveIndexChange={setActiveIndex}
           extraThumbnail={addPhotosTile}
@@ -136,6 +138,7 @@ export function SpotPhotoTab({
       <Stack gap="lg" px="md" pt="sm">
         {photos.length === 0 && labels && (
           <Group gap="sm" wrap="nowrap" fz="xl">
+            <SpotStatusIcon status={spot.status} />
             {labels}
           </Group>
         )}
