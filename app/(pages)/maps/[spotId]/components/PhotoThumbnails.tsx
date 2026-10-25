@@ -2,7 +2,6 @@
 
 import type { SpotDetail } from "@/server/routers/spots";
 import { Group, Image, UnstyledButton, useMantineTheme } from "@mantine/core";
-import NextImage from "next/image";
 import {
   useEffect,
   useRef,
@@ -225,11 +224,8 @@ export function PhotoThumbnails({
             }}
           >
             <Image
-              component={NextImage}
               src={photo.imageUrl}
               alt=""
-              width={64}
-              height={64}
               w="100%"
               h="100%"
               fit="cover"

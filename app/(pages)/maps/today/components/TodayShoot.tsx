@@ -28,7 +28,6 @@ import {
   IconPhoto,
   IconX,
 } from "@tabler/icons-react";
-import NextImage from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useTodayShoot } from "../useTodayShoot";
@@ -233,16 +232,7 @@ function ShootStop({ spot, number, isUpNext, next, isSaving, onShot, onRemove }:
                   style={{ flexShrink: 0, overflow: "hidden" }}
                 >
                   {spot.coverImageUrl ? (
-                    <Image
-                      component={NextImage}
-                      src={spot.coverImageUrl}
-                      alt=""
-                      width={64}
-                      height={64}
-                      w={64}
-                      h={64}
-                      fit="cover"
-                    />
+                    <Image src={spot.coverImageUrl} alt="" w={64} h={64} fit="cover" />
                   ) : (
                     <Center h="100%">
                       <IconPhoto size={20} color="var(--mantine-color-brown-1)" />

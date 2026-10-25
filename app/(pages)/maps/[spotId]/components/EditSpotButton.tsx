@@ -25,7 +25,6 @@ import {
   TextInput,
 } from "@mantine/core";
 import { IconTrash } from "@tabler/icons-react";
-import NextImage from "next/image";
 import { useEffect, useState, type FormEvent } from "react";
 import {
   SPOT_FORM_MODAL_TITLE_STYLES,
@@ -166,11 +165,8 @@ function EditSpotForm({ spot, formId, onSavingChange, onDone }: EditSpotFormProp
                   {list.map((photo, index) => (
                     <Group key={photo.id} wrap="nowrap" gap="sm">
                       <Image
-                        component={NextImage}
                         src={photo.imageUrl}
                         alt={`${label} ${index + 1}`}
-                        width={72}
-                        height={72}
                         w={72}
                         h={72}
                         radius="sm"
