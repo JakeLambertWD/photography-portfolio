@@ -301,7 +301,9 @@ export function SpotPhotoCarousel({
             width: "100%",
           },
           header: { backgroundColor: theme.colors.brown[7], alignItems: "flex-start" },
-          body: { paddingBottom: "var(--mantine-spacing-xl)" },
+          // Room above the first row so the selected photo's outline and a lifted (dragged)
+          // photo aren't clipped by the sheet's scroll area.
+          body: { paddingTop: 8, paddingBottom: "var(--mantine-spacing-xl)" },
         }}
       >
         <PhotoThumbnails
