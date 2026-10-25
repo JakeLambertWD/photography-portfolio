@@ -7,7 +7,7 @@ import {
   IconCalendarMinus,
   IconCalendarPlus,
   IconArrowsMove,
-  IconMenu2,
+  IconDots,
   IconNavigation,
   IconPencil,
   IconTrash,
@@ -15,21 +15,17 @@ import {
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTodayShoot } from "@/app/(pages)/maps/today/useTodayShoot";
-import { ContentTabMenuItems } from "./ContentTabMenu";
 import { DeleteSpotModal } from "./DeleteSpotButton";
 import { EditSpotModal } from "./EditSpotButton";
-import type { ContentTabId } from "./SpotContentTabs.constants";
 import { getDirectionsUrl } from "./SpotDetail.constants";
 
 type SpotActionsProps = {
   spot: SpotDetail;
-  activeTab: ContentTabId;
-  onTabChange: (tab: ContentTabId) => void;
 };
 
-// The spot's one menu, behind the ☰ button in the header: the content tabs, then directions,
-// edit and delete.
-export function SpotActions({ spot, activeTab, onTabChange }: SpotActionsProps) {
+// The spot's menu, behind the ⋯ button in the header: today's shoot, directions, edit, move
+// and delete. The content tabs are the chips under the spot name.
+export function SpotActions({ spot }: SpotActionsProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const shoot = useTodayShoot();
@@ -60,23 +56,30 @@ export function SpotActions({ spot, activeTab, onTabChange }: SpotActionsProps) 
 
   return (
     <>
-      <Menu position="bottom-end" width={220} radius="md" shadow="md">
+      <Menu
+        position="bottom-end"
+        width={260}
+        radius="md"
+        shadow="md"
+        // Bigger text, icons and tap targets than Mantine's compact default.
+        styles={{
+          item: { fontSize: 16, padding: "12px 14px", minHeight: 48 },
+          itemSection: { marginInlineEnd: 12 },
+        }}
+      >
         <Menu.Target>
           <ActionIcon aria-label="Spot options" variant="subtle" color="brown.0" size={44}>
-            <IconMenu2 size={22} />
+            <IconDots size={22} />
           </ActionIcon>
         </Menu.Target>
         <Menu.Dropdown>
-          <ContentTabMenuItems value={activeTab} onChange={onTabChange} />
-          <Menu.Divider />
-          <Menu.Label>Spot</Menu.Label>
           {CAN_EDIT_SPOTS && shoot.isReady && (
             <Menu.Item
               leftSection={
                 isInShoot ? (
-                  <IconCalendarMinus size={16} />
+                  <IconCalendarMinus size={20} />
                 ) : (
-                  <IconCalendarPlus size={16} color="var(--mantine-color-yellow-5)" />
+                  <IconCalendarPlus size={20} color="var(--mantine-color-yellow-5)" />
                 )
               }
               onClick={toggleShoot}
@@ -89,26 +92,26 @@ export function SpotActions({ spot, activeTab, onTabChange }: SpotActionsProps) 
             href={getDirectionsUrl(spot.latitude, spot.longitude)}
             target="_blank"
             rel="noreferrer"
-            leftSection={<IconNavigation size={16} color="var(--mantine-color-blue-4)" />}
+            leftSection={<IconNavigation size={20} color="var(--mantine-color-blue-4)" />}
           >
             Directions
           </Menu.Item>
           {CAN_EDIT_SPOTS && (
             <>
-              <Menu.Item leftSection={<IconPencil size={16} />} onClick={() => setIsEditing(true)}>
+              <Menu.Item leftSection={<IconPencil size={20} />} onClick={() => setIsEditing(true)}>
                 Edit spot
               </Menu.Item>
               <Menu.Item
                 component={Link}
                 href={`/maps?move=${spot.id}`}
-                leftSection={<IconArrowsMove size={16} />}
+                leftSection={<IconArrowsMove size={20} />}
               >
                 Move pin
               </Menu.Item>
               <Menu.Divider />
               <Menu.Item
                 color="red"
-                leftSection={<IconTrash size={16} />}
+                leftSection={<IconTrash size={20} />}
                 onClick={() => setIsConfirmingDelete(true)}
               >
                 Delete spot

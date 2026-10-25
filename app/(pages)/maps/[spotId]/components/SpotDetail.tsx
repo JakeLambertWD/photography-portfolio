@@ -20,6 +20,7 @@ import { ContentGuidePanel } from "./ContentGuidePanel";
 import { ReelsPanel } from "./reels/ReelsPanel";
 import { EditingNotes } from "./EditingNotes";
 import { CONTENT_TABS, type ContentTabId } from "./SpotContentTabs.constants";
+import { ContentTabChips } from "./ContentTabChips";
 import { SpotActions } from "./SpotActions";
 import { ShowcaseCarousels } from "./ShowcaseCarousels";
 import { SpotPhotoTab } from "./SpotPhotoTab";
@@ -84,17 +85,19 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
         >
           <IconChevronLeft size={24} />
         </ActionIcon>
-        {/* The spot name, with the content tab being shown next to it. */}
-        <Group gap={6} justify="center" align="baseline" wrap="nowrap" miw={0}>
+        <Group justify="center" wrap="nowrap" miw={0}>
           <SpotTitle title={spot.title} />
-          <Text fz="sm" c="brown.1" style={{ flexShrink: 0 }}>
-            · {CONTENT_TABS.find((tab) => tab.id === activeTab)?.label}
-          </Text>
         </Group>
-        <SpotActions spot={spot} activeTab={activeTab} onTabChange={setActiveTab} />
+        <SpotActions spot={spot} />
       </Group>
 
-      <Tabs value={activeTab}>
+      <Tabs
+        value={activeTab}
+        onChange={(tab) => tab && setActiveTab(tab as ContentTabId)}
+        variant="pills"
+      >
+        <ContentTabChips spot={spot} value={activeTab} />
+
         <Tabs.Panel value="showcase">
           <ShowcaseCarousels spot={spot} labels={spotLabels} />
         </Tabs.Panel>
