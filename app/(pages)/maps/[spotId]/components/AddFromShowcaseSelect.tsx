@@ -5,6 +5,7 @@ import { MAX_SPOT_PHOTOS } from "@/lib/photo-spots";
 import { getPhotoUploadErrorMessage } from "@/lib/upload-spot-photo";
 import type { SpotDetail } from "@/server/routers/spots";
 import { Group, Image, Select, Text } from "@mantine/core";
+import NextImage from "next/image";
 import { useState } from "react";
 
 type AddFromShowcaseSelectProps = {
@@ -85,7 +86,17 @@ export function AddFromShowcaseSelect({
         return (
           <Group gap="sm" wrap="nowrap">
             {match && (
-              <Image src={match.photo.imageUrl} alt="" w={48} h={48} radius="sm" fit="cover" />
+              <Image
+                component={NextImage}
+                src={match.photo.imageUrl}
+                alt=""
+                width={48}
+                height={48}
+                w={48}
+                h={48}
+                radius="sm"
+                fit="cover"
+              />
             )}
             <Text fz="sm" lineClamp={2}>
               {option.label}

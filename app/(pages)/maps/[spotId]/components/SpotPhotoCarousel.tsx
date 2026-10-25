@@ -3,8 +3,12 @@
 import type { SpotDetail } from "@/server/routers/spots";
 import { ActionIcon, AspectRatio, Box, Group, Image, Modal, UnstyledButton } from "@mantine/core";
 import { IconX } from "@tabler/icons-react";
+import NextImage from "next/image";
 import { useCallback, useEffect, useRef, useState, type ReactNode, type UIEvent } from "react";
-import { formatSpotTag, SPOT_TAG_EMOJIS } from "@/app/(pages)/maps/components/add-spot/AddSpot.constants";
+import {
+  formatSpotTag,
+  SPOT_TAG_EMOJIS,
+} from "@/app/(pages)/maps/components/add-spot/AddSpot.constants";
 import { PhotoThumbnails } from "./PhotoThumbnails";
 import styles from "./SpotPhotoCarousel.module.css";
 
@@ -96,7 +100,16 @@ export function SpotPhotoCarousel({
                 {/* A fixed 4:5 frame, so the page doesn't jump between photos. The whole photo
                     fits inside it: landscape shots get space above and below, not cropped sides. */}
                 <AspectRatio ratio={4 / 5}>
-                  <Image src={photo.imageUrl} alt={photo.caption ?? ""} fit="contain" />
+                  <Image
+                    component={NextImage}
+                    src={photo.imageUrl}
+                    alt={photo.caption ?? ""}
+                    fill
+                    sizes="90vw"
+                    // Only the first slide is visible straight away; the rest load as they near the screen.
+                    loading={index === 0 ? "eager" : "lazy"}
+                    fit="contain"
+                  />
                 </AspectRatio>
               </UnstyledButton>
             </div>

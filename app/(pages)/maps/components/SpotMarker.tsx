@@ -3,6 +3,7 @@
 import type { SpotSummary } from "@/server/routers/spots";
 import { Center, Image, UnstyledButton, useMantineTheme } from "@mantine/core";
 import { IconCheck, IconPhoto } from "@tabler/icons-react";
+import NextImage from "next/image";
 
 type SpotMarkerProps = {
   spot: SpotSummary;
@@ -33,7 +34,18 @@ export function SpotMarker({ spot, onSelect, shootNumber, isShot }: SpotMarkerPr
       }}
     >
       {spot.coverImageUrl ? (
-        <Image src={spot.coverImageUrl} alt="" w="100%" h="100%" fit="cover" bdrs="50%" />
+        <Image
+          component={NextImage}
+          src={spot.coverImageUrl}
+          alt=""
+          // The photo sits inside the 3px ring, so it is drawn at 40px.
+          width={40}
+          height={40}
+          w="100%"
+          h="100%"
+          fit="cover"
+          bdrs="50%"
+        />
       ) : (
         <Center h="100%">
           <IconPhoto size={18} color={theme.colors.brown[1]} />
