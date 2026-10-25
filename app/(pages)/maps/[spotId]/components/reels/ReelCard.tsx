@@ -22,18 +22,21 @@ import { formatReelSummary, REEL_CARD_BORDER } from "./Reels.constants";
 import { InstagramLinkSheet } from "./InstagramLinkSheet";
 import { ReelClipEditor, type ReelClipDraft } from "./ReelClipEditor";
 import { ReelClipRow } from "./ReelClipRow";
+import { ReelTypePill } from "./ReelTypePill";
 
 type ReelCardProps = {
   spotId: string;
   reel: SpotReel;
   expanded: boolean;
   onToggle: () => void;
+  // On the combined Reels tab: show the reel's type as a pill that can be changed.
+  showType?: boolean;
 };
 
 // Which clip is being edited: an existing clip's id, "new" for the add form, or none.
 type ClipEditing = string | "new" | null;
 
-export function ReelCard({ spotId, reel, expanded, onToggle }: ReelCardProps) {
+export function ReelCard({ spotId, reel, expanded, onToggle, showType }: ReelCardProps) {
   const utils = api.useUtils();
   const [clipEditing, setClipEditing] = useState<ClipEditing>(null);
   const [titleDraft, setTitleDraft] = useState<string | null>(null);
@@ -49,6 +52,7 @@ export function ReelCard({ spotId, reel, expanded, onToggle }: ReelCardProps) {
     onSuccess: async () => (await refresh(), setTitleDraft(null)),
   });
   const deleteReel = api.reels.delete.useMutation({ onSuccess: refresh });
+  const setKind = api.reels.setKind.useMutation({ onSuccess: refresh });
 
   const isSavingClip = addClip.isPending || updateClip.isPending || deleteClip.isPending;
   const clipError =
@@ -88,16 +92,33 @@ export function ReelCard({ spotId, reel, expanded, onToggle }: ReelCardProps) {
             autoFocus
           />
         ) : (
-          <UnstyledButton flex={1} miw={0} onClick={onToggle} aria-expanded={expanded}>
-            <Stack gap={4}>
-              <Title order={3} fz={expanded ? 16 : 15} lh={1.3} c="brown.0">
-                {reel.title}
-              </Title>
-              <Text fz="xs" c="brown.1">
-                {formatReelSummary(reel.clips)}
-              </Text>
-            </Stack>
-          </UnstyledButton>
+          <Stack gap={6} flex={1} miw={0}>
+            <UnstyledButton onClick={onToggle} aria-expanded={expanded}>
+              <Stack gap={4}>
+                <Title order={3} fz={expanded ? 16 : 15} lh={1.3} c="brown.0">
+                  {reel.title}
+                </Title>
+                {!showType && (
+                  <Text fz="xs" c="brown.1">
+                    {formatReelSummary(reel.clips)}
+                  </Text>
+                )}
+              </Stack>
+            </UnstyledButton>
+            {/* The pill is its own button, so it sits outside the expand/collapse button. */}
+            {showType && (
+              <Group gap={8} wrap="nowrap">
+                <ReelTypePill
+                  kind={reel.kind}
+                  isSaving={setKind.isPending}
+                  onChange={(kind) => setKind.mutate({ id: reel.id, kind })}
+                />
+                <Text fz="xs" c="brown.1" truncate>
+                  {formatReelSummary(reel.clips)}
+                </Text>
+              </Group>
+            )}
+          </Stack>
         )}
 
         {reel.instagramUrl ? (

@@ -13,6 +13,7 @@ const reelClipSchema = z.object({
 
 const reelSchema = z.object({
   id: z.string(),
+  kind: z.enum(REEL_KINDS),
   title: z.string(),
   instagramUrl: z.string().nullable(),
   position: z.number(),
@@ -38,19 +39,29 @@ function notFound(what: string): never {
 }
 
 export const reelsRouter = router({
-  // Reel ideas for one spot, oldest first, each with its clips in order.
+  // Reel ideas for one spot, each with its clips in order. Pass `kinds` to list several reel
+  // types together (oldest first); otherwise one `kind`, in its saved order.
   list: publicProcedure
-    .input(z.object({ spotId: z.uuid(), kind: z.enum(REEL_KINDS).default("bts") }))
+    .input(
+      z.object({
+        spotId: z.uuid(),
+        kind: z.enum(REEL_KINDS).default("bts"),
+        kinds: z.array(z.enum(REEL_KINDS)).min(1).optional(),
+      }),
+    )
     .query(async ({ input }) => {
       const db = getDb();
+      const kinds = input.kinds ?? [input.kind];
+      const isMixed = kinds.length > 1;
 
       const [reelRows, clipRows] = await Promise.all([
         db
           .selectFrom("photo_spot_reel")
-          .select(["id", "title", "instagram_url as instagramUrl", "position"])
+          .select(["id", "kind", "title", "instagram_url as instagramUrl", "position"])
           .where("spot_id", "=", input.spotId)
-          .where("kind", "=", input.kind)
-          .orderBy("position")
+          .where("kind", "in", kinds)
+          // Positions are per type, so a mixed list goes by when each reel was added.
+          .$if(!isMixed, (qb) => qb.orderBy("position"))
           .orderBy("created_at")
           .execute(),
         db
@@ -64,7 +75,7 @@ export const reelsRouter = router({
             "c.position",
           ])
           .where("r.spot_id", "=", input.spotId)
-          .where("r.kind", "=", input.kind)
+          .where("r.kind", "in", kinds)
           .orderBy("c.position")
           .execute(),
       ]);
@@ -113,6 +124,31 @@ export const reelsRouter = router({
 
       if (!created) notFound("Spot");
       return { id: created.id };
+    }),
+
+  // Changes a reel's type, e.g. from Educational to BTS; it goes to the end of that type's list.
+  setKind: publicProcedure
+    .input(z.object({ id: z.uuid(), kind: z.enum(REEL_KINDS) }))
+    .mutation(async ({ input }) => {
+      assertCanEdit();
+
+      const updated = await getDb()
+        .updateTable("photo_spot_reel as reel")
+        .set((eb) => ({
+          kind: input.kind,
+          position: eb.fn.coalesce(
+            eb
+              .selectFrom("photo_spot_reel as other")
+              .select((eb) => eb(eb.fn.max("other.position"), "+", 1).as("next"))
+              .whereRef("other.spot_id", "=", "reel.spot_id")
+              .where("other.kind", "=", input.kind),
+            eb.lit(0),
+          ),
+        }))
+        .where("reel.id", "=", input.id)
+        .returning("reel.id")
+        .executeTakeFirst();
+      if (!updated) notFound("Reel");
     }),
 
   rename: publicProcedure

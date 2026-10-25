@@ -5,19 +5,24 @@ import { CAN_EDIT_SPOTS, type ReelKind } from "@/lib/photo-spots";
 import { Button, Center, Group, Loader, Paper, Stack, Text, TextInput } from "@mantine/core";
 import { IconPlus } from "@tabler/icons-react";
 import { useState, type FormEvent } from "react";
-import { REEL_CARD_BORDER, REEL_KIND_COPY } from "./Reels.constants";
+import { REEL_CARD_BORDER, REEL_KIND_COPY, REELS_TAB_COPY } from "./Reels.constants";
 import { ReelCard } from "./ReelCard";
 
 type ReelsPanelProps = {
   spotId: string;
-  // Which reel tab this is (BTS, Educational, 1 Clip or Trial Reels).
-  kind: ReelKind;
+  // The reel types this tab lists: several for the Reels tab, just "pov" for Trial Reels.
+  // New reels start as the first one.
+  kinds: readonly ReelKind[];
 };
 
-// Reel ideas for one tab of a spot: each card opens to show its clip-by-clip breakdown.
-export function ReelsPanel({ spotId, kind }: ReelsPanelProps) {
+// Reel ideas for one tab of a spot: each card opens to show its clip-by-clip breakdown. With
+// several types, each card shows its type as a pill that can be changed.
+export function ReelsPanel({ spotId, kinds }: ReelsPanelProps) {
   const utils = api.useUtils();
-  const reelsQuery = api.reels.list.useQuery({ spotId, kind });
+  const kind = kinds[0];
+  const isMixed = kinds.length > 1;
+  const copy = isMixed ? REELS_TAB_COPY : REEL_KIND_COPY[kind];
+  const reelsQuery = api.reels.list.useQuery({ spotId, kinds: [...kinds] });
   const [openReelId, setOpenReelId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState<string | null>(null);
 
@@ -60,7 +65,7 @@ export function ReelsPanel({ spotId, kind }: ReelsPanelProps) {
             <Stack gap="xs">
               <TextInput
                 label="Reel idea"
-                placeholder={REEL_KIND_COPY[kind].placeholder}
+                placeholder={copy.placeholder}
                 value={newTitle}
                 onChange={(event) => setNewTitle(event.currentTarget.value)}
                 maxLength={160}
@@ -99,7 +104,7 @@ export function ReelsPanel({ spotId, kind }: ReelsPanelProps) {
         </Text>
       ) : reels.length === 0 && newTitle === null ? (
         <Center h={120} bg="brown.7" bdrs="md" c="brown.1" fz="sm" ta="center" px="md">
-          {REEL_KIND_COPY[kind].emptyText}
+          {copy.emptyText}
         </Center>
       ) : (
         reels.map((reel) => (
@@ -109,6 +114,7 @@ export function ReelsPanel({ spotId, kind }: ReelsPanelProps) {
             reel={reel}
             expanded={openReelId === reel.id}
             onToggle={() => setOpenReelId((current) => (current === reel.id ? null : reel.id))}
+            showType={isMixed}
           />
         ))
       )}

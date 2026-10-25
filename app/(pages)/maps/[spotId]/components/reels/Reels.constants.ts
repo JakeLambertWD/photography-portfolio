@@ -33,3 +33,37 @@ export const REEL_KIND_COPY: Record<ReelKind, { emptyText: string; placeholder: 
     placeholder: "e.g. POV: you wait 20 mins for one train",
   },
 };
+
+// The reel types that share the Reels tab, in the order the type menu lists them. New reels
+// there start as the first one.
+export const REEL_TYPE_KINDS = [
+  "educational",
+  "technique",
+  "bts",
+] as const satisfies readonly ReelKind[];
+
+// Label and colours for each reel type's pill. Colours differ in lightness as well as hue.
+export const REEL_TYPE_STYLES: Record<
+  (typeof REEL_TYPE_KINDS)[number],
+  { label: string; color: string; text: string; tint: string }
+> = {
+  educational: {
+    label: "Educational",
+    color: "#74a9e8",
+    text: "#9cc4f0",
+    tint: "rgba(116, 169, 232, 0.12)",
+  },
+  technique: {
+    label: "1 Clip",
+    color: "#e7ba3d",
+    text: "#f4d05f",
+    tint: "rgba(231, 186, 61, 0.14)",
+  },
+  bts: { label: "BTS", color: "#e8916a", text: "#f0ad8e", tint: "rgba(232, 145, 106, 0.12)" },
+};
+
+// Wording for the combined Reels tab.
+export const REELS_TAB_COPY = {
+  emptyText: "No reel ideas yet",
+  placeholder: "e.g. 3 tips for shooting this spot at night",
+};

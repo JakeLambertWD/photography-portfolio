@@ -1,15 +1,15 @@
 "use client";
 
 import { api } from "@/app/providers";
-import { REEL_KINDS, type ReelKind } from "@/lib/photo-spots";
 import type { SpotDetail } from "@/server/routers/spots";
 import { Box, Tabs, useMantineTheme } from "@mantine/core";
 import { useEffect, useRef } from "react";
-import { CONTENT_TABS, type ContentTabId } from "./SpotContentTabs.constants";
+import { REEL_TYPE_KINDS } from "./reels/Reels.constants";
+import { SPOT_TABS, type SpotTabId } from "./SpotContentTabs.constants";
 
 type ContentTabChipsProps = {
   spot: SpotDetail;
-  value: ContentTabId;
+  value: SpotTabId;
 };
 
 // The content tabs as a row of chips under the spot name. Rendered inside the page's <Tabs>
@@ -20,18 +20,14 @@ export function ContentTabChips({ spot, value }: ContentTabChipsProps) {
   const listRef = useRef<HTMLDivElement>(null);
 
   // How many reel ideas each reel tab has; the same queries the reel panels use, so they're shared.
-  const reelQueries = api.useQueries((t) =>
-    REEL_KINDS.map((kind) => t.reels.list({ spotId: spot.id, kind })),
-  );
-  const reelCounts = Object.fromEntries(
-    REEL_KINDS.map((kind, index) => [kind, reelQueries[index]?.data?.length ?? 0]),
-  ) as Record<ReelKind, number>;
+  const reelsQuery = api.reels.list.useQuery({ spotId: spot.id, kinds: [...REEL_TYPE_KINDS] });
+  const trialReelsQuery = api.reels.list.useQuery({ spotId: spot.id, kinds: ["pov"] });
 
   // Showcase has its own photo counter, so it doesn't get a count here.
-  const counts: Partial<Record<ContentTabId, number>> = {
+  const counts: Partial<Record<SpotTabId, number>> = {
     creator: spot.creatorPhotos.length,
-    editing: spot.editingPhotos.length,
-    ...reelCounts,
+    reels: reelsQuery.data?.length ?? 0,
+    pov: trialReelsQuery.data?.length ?? 0,
   };
 
   // Keep the selected chip in view, e.g. after picking one near the end of the row.
@@ -55,7 +51,7 @@ export function ContentTabChips({ spot, value }: ContentTabChipsProps) {
           maskImage: "linear-gradient(to right, black calc(100% - 40px), transparent)",
         }}
       >
-        {CONTENT_TABS.map((tab) => {
+        {SPOT_TABS.map((tab) => {
           const isActive = tab.id === value;
           const count = counts[tab.id] ?? 0;
           return (

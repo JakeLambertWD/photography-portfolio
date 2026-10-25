@@ -1,7 +1,7 @@
 "use client";
 
 import { api } from "@/app/providers";
-import { getSpotGearOption, REEL_KINDS } from "@/lib/photo-spots";
+import { getSpotGearOption } from "@/lib/photo-spots";
 import {
   ActionIcon,
   Button,
@@ -16,10 +16,9 @@ import {
 import { IconChevronLeft } from "@tabler/icons-react";
 import Link from "next/link";
 import { useState } from "react";
-import { ContentGuidePanel } from "./ContentGuidePanel";
+import { REEL_TYPE_KINDS } from "./reels/Reels.constants";
 import { ReelsPanel } from "./reels/ReelsPanel";
-import { EditingNotes } from "./EditingNotes";
-import { CONTENT_TABS, type ContentTabId } from "./SpotContentTabs.constants";
+import type { SpotTabId } from "./SpotContentTabs.constants";
 import { ContentTabChips } from "./ContentTabChips";
 import { SpotActions } from "./SpotActions";
 import { ShowcaseCarousels } from "./ShowcaseCarousels";
@@ -31,7 +30,7 @@ type SpotDetailProps = {
 };
 
 export function SpotDetail({ spotId }: SpotDetailProps) {
-  const [activeTab, setActiveTab] = useState<ContentTabId>("showcase");
+  const [activeTab, setActiveTab] = useState<SpotTabId>("showcase");
 
   const spotQuery = api.spots.byId.useQuery({ id: spotId }, { retry: false });
 
@@ -93,7 +92,7 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
 
       <Tabs
         value={activeTab}
-        onChange={(tab) => tab && setActiveTab(tab as ContentTabId)}
+        onChange={(tab) => tab && setActiveTab(tab as SpotTabId)}
         variant="pills"
       >
         <ContentTabChips spot={spot} value={activeTab} />
@@ -111,24 +110,14 @@ export function SpotDetail({ spotId }: SpotDetailProps) {
           />
         </Tabs.Panel>
 
-        <Tabs.Panel value="editing">
-          <SpotPhotoTab spot={spot} photos={spot.editingPhotos} kind="editing" labels={spotLabels}>
-            <EditingNotes spotId={spot.id} notes={spot.editingNotes ?? null} />
-          </SpotPhotoTab>
+        {/* Educational, 1 Clip and BTS ideas together, each with a type pill. */}
+        <Tabs.Panel value="reels">
+          <ReelsPanel spotId={spot.id} kinds={REEL_TYPE_KINDS} />
         </Tabs.Panel>
 
-        {REEL_KINDS.map((kind) => (
-          <Tabs.Panel key={kind} value={kind}>
-            <ReelsPanel spotId={spot.id} kind={kind} />
-          </Tabs.Panel>
-        ))}
-
-        {/* Shoot Day is still a guide; the other tabs hold this spot's own content. */}
-        {CONTENT_TABS.filter((tab) => tab.id === "shoot-day").map((tab) => (
-          <Tabs.Panel key={tab.id} value={tab.id}>
-            <ContentGuidePanel tabId={tab.id} spotTitle={spot.title} />
-          </Tabs.Panel>
-        ))}
+        <Tabs.Panel value="pov">
+          <ReelsPanel spotId={spot.id} kinds={["pov"]} />
+        </Tabs.Panel>
       </Tabs>
     </Container>
   );

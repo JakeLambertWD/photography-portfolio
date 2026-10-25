@@ -15,6 +15,17 @@ export type ContentTabConfig = {
   tips?: string[];
 };
 
+// The chips under the spot name. Reels holds the Educational, 1 Clip and BTS ideas together.
+export type SpotTabId = "showcase" | "creator" | "reels" | "pov";
+
+export const SPOT_TABS = [
+  { id: "showcase", label: "Showcase" },
+  { id: "creator", label: "Creator Shots" },
+  { id: "reels", label: "Reels" },
+  { id: "pov", label: "Trial Reels" },
+] as const satisfies readonly { id: SpotTabId; label: string }[];
+
+// Guide copy for each content format, used by the Shoot Day guide.
 export const CONTENT_TABS = [
   {
     id: "showcase",
