@@ -14,7 +14,7 @@ body {
 }
 
 body {
-  min-height: 100vh;
+  min-height: 100dvh;
   color: var(--foreground);
   background-color: var(--background);
   background-position: center;
@@ -27,7 +27,7 @@ body {
 
 main {
   display: grid;
-  min-height: 100vh;
+  min-height: 100dvh;
   place-items: center;
   padding: 2rem;
 }
