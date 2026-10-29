@@ -35,12 +35,9 @@
   filter: blur(6px);
 }
 
-/* Covers the bottom 75% of the page; motes drift its full height
-   (100cqh), so they rise to 75% of the page whatever its height. */
 .motes {
   position: absolute;
-  inset: 25% 0 0;
-  container-type: size;
+  inset: 0;
   z-index: -1;
   pointer-events: none;
 }
@@ -69,7 +66,7 @@
     opacity: 0.5;
   }
   to {
-    transform: translateY(-100cqh);
+    transform: translateY(-60vh);
     opacity: 0;
   }
 }
@@ -88,7 +85,7 @@
   bottom: 0;
   transform: translateX(-50%);
   width: 60vw;
-  height: 90%;
+  height: 50%;
   z-index: -1;
   pointer-events: none;
   background: radial-gradient(

@@ -1,5 +1,4 @@
 import { router } from "../trpc";
-import { authRouter } from "./auth";
 import { followerRouter } from "./follower";
 import { placesRouter } from "./places";
 import { carouselsRouter } from "./carousels";
@@ -11,7 +10,6 @@ import { trialReelsRouter } from "./trialReels";
 
 // Main application router for TRPC stored endpoints
 export const appRouter = router({
-  auth: authRouter,
   followers: followerRouter,
   places: placesRouter,
   reels: reelsRouter,
