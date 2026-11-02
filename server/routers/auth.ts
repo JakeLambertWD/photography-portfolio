@@ -2,6 +2,7 @@ import { signInSchema } from "@/utils/validations-schemas/auth";
 import { TRPCError } from "@trpc/server";
 import argon2 from "argon2";
 import { db } from "../db";
+import { createSession } from "../session";
 import { publicProcedure, router } from "../trpc";
 
 export const authRouter = router({
@@ -34,6 +35,9 @@ export const authRouter = router({
       // Same error for an unknown email and a wrong password, so neither is revealed.
       throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid email or password" });
     }
+
+    // Credentials are valid, so start a session and send its cookie to the browser.
+    await createSession();
 
     return { success: true };
   }),
