@@ -1,13 +1,20 @@
-import { Title } from "@mantine/core";
+import { Stack, Title } from "@mantine/core";
 import { ProjectorBeamContainer } from "@/app/components/projector-beam-container/ProjectorBeamContainer";
+import SignOutButton from "@/app/components/signin/SignOutButton";
+import { verifySession } from "@/server/session";
 
-// Placeholder admin area; ticket 7 guards it so only a signed-in admin can reach it.
-export default function CollaboratePage() {
+// Placeholder admin page. verifySession() redirects to sign-in unless there's a valid session.
+export default async function CollaboratePage() {
+  await verifySession();
+
   return (
     <ProjectorBeamContainer>
-      <Title order={1} ta="center">
-        COLLABORATE
-      </Title>
+      <Stack align="center">
+        <Title order={1} ta="center">
+          COLLABORATE
+        </Title>
+        <SignOutButton />
+      </Stack>
     </ProjectorBeamContainer>
   );
 }

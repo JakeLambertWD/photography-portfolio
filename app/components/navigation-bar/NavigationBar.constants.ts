@@ -3,7 +3,7 @@ export const NAVIGATION_LINKS = [
   { label: "about", href: "/about" },
   { label: "gear", href: "/gear" },
   { label: "presets", href: "/presets" },
-  { label: "collaborate", href: "/collaborate/signin" },
+  { label: "collaborate", href: "/collaborate/request" },
   { label: "contact", href: "/contact" },
 ] as const;
 

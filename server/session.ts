@@ -1,8 +1,10 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { createHash, randomBytes } from "node:crypto";
+import { cache } from "react";
 import { db } from "./db";
+import { SESSION_COOKIE_NAME } from "./session.constants";
 
-const SESSION_COOKIE_NAME = "admin_session";
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 // The database stores this hash, never the raw token, so a leaked table can't be used to sign in.
@@ -61,6 +63,26 @@ export async function getSession() {
     .executeTakeFirst();
 
   return session ?? null;
+}
+
+// For admin pages: returns the session, or redirects to sign-in when there isn't a valid one.
+// cache() means several calls during one render share a single database query.
+export const verifySession = cache(async () => {
+  const session = await getSession();
+
+  if (!session) {
+    redirect("/collaborate/signin");
+  }
+
+  return session;
+});
+
+// For the sign-in page: sends an already signed-in admin straight to /collaborate.
+// Checks the database rather than just the cookie, so an expired cookie can't cause a redirect loop.
+export async function redirectIfSignedIn() {
+  if (await getSession()) {
+    redirect("/collaborate");
+  }
 }
 
 // Signs the admin out: removes the session row so the token stops working, then clears the cookie.

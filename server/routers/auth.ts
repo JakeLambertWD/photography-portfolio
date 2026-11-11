@@ -2,7 +2,7 @@ import { signInSchema } from "@/utils/validations-schemas/auth";
 import { TRPCError } from "@trpc/server";
 import argon2 from "argon2";
 import { db } from "../db";
-import { createSession } from "../session";
+import { createSession, deleteSession } from "../session";
 import { publicProcedure, router } from "../trpc";
 
 export const authRouter = router({
@@ -38,6 +38,13 @@ export const authRouter = router({
 
     // Credentials are valid, so start a session and send its cookie to the browser.
     await createSession();
+
+    return { success: true };
+  }),
+
+  // Signing out without a session does no harm, so this doesn't need protectedProcedure.
+  signOut: publicProcedure.mutation(async () => {
+    await deleteSession();
 
     return { success: true };
   }),
