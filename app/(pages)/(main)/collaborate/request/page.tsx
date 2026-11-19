@@ -2,7 +2,7 @@ import { ProjectorBeamContainer } from "@/app/components/projector-beam-containe
 import SignOutButton from "@/app/components/signin/SignOutButton";
 import { Title } from "@mantine/core";
 
-// Placeholder for the public Collaboration Request form, which has its own subticket.
+// Public route
 export default function CollaborationRequestPage() {
   return (
     <ProjectorBeamContainer>
