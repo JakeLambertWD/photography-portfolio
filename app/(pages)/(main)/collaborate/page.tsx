@@ -1,10 +1,11 @@
-import { Stack, Title } from "@mantine/core";
 import { ProjectorBeamContainer } from "@/app/components/projector-beam-container/ProjectorBeamContainer";
 import SignOutButton from "@/app/components/signin/SignOutButton";
 import { verifySession } from "@/server/session";
+import { Stack, Title } from "@mantine/core";
 
-// Placeholder admin page. verifySession() redirects to sign-in unless there's a valid session.
+// Private route
 export default async function CollaboratePage() {
+  // If the user is not signed in, redirect them to the /signin page
   await verifySession();
 
   return (
