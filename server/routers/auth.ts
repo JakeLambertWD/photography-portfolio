@@ -3,44 +3,48 @@ import { TRPCError } from "@trpc/server";
 import argon2 from "argon2";
 import { db } from "../db";
 import { createSession, deleteSession } from "../session";
-import { publicProcedure, router } from "../trpc";
+import { publicProcedure, rateLimit, router } from "../trpc";
 
 export const authRouter = router({
-  signIn: publicProcedure.input(signInSchema).mutation(async ({ input }) => {
-    // Check if the database connection is available before proceeding with authentication.
-    if (!db) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Database connection not available.",
-      });
-    }
+  // rateLimit runs first, so once an IP is over the limit its requests never reach the password check.
+  signIn: publicProcedure
+    .use(rateLimit("signIn"))
+    .input(signInSchema)
+    .mutation(async ({ input }) => {
+      // Check if the database connection is available before proceeding with authentication.
+      if (!db) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Database connection not available.",
+        });
+      }
 
-    // Retrieve the admin credentials from the database based on the provided email.
-    const admin = await db
-      .selectFrom("admin_credentials")
-      .select(["email", "password_hash"])
-      .where("email", "=", input.email)
-      .executeTakeFirst();
+      // Retrieve the admin credentials from the database based on the provided email.
+      const admin = await db
+        .selectFrom("admin_credentials")
+        .select(["email", "password_hash"])
+        .where("email", "=", input.email)
+        .executeTakeFirst();
 
-    // If no admin is found, throw an unauthorized error.
-    if (!admin) {
-      throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid email or password" });
-    }
+      // If no admin is found, throw an unauthorized error.
+      if (!admin) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid email or password" });
+      }
 
-    // Verify the input password against the password hash
-    const passwordMatches = await argon2.verify(admin.password_hash, input.password);
+      // Verify the input password against the password hash
+      const passwordMatches = await argon2.verify(admin.password_hash, input.password);
 
-    // If the password does not match, throw an unauthorized error.
-    if (!passwordMatches) {
-      // Same error for an unknown email and a wrong password, so neither is revealed.
-      throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid email or password" });
-    }
+      // If the password does not match, throw an unauthorized error.
+      if (!passwordMatches) {
+        // Same error for an unknown email and a wrong password, so neither is revealed.
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid email or password" });
+      }
 
-    // Credentials are valid, so start a session and send its cookie to the browser.
-    await createSession();
+      // Credentials are valid, so start a session and send its cookie to the browser.
+      await createSession();
 
-    return { success: true };
-  }),
+      return { success: true };
+    }),
 
   // Signing out without a session does no harm, so this doesn't need protectedProcedure.
   signOut: publicProcedure.mutation(async () => {

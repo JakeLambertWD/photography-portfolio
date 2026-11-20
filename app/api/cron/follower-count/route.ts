@@ -1,5 +1,6 @@
 import { getInstagramStats } from "@/lib/instagram";
 import { db } from "@/server/db";
+import { sql } from "kysely";
 
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET;
@@ -36,6 +37,14 @@ export async function GET(request: Request) {
       .values({ follower_count: stats.followers_count })
       .returning("fetched_at")
       .executeTakeFirstOrThrow();
+
+    // Housekeeping: rate-limit windows last minutes, so rows older than a day are no longer needed.
+    // A failure here is only logged, so it never fails the follower-count job.
+    await db
+      .deleteFrom("auth_rate_limits")
+      .where("window_start", "<", sql<Date>`now() - interval '1 day'`)
+      .execute()
+      .catch((error) => console.error("Failed to clean up auth_rate_limits:", error));
 
     // Return the inserted follower count and the timestamp it was fetched at.
     return Response.json({
