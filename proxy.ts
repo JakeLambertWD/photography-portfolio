@@ -1,4 +1,4 @@
-import { SESSION_COOKIE_NAME } from "@/server/session.constants";
+import { SESSION_COOKIE_NAME } from "@/server/session/session.constants";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Pages under /collaborate that anyone can open without signing in.

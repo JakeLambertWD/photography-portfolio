@@ -32,9 +32,9 @@ Cron (daily ~8am UTC) → route.ts → instagram.ts → Instagram API
 
 ## Read path (per page visit)
 
-4. **server/routers/follower.ts** — `followers.getCount` queries the
+4. **server/trpc/routers/follower.ts** — `followers.getCount` queries the
    latest row: `ORDER BY fetched_at DESC LIMIT 1`. Registered in
-   `server/routers/_app.ts`, served via `app/api/trpc/[trpc]/route.ts`.
+   `server/trpc/routers/_app.ts`, served via `app/api/trpc/[trpc]/route.ts`.
 
 5. **app/components/instagram-followers/InstagramFollowerCount.tsx** —
    calls `api.followers.getCount.useQuery()` and renders the count with

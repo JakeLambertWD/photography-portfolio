@@ -10,7 +10,7 @@
     "lint": "eslint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "db:types": "kysely-codegen --dialect postgres --env-file .env.local --out-file server/db.types.ts --include-pattern 'public.*'"
+    "db:types": "kysely-codegen --dialect postgres --env-file .env.local --out-file server/db/db.types.ts --include-pattern 'public.*'"
   },
   "dependencies": {
     "@mantine/core": "^9.5.2",
