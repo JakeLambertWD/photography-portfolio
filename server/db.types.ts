@@ -25,6 +25,12 @@ export interface AdminSessions {
   id: string;
 }
 
+export interface AuthRateLimits {
+  count: Generated<number>;
+  key: string;
+  window_start: Generated<Timestamp>;
+}
+
 export interface CreatorShot {
   created_at: Generated<Timestamp>;
   id: Generated<string>;
@@ -56,6 +62,8 @@ export interface PhotoSpot {
   longitude: number;
   notes: string | null;
   postcode: string | null;
+  posted: Generated<boolean>;
+  reels_position: number | null;
   status: Generated<string>;
   tags: Generated<string[]>;
   title: string;
@@ -64,6 +72,7 @@ export interface PhotoSpot {
 export interface PhotoSpotCarousel {
   created_at: Generated<Timestamp>;
   id: Generated<string>;
+  instagram_url: string | null;
   position: Generated<number>;
   spot_id: string;
   title: string;
@@ -82,10 +91,13 @@ export interface PhotoSpotImage {
 
 export interface PhotoSpotReel {
   created_at: Generated<Timestamp>;
+  creator: string | null;
+  hooks: Generated<string[]>;
   id: Generated<string>;
   instagram_url: string | null;
   kind: Generated<string>;
   position: Generated<number>;
+  ready: Generated<boolean>;
   spot_id: string;
   title: string;
 }
@@ -93,7 +105,9 @@ export interface PhotoSpotReel {
 export interface PhotoSpotReelClip {
   description: string;
   duration_seconds: number | null;
+  how_to_film: string | null;
   id: Generated<string>;
+  on_screen_text: string | null;
   position: Generated<number>;
   reel_id: string;
 }
@@ -104,6 +118,12 @@ export interface PhotoSpotTrialReel {
   trial_reel_id: string;
 }
 
+export interface PhotoSpotUpNext {
+  created_at: Generated<Timestamp>;
+  position: Generated<number>;
+  spot_id: string;
+}
+
 export interface TrialReel {
   created_at: Generated<Timestamp>;
   creator: string | null;
@@ -111,9 +131,36 @@ export interface TrialReel {
   instagram_url: string;
 }
 
+export interface UpcomingPost {
+  caption: Generated<string>;
+  created_at: Generated<Timestamp>;
+  id: Generated<string>;
+  instagram_url: string | null;
+  kind: string;
+  position: Generated<number>;
+  post_date: Timestamp | null;
+  reel_type: string | null;
+  spot_id: string | null;
+  title: string;
+}
+
+export interface UpcomingPostMedia {
+  created_at: Generated<Timestamp>;
+  description: Generated<string>;
+  duration_seconds: number | null;
+  id: Generated<string>;
+  media_type: string;
+  media_url: string;
+  position: Generated<number>;
+  post_id: string;
+  poster_url: string | null;
+  thumbnail_url: string | null;
+}
+
 export interface DB {
   admin_credentials: AdminCredentials;
   admin_sessions: AdminSessions;
+  auth_rate_limits: AuthRateLimits;
   creator_shot: CreatorShot;
   follower_snapshot: FollowerSnapshot;
   photo_shoot_day_spot: PhotoShootDaySpot;
@@ -123,5 +170,8 @@ export interface DB {
   photo_spot_reel: PhotoSpotReel;
   photo_spot_reel_clip: PhotoSpotReelClip;
   photo_spot_trial_reel: PhotoSpotTrialReel;
+  photo_spot_up_next: PhotoSpotUpNext;
   trial_reel: TrialReel;
+  upcoming_post: UpcomingPost;
+  upcoming_post_media: UpcomingPostMedia;
 }
