@@ -1,5 +1,5 @@
 import { sql } from "kysely";
-import { db } from "./db";
+import { db } from "@/server/db/db";
 import { RATE_LIMITS, type RateLimitName } from "./rateLimit.constants";
 
 // The visitor's IP address. On Vercel, x-forwarded-for is set by Vercel itself (anything the

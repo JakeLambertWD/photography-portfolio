@@ -1,5 +1,5 @@
 import { getInstagramStats } from "@/lib/instagram";
-import { db } from "@/server/db";
+import { db } from "@/server/db/db";
 import { sql } from "kysely";
 
 export async function GET(request: Request) {

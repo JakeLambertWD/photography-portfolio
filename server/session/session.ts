@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createHash, randomBytes } from "node:crypto";
 import { cache } from "react";
-import { db } from "./db";
+import { db } from "@/server/db/db";
 import { SESSION_COOKIE_NAME } from "./session.constants";
 
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days

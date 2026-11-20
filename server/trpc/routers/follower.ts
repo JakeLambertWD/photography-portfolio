@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { db } from "../db";
+import { db } from "@/server/db/db";
 import { publicProcedure, router } from "../trpc";
 
 export const followerRouter = router({

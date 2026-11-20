@@ -1,8 +1,8 @@
 import { signInSchema } from "@/utils/validations-schemas/auth";
 import { TRPCError } from "@trpc/server";
 import argon2 from "argon2";
-import { db } from "../db";
-import { createSession, deleteSession } from "../session";
+import { db } from "@/server/db/db";
+import { createSession, deleteSession } from "@/server/session/session";
 import { publicProcedure, rateLimit, router } from "../trpc";
 
 export const authRouter = router({

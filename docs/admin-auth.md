@@ -80,7 +80,7 @@ database check before an admin page renders.
 ## Rate limiting
 
 Sign-in attempts are limited per IP address, so passwords can't be guessed
-without limit. The limits live in `server/rateLimit.constants.ts`:
+without limit. The limits live in `server/rateLimit/rateLimit.constants.ts`:
 
 | Endpoint                              | Limit                     |
 | ------------------------------------- | ------------------------- |
@@ -104,11 +104,11 @@ without limit. The limits live in `server/rateLimit.constants.ts`:
 ## Where the code lives
 
 - **proxy.ts** — cookie-only check for every request under `/collaborate`.
-- **server/session.ts** — `createSession()`, `getSession()`,
+- **server/session/session.ts** — `createSession()`, `getSession()`,
   `verifySession()`, `redirectIfSignedIn()`, `deleteSession()`.
-- **server/routers/auth.ts** — `auth.signIn` and `auth.signOut` mutations.
-- **server/trpc.ts** — `protectedProcedure` guards admin tRPC calls, which the
+- **server/trpc/routers/auth.ts** — `auth.signIn` and `auth.signOut` mutations.
+- **server/trpc/trpc.ts** — `protectedProcedure` guards admin tRPC calls, which the
   proxy doesn't cover.
-- **server/trpc.ts** — `rateLimit(name)` middleware limits attempts per IP.
-- **server/rateLimit.ts** — `consumeRateLimit()` and `getClientIp()`; the
-  limits themselves are in **server/rateLimit.constants.ts**.
+- **server/trpc/trpc.ts** — `rateLimit(name)` middleware limits attempts per IP.
+- **server/rateLimit/rateLimit.ts** — `consumeRateLimit()` and `getClientIp()`; the
+  limits themselves are in **server/rateLimit/rateLimit.constants.ts**.

@@ -1,8 +1,8 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
-import { consumeRateLimit, getClientIp } from "./rateLimit";
-import { RATE_LIMITS, type RateLimitName } from "./rateLimit.constants";
-import { getSession } from "./session";
+import { consumeRateLimit, getClientIp } from "@/server/rateLimit/rateLimit";
+import { RATE_LIMITS, type RateLimitName } from "@/server/rateLimit/rateLimit.constants";
+import { getSession } from "@/server/session/session";
 
 // Built for every request by the /api/trpc route handler. Rate limiting reads the client IP from req.
 export const createContext = ({ req }: FetchCreateContextFnOptions) => ({ req });

@@ -1,6 +1,6 @@
 import { ProjectorBeamContainer } from "@/app/components/projector-beam-container/ProjectorBeamContainer";
 import SignInContainer from "@/app/components/signin/SignInContainer";
-import { redirectIfSignedIn } from "@/server/session";
+import { redirectIfSignedIn } from "@/server/session/session";
 
 // Private route
 export default async function SignInPage() {

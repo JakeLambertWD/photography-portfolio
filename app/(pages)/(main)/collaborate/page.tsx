@@ -1,6 +1,6 @@
 import { ProjectorBeamContainer } from "@/app/components/projector-beam-container/ProjectorBeamContainer";
 import SignOutButton from "@/app/components/signin/SignOutButton";
-import { verifySession } from "@/server/session";
+import { verifySession } from "@/server/session/session";
 import { Stack, Title } from "@mantine/core";
 
 // Private route
